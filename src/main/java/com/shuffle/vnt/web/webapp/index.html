@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+<title>VNT</title>
+
+<link rel="stylesheet" href="css/bootstrap.min.css">
+<link rel="stylesheet" href="css/bootstrap-theme.min.css">
+<link rel="stylesheet" href="css/font-awesome.min.css">
+<link rel="stylesheet" href="css/select2.min.css"/>
+<link rel="stylesheet" href="css/vnt.css">
+<script type="text/javascript" src="js/jquery-2.1.4.min.js"></script>
+<script type="text/javascript" src="js/bootstrap.min.js"></script>
+<script type="text/javascript" src="js/select2.full.min.js"></script>
+</head>
+
+<body>
+	<div class="container">
+		<ul class="nav nav-tabs" role="tablist">
+			<li role="presentation" class="active"><a href="#home"
+				aria-controls="home" role="tab" data-toggle="tab">Home</a></li>
+			<li role="presentation"><a href="#schedules"
+				aria-controls="schedules" role="tab" data-toggle="tab">Schedules
+					<span class="badge">0</span>
+			</a></li>
+			<li role="presentation"><a href="#trackerusers"
+				aria-controls="trackerusers" role="tab" data-toggle="tab">Tracker
+					Users</a></li>
+			<li role="presentation"><a href="#seedboxes"
+				aria-controls="seedboxes" role="tab" data-toggle="tab">Seedboxes
+			</a></li>
+			<li role="presentation"><a href="#settings"
+				aria-controls="settings" role="tab" data-toggle="tab">Settings</a></li>
+		</ul>
+
+		<!-- Tab panes -->
+		<div class="tab-content">
+			<div role="tabpanel" class="tab-pane active" id="home">
+				<br>
+				<div class="col-xs-12">
+					<form id="formfilter">
+						<input type="hidden" id="tracker">
+						<div class="input-group input-group-lg">
+							<span class="input-group-addon" id="sizing-addon1"><i id="iconfilterleft" class="glyphicon glyphicon-search"></i></span>
+							<input type="text" name="search" class="form-control" placeholder="Search on tracker..." aria-describedby="sizing-addon1">
+							<div class="input-group-btn">
+								<button type="button" class="btn btn-default dropdown-toggle"
+									data-toggle="dropdown" aria-haspopup="true"
+									aria-expanded="false">
+									All <span class="caret"></span>
+								</button>
+								<ul class="dropdown-menu dropdown-menu-right dropdown-trackers">
+									<li><a href="#">All</a></li>
+									<li role="separator" class="divider"></li>
+									<li><a href="#" class="advancedli">Advanced</a></li>
+								</ul>
+							</div>
+						</div>
+						<div class="row hide" id="divadvanced">
+							<div class="col-xs-offset-1 col-xs-10 search-advanced-box">
+								<div class="col-xs-12 text-center">
+									<h5>Advanced</h5>
+								</div>
+								<div class="col-xs-12">
+									<div class="form-group">
+										<select id="trackercategories" name="category" multiple="multiple" style="width: 100%" data-placeholder="Categories"></select>
+										<p class="help-block">Not all trackers support multiple category search, on these the search will apply only the first selected.</p>
+									</div>
+								</div>
+								<div class="col-xs-12">
+									<div class="form-group">
+										<select id="torrentfields" style="width: 100%" data-placeholder="Fields">
+											<option value="">Select</option>
+											<option value="tracker">Tracker</option>
+											<option value="name">Name</option>
+											<option value="year">Year</option>
+											<option value="size">Size</option>
+											<option value="added">Added</option>
+											<option value="category">Category</option>
+										</select>
+										<p class="help-block">Filter by a field. Select the field and create a filter with it.</p>
+									</div>
+								</div>
+								<div class="col-xs-12" id="div-torrent-filter">
+									<div class="table-responsive">
+										<table class="table table-striped table-hover table-torrent-filter">
+											
+										</table>
+									</div>
+								</div>
+								<div class="col-xs-12">
+									<button class="btn btn-primary pull-right">Submit</button>
+								</div>
+								&nbsp;
+							</div>
+						</div>
+					</form>
+					<br>
+				</div>
+				<div class="row" id="divtrackerresults"></div>
+			</div>
+			<div role="tabpanel" class="tab-pane" id="schedules">
+				<br>
+				<div class="col-xs-12">
+					<div class="col-xs-8">
+						<h4>Schedules</h4>
+					</div>
+					<div class="col-xs-4">
+						<div class="pull-right">
+							<button type="button" class="btn btn-primary modalschedule">New Schedule</button>
+						</div>
+					</div>
+				</div>
+				<br>
+				<div class="col-xs-12">
+					<div class="table-responsive">
+						<table class="table table-striped table-hover" id="schedulestable">
+							<thead>
+								<tr>
+									<th>Name</th>
+									<th>Tracker User</th>
+									<th>Service</th>
+									<th>Email</th>
+									<th>Next Run</th>
+									<th><i class="glyphicon glyphicon-remove" style="color: red;"></i></th>
+								</tr>
+							</thead>
+							<tbody style="cursor:pointer;">
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+			<div role="tabpanel" class="tab-pane" id="trackerusers">
+				<br>
+				<div class="col-xs-12">
+					<div class="col-xs-8">
+						<h4>Tracker Users</h4>
+					</div>
+					<div class="col-xs-4">
+						<div class="pull-right">
+							<button type="button" class="btn btn-primary modaltrackeruser">New
+								Tracker User</button>
+						</div>
+					</div>
+				</div>
+				<br>
+				<div class="col-xs-12">
+					<div class="table-responsive">
+						<table class="table table-striped table-hover"
+							id="trackeruserstable">
+							<thead>
+								<tr>
+									<th>Tracker</th>
+									<th>Username</th>
+									<th>Authenticated Until</th>
+									<th><i class="glyphicon glyphicon-remove"
+										style="color: red;"></i></th>
+								</tr>
+							</thead>
+							<tbody style="cursor: pointer;">
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+			<div role="tabpanel" class="tab-pane" id="seedboxes">
+				<br>
+				<div class="col-xs-12">
+					<div class="col-xs-8">
+						<h4>Seedboxes</h4>
+					</div>
+					<div class="col-xs-4">
+						<div class="pull-right">
+							<button type="button" class="btn btn-primary modalseedbox">New
+								Seedbox</button>
+						</div>
+					</div>
+				</div>
+				<br>
+				<div class="col-xs-12">
+					<div class="table-responsive">
+						<table class="table table-striped table-hover" id="seedboxestable">
+							<thead>
+								<tr>
+									<th>Name</th>
+									<th>Username</th>
+									<th>Web Client</th>
+									<th><i class="glyphicon glyphicon-remove"
+										style="color: red;"></i></th>
+								</tr>
+							</thead>
+							<tbody style="cursor:pointer;">
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+			<div role="tabpanel" class="tab-pane" id="settings">
+				<br>
+				<div class="col-xs-12">
+					<div class="col-xs-12">
+						<h4>Settings</h4>
+					</div>
+				</div>
+				<div class="col-xs-12">
+					<ul class="list-group">
+						<a href="#" class="list-group-item" data-toggle="modal" data-target="#modalgeneralconfig">
+							<h4 class="list-group-item-heading">General</h4>
+							<p class="list-group-item-text">Configure Base URL and for now is pretty much it...</p>
+						</a>
+						<a href="#" class="list-group-item" data-toggle="modal" data-target="#modalmailconfig">
+							<h4 class="list-group-item-heading">Email</h4>
+							<p class="list-group-item-text">Configure hostname, username, password, etc...</p>
+						</a>
+					</ul>
+				</div>
+			</div>
+		</div>
+
+	</div>
+	
+	<div class="modal fade" tabindex="-1" role="dialog" id="modalgeneralconfig">
+		<div class="modal-dialog">
+			<form>
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal"
+							aria-label="Close">
+							<span aria-hidden="true">&times;</span>
+						</button>
+						<h4 class="modal-title">General</h4>
+					</div>
+					<div class="modal-body">
+						<div class="form-group">
+							<label for="baseUrl">Base URL</label>
+							<input type="text" class="form-control" name="baseUrl" placeholder="Base URL">
+							<p class="">Set the base URL used on the emails</p>
+						</div>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+						<button type="submit" class="btn btn-primary">Submit</button>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+	
+	<div class="modal fade" tabindex="-1" role="dialog" id="modalmailconfig">
+		<div class="modal-dialog">
+			<form>
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal"
+							aria-label="Close">
+							<span aria-hidden="true">&times;</span>
+						</button>
+						<h4 class="modal-title">Email</h4>
+					</div>
+					<div class="modal-body">
+						<div class="form-group">
+							<label for="hostname">Hostname</label>
+							<input type="text" class="form-control" name="hostname" placeholder="Hostname">
+						</div>
+						<div class="form-group">
+							<label for="username">Username</label>
+							<input type="text" class="form-control" name="username" placeholder="Username">
+						</div>
+						<div class="form-group">
+							<label for="password">Password</label>
+							<input type="password" class="form-control" name="password" placeholder="Password">
+						</div>
+						<div class="form-group">
+							<label for="port">Port</label>
+							<input type="text" class="form-control" name="port" placeholder="Port">
+						</div>
+						<div class="form-group">
+							<label for="ssl">SSL</label>
+							<select class="form-control" name="ssl">
+								<option value="false">No</option>
+								<option value="true">Yes</option>
+							</select>
+						</div>
+						<div class="form-group">
+							<label for="tls">TLS</label>
+							<select class="form-control" name="tls">
+								<option value="false">No</option>
+								<option value="true">Yes</option>
+							</select>
+						</div>
+						<div class="form-group">
+							<label for="from">From</label>
+							<input type="email" class="form-control" name="from" placeholder="From Email">
+						</div>
+						<div class="form-group">
+							<label for="fromName">From Name</label>
+							<input type="text" class="form-control" name="fromName" placeholder="From Name">
+						</div>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+						<button type="submit" class="btn btn-primary">Submit</button>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+
+	<div class="modal fade" tabindex="-1" role="dialog" id="modalschedule">
+		<div class="modal-dialog">
+			<form>
+				<input type="hidden" name="new">
+				<input type="hidden" name="pkname">
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal"
+							aria-label="Close">
+							<span aria-hidden="true">&times;</span>
+						</button>
+						<h4 class="modal-title">Schedule</h4>
+					</div>
+					<div class="modal-body">
+						<div class="form-group">
+							<label for="name">Name</label> <input type="text" required
+								class="form-control" name="name" placeholder="Name">
+						</div>
+						<div class="form-group">
+							<label for="search">Tracker</label> <select required class="form-control" readonly="readonly" name="tracker">
+							</select>
+						</div>
+						<div class="form-group">
+							<label for="trackerUser">User</label> <select required class="form-control"
+								name="trackerUser">
+							</select>
+						</div>
+						<div class="form-group">
+							<label for="serviceParser">Service Parser</label> <select required class="form-control" name="serviceParser">
+							</select>
+						</div>
+						<div class="form-group">
+							<label for="search">Search</label> <input type="text" required
+								class="form-control" name="search" placeholder="Search">
+						</div>
+						<div class="form-group">
+							<label for="category">Categories</label> 
+							<select id="trackercategoriesschedule" name="category" multiple="multiple" style="width: 100%" data-placeholder="Categories"></select>
+							<p class="help-block">Not all trackers support multiple category search, on these the search will apply only the first selected.</p>
+						</div>
+						<div class="form-group">
+							<label for="torrentfieldsschedule">Fields</label> 
+							<select id="torrentfieldsschedule" style="width: 100%" data-placeholder="Fields">
+								<option value="">Select</option>
+								<option value="tracker">Tracker</option>
+								<option value="name">Name</option>
+								<option value="year">Year</option>
+								<option value="size">Size</option>
+								<option value="added">Added</option>
+								<option value="category">Category</option>
+							</select>
+							<p class="help-block">Filter by a field. Select the field and create a filter with it.</p>
+						</div>
+						<div class="col-xs-12" id="div-torrent-filter-schedule">
+							<div class="table-responsive">
+								<table class="table table-striped table-hover table-torrent-filter">
+									
+								</table>
+							</div>
+						</div>
+						<div class="form-group">
+							<label for="email">Email</label> <input type="email" required
+								class="form-control" name="email" placeholder="Email">
+						</div>
+						<div class="row">
+							<div class="col-xs-8">
+								<div class="form-group">
+									<label for="startDate">Start Date/Time</label>
+									<div class="input-group">
+										<input type="text" class="form-control" required placeholder="__/__/____ __:__" aria-describedby="basic-addon2" name="startDate" data-mask="00/00/0000 00:00"  data-mask-clearifnotmatch="true">
+										<span class="input-group-addon" id="basic-addon2"><i
+											class="glyphicon glyphicon-calendar"></i></span>
+									</div>
+								</div>
+							</div>
+							<div class="col-xs-4">
+								<div class="form-group">
+									<label for="interval">Interval (min)</label> <input type="text" required
+										class="form-control" name="interval"
+										placeholder="1 day = 1440min">
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+						<button type="submit" class="btn btn-primary">Submit</button>
+					</div>
+				</div>
+				<!-- /.modal-content -->
+			</form>
+		</div>
+		<!-- /.modal-dialog -->
+	</div>
+	<!-- /.modal -->
+
+	<div class="modal fade" tabindex="-1" role="dialog"
+		id="modaltrackeruser">
+		<div class="modal-dialog">
+			<form>
+				<input type="hidden" name="new"> <input type="hidden"
+					name="pktracker"> <input type="hidden" name="pkusername">
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal"
+							aria-label="Close">
+							<span aria-hidden="true">&times;</span>
+						</button>
+						<h4 class="modal-title">Tracker User</h4>
+					</div>
+					<div class="modal-body">
+						<div class="form-group">
+							<label for="search">Tracker</label> <select class="form-control"
+								name="tracker">
+							</select>
+						</div>
+						<div class="form-group">
+							<label for="username">Username</label> <input type="text"
+								class="form-control" name="username" placeholder="Username">
+						</div>
+						<div class="form-group">
+							<label for="search">Password</label> <input type="password"
+								class="form-control" name="password" placeholder="Password">
+						</div>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+						<button type="submit" class="btn btn-primary">Submit</button>
+					</div>
+				</div>
+				<!-- /.modal-content -->
+			</form>
+		</div>
+		<!-- /.modal-dialog -->
+	</div>
+	<!-- /.modal -->
+
+	<div class="modal fade" tabindex="-1" role="dialog" id="modalseedbox">
+		<div class="modal-dialog">
+			<form>
+				<input type="hidden" name="new">
+				<input type="hidden" name="pkname"> 
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal"
+							aria-label="Close">
+							<span aria-hidden="true">&times;</span>
+						</button>
+						<h4 class="modal-title">Seedbox</h4>
+					</div>
+					<div class="modal-body">
+						<div class="form-group">
+							<label for="name">Name</label> <input type="text"
+								class="form-control" name="name" placeholder="Name">
+						</div>
+						<div class="form-group">
+							<label for="url">URL</label> <input type="text"
+								class="form-control" name="url" placeholder="URL">
+						</div>
+						<div class="form-group">
+							<label for="username">Username</label> <input type="text"
+								class="form-control" name="username" placeholder="Username">
+						</div>
+						<div class="form-group">
+							<label for="search">Password</label> <input type="password"
+								class="form-control" name="password" placeholder="Password">
+						</div>
+						<div class="form-group">
+							<label for="label">Label</label> <input type="text"
+								class="form-control" name="label" placeholder="Label">
+							<p class="help-block">Label applied when send a torrent to
+								this seedbox.</p>
+						</div>
+						<div class="form-group">
+							<label for="webclient">Web Client</label> <select
+								class="form-control" name="webClient">
+								<option value="com.shuffle.vnt.services.torrentmanager.RuTorrent">RuTorrent</option>
+							</select>
+						</div>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+						<button type="submit" class="btn btn-primary">Submit</button>
+					</div>
+				</div>
+				<!-- /.modal-content -->
+			</form>
+		</div>
+		<!-- /.modal-dialog -->
+	</div>
+	<!-- /.modal -->
+
+	<div class="modal fade" tabindex="-1" role="dialog" id="modalpickseedbox">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<form>
+					<input type="hidden" name="torrent">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal"
+							aria-label="Close">
+							<span aria-hidden="true">&times;</span>
+						</button>
+						<h4 class="modal-title">Select the seedbox</h4>
+					</div>
+					<div class="modal-body">
+						<div class="form-group">
+							<label for="seedbox">Seedbox</label> <select class="form-control"
+								name="seedbox">
+								<option value="Molusco">Molusco</option>
+							</select>
+						</div>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+						<button type="submit" class="btn btn-primary">Submit</button>
+					</div>
+				</form>
+			</div>
+			<!-- /.modal-content -->
+		</div>
+		<!-- /.modal-dialog -->
+	</div>
+	<!-- /.modal -->
+
+</body>
+
+<script type="text/javascript" src="js/jquery.mask.min.js"></script>
+<script type="text/javascript" src="js/vnt.js"></script>
+
+</html>
