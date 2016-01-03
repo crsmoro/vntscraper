@@ -39,6 +39,8 @@ public abstract class VntUtil {
 
     }
 
+    private static Reflections reflections = null;
+
     public static boolean cookieExpired(String trackerName, String username) {
 	TrackerUser trackerData = PreferenceManager.getInstance().getTrackerUser(trackerName, username);
 	if (trackerData != null) {
@@ -105,8 +107,10 @@ public abstract class VntUtil {
     }
 
     public static TrackerConfig getTrackerConfig(String trackerName) {
-
-	Reflections reflections = new Reflections("com.shuffle");
+	//FIXME check better solution, still gets error at first time
+	if (reflections == null) {
+	    reflections = new Reflections("com.shuffle");
+	}
 	Set<Class<? extends TrackerConfig>> trackerConfigs = reflections.getSubTypesOf(TrackerConfig.class);
 	TrackerConfig returnTrackerConfig = null;
 	for (Class<? extends TrackerConfig> trackerConfigItem : trackerConfigs) {
@@ -182,7 +186,7 @@ public abstract class VntUtil {
 	}
 	return -1;
     }
-    
+
     public static TrackerCategory getTrackerCategory(String trackerName, String code) {
 	TrackerConfig trackerConfig = getTrackerConfig(trackerName);
 	for (TrackerCategory trackerCategory : trackerConfig.getCategories()) {
@@ -192,14 +196,14 @@ public abstract class VntUtil {
 	}
 	return null;
     }
-    
+
     public static String compileTemplate(String template, Map<String, Object> scopes) {
 	StringWriter writer = new StringWriter();
 	MustacheFactory mf = new DefaultMustacheFactory();
 	Mustache mustache = mf.compile(new StringReader(template), "genericTemplate");
 	mustache.execute(writer, scopes);
 	writer.flush();
-	
+
 	StringBuilder compiledTemplate = new StringBuilder();
 	compiledTemplate.append(writer.getBuffer());
 	return compiledTemplate.toString();
