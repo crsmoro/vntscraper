@@ -520,7 +520,7 @@ function buildTrackerTorrentsResultHtml(data) {
 		html += '<th scope="row">' + torrent.id + '</th>';
 		html += '<td>' + torrent.name + '</td>';
 		html += '<td>' + readableFileSize(torrent.size) + '</td>';
-		html += '<td>' + torrent.added + '</td>';
+		html += '<td>' + (torrent.added?torrent.added:' - ') + '</td>';
 		html += '<td>' + torrent.category + '</td>';
 		html += '<td><i class="glyphicon glyphicon-cloud-upload modalpickseedbox" style="cursor: pointer;" data-toggle="tooltip" data-placement="top" title="Send to Seedbox"></i></td>';
 		html += '</tr>';
