@@ -575,7 +575,7 @@ function loadTrackerCategories(tracker) {
 		var dataTrackerCategories = [];
 		for (var i=0; i<data.length; i++) {
 			var trackerCategory = data[i];
-			var item = {id: trackerCategory.code, text:trackerCategory.name + (!tracker ? (' - ' + trackerCategory.tracker) : '') };
+			var item = {id: trackerCategory.tracker + '|' + trackerCategory.code, text:trackerCategory.name + (!tracker ? (' - ' + trackerCategory.tracker) : '') };
 			dataTrackerCategories.push(item);
 		}
 		var select2 = $("#trackercategories").select2({

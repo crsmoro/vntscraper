@@ -8,6 +8,7 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 
 import com.shuffle.vnt.configuration.PreferenceManager;
+import com.shuffle.vnt.core.parser.TrackerConfig;
 import com.shuffle.vnt.core.parser.TrackerManagerFactory;
 import com.shuffle.vnt.core.parser.bean.QueryParameters;
 import com.shuffle.vnt.core.parser.bean.Torrent;
@@ -39,26 +40,37 @@ public class SearchTrackers implements HttpServlet {
 	List<Torrent> torrents = new ArrayList<>();
 	String tracker = session.getParms().get("tracker");
 	if (tracker != null && !"".equals(tracker)) {
-	    TrackerManager trackerManager = TrackerManagerFactory.getInstance(VntUtil.getTrackerConfig(tracker).getClass());
+	    TrackerConfig trackerConfig = VntUtil.getTrackerConfig(tracker);
+	    TrackerManager trackerManager = TrackerManagerFactory.getInstance(trackerConfig.getClass());
 	    QueryParameters queryParameters = new QueryParameters();
 	    queryParameters.setSearch(session.getParms().get("search"));
 	    if (parameters.get("category") != null) {
 		for (String category : parameters.get("category")) {
-			TrackerCategory trackerCategory = VntUtil.getTrackerCategory(tracker, category);
+		    String[] catSpl = category.split("\\|");
+		    String trac = catSpl[0];
+		    String cat = catSpl[1];
+		    if (tracker.equals(trac)) {
+			TrackerCategory trackerCategory = VntUtil.getTrackerCategory(tracker, cat);
 			if (trackerCategory != null) {
 			    queryParameters.getTrackerCategories().add(trackerCategory);
 			}
 		    }
+
+		}
 	    }
-	    
+
 	    if (parameters.get("torrentfiltername") != null) {
 		int torrentfilternameiterator = 0;
-		    for (String torrentfiltername : parameters.get("torrentfiltername")) {
-			queryParameters.getTorrentFilters().add(new TorrentFilter(torrentfiltername, FilterOperation.valueOf(parameters.get("torrentfilteroperation").get(torrentfilternameiterator)), parameters.get("torrentfiltervalue").get(torrentfilternameiterator)));
-			torrentfilternameiterator++;
-		    }
+		for (String torrentfiltername : parameters.get("torrentfiltername")) {
+		    queryParameters.getTorrentFilters()
+			    .add(new TorrentFilter(torrentfiltername,
+				    FilterOperation.valueOf(
+					    parameters.get("torrentfilteroperation").get(torrentfilternameiterator)),
+			    parameters.get("torrentfiltervalue").get(torrentfilternameiterator)));
+		    torrentfilternameiterator++;
+		}
 	    }
-	    
+
 	    trackerManager.setQueryParameters(queryParameters);
 	    trackerManager.setTrackerUser(PreferenceManager.getInstance().getTrackerUser(tracker));
 	    if (StringUtils.isNotBlank(session.getParms().get("page"))) {
