@@ -121,6 +121,9 @@ public class SaveScheduleDatas implements HttpServlet {
 	SchedulerData schedulerData = PreferenceManager.getInstance().getScheduleData(session.getParms().get("pkname"));
 	PreferenceManager.getInstance().getPreferences().getSchedulerDatas().remove(schedulerData);
 	PreferenceManager.getInstance().savePreferences();
+	
+	ScheduleManager.getInstance().clearSchedules();
+	ScheduleManager.getInstance().updateSchedules();
 
 	response.setMimeType("application/json");
 	ReturnObject returnObject = new ReturnObject(true, null);

@@ -414,12 +414,12 @@ loadTrackers();
 loadServiceParsers();
 loadTotalSchedules();
 
-$('.dropdown-trackers').on('click', 'li > a', function(e) {
+$('.dropdown-trackers').on('click', 'li[data-tracker] > a', function(e) {
 	e.preventDefault();
 	var tracker = $(e.currentTarget).parent().data('tracker');
 	var btnSelect = $(e.currentTarget).parent().parent().parent().find('button');
 	btnSelect.html((tracker?tracker:'All') + ' <span class="caret"></span>');
-	$('#formfilter [name="tracker"]').val(tracker);
+	$('#tracker').val(tracker);
 	loadTrackerCategories(tracker);
 });
 
@@ -449,7 +449,7 @@ $('#formfilter').on('submit', function(e) {
 		});
 	}
 	else {
-		filter(('#tracker').val(), form.serialize());
+		filter($('#tracker').val(), form.serialize());
 		trackersLoading++;
 	}
 	verifyLoading();
@@ -567,8 +567,12 @@ function readableFileSize(size) {
 }
 
 function loadTrackerCategories(tracker) {
-	var dataTrackerCategories = [];
 	var jqxhr = $.getJSON('LoadTrackerCategories.vnt' + (tracker? '?tracker=' + tracker : '')).done(function(data) {
+		var sel2Jq = $("#trackercategories");
+		sel2Jq.html('');
+		sel2Jq.select2();
+		sel2Jq.select2('destroy');
+		var dataTrackerCategories = [];
 		for (var i=0; i<data.length; i++) {
 			var trackerCategory = data[i];
 			var item = {id: trackerCategory.code, text:trackerCategory.name + (!tracker ? (' - ' + trackerCategory.tracker) : '') };

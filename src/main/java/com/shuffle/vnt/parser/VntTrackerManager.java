@@ -99,17 +99,27 @@ public class VntTrackerManager implements TrackerManager {
 	    cookies = cookies.isEmpty() ? VntUtil.getCookies(VntUtil.getCookies(getTrackerConfig().getName(), getTrackerUser().getUsername())) : cookies;
 	    StringBuilder url = new StringBuilder();
 	    url.append(getTrackerConfig().getUrl() + (getTrackerConfig().getUrl().contains("?") ? "&" : "?"));
+	    
+	    StringBuilder urlCategory = new StringBuilder();
 	    for (TrackerCategory trackerCategory : getQueryParameters().getTrackerCategories())
 	    {
-		if (StringUtils.isNotBlank(trackerCategory.getProperty())) {
-		    url.append(trackerCategory.getProperty());
+		if (getTrackerConfig().getCategories().contains(trackerCategory)) {
+		    if (urlCategory.length() > 0) {
+			    urlCategory.append("&");
+			}
+			if (StringUtils.isNotBlank(trackerCategory.getProperty())) {
+			    urlCategory.append(trackerCategory.getProperty());
+			}
+			else if (StringUtils.isNotBlank(getTrackerConfig().getCategoryField())) {
+			    urlCategory.append(getTrackerConfig().getCategoryField());
+			}
+			if (StringUtils.isNotBlank(trackerCategory.getCode())) {
+			    urlCategory.append("=" + trackerCategory.getCode());
+			}
 		}
-		else if (StringUtils.isNotBlank(getTrackerConfig().getCategoryField())) {
-		    url.append(getTrackerConfig().getCategoryField());
-		}
-		if (StringUtils.isNotBlank(trackerCategory.getCode())) {
-		    url.append("=" + trackerCategory.getCode());
-		}
+	    }
+	    if (urlCategory.length() > 0) {
+		url.append(urlCategory.toString());
 	    }
 	    
 	    url.append("&" + getTrackerConfig().getSearchField() + "=" + getQueryParameters().getSearch());
