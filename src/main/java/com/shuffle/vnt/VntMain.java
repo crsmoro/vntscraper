@@ -30,16 +30,28 @@ public class VntMain {
 	    public void run() {
 		try {
 		    webServer.start();
-		    System.in.read();
+		    //FIXME workaround to run as service on linux
+		    while (!Thread.currentThread().isInterrupted()) {
+			try {
+			    Thread.sleep(60000);
+			}
+			catch (InterruptedException e) {
+			    
+			}
+		    }
 		} catch (IOException e) {
 		    e.printStackTrace();
 		}
 	    }
 	});
+	System.out.println("0.1");
 	webServerThread.start();
+	
+	System.out.println("0.2");
 
 	ScheduleManager.getInstance().updateSchedules();
 
+	System.out.println("0.3");
     }
 
     private static void initLogger() {

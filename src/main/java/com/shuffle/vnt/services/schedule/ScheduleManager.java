@@ -53,8 +53,12 @@ public class ScheduleManager {
     }
 
     public void clearSchedules() {
+	log.debug("init clearSchedules");
 	scheduledExecutorService.shutdownNow();
+	log.debug("after shutdownNow");
 	scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+	log.debug("after newSingleThreadScheduledExecutor");
+	log.debug("finish clearSchedules");
     }
 
     //FIXME find a better way to do this
@@ -149,50 +153,56 @@ public class ScheduleManager {
 	    public void run() {
 
 		log.info("Starting schedule");
-
-		List<Torrent> torrents = new ArrayList<>();
-		TrackerManager trackerManager = TrackerManagerFactory.getInstance(VntUtil.getTrackerConfig(schedulerData.getTrackerUser().getTracker()).getClass());
-		trackerManager.setQueryParameters(schedulerData.getQueryParameters());
-		trackerManager.setTrackerUser(schedulerData.getTrackerUser());
-		if (schedulerData.getServiceParser() != null) {
-		    ServiceParser serviceParser = ServiceFactory.getInstance(schedulerData.getServiceParser());
-		    serviceParser.setQueryParameters(schedulerData.getQueryParameters());
-		    serviceParser.setTrackerUserData(schedulerData.getTrackerUser());
-		    torrents.addAll(serviceParser.fetch());
-		} else {
-		    torrents.addAll(trackerManager.fetchTorrents());
-		}
-
+		
 		try {
-		    if (!torrents.isEmpty()) {
-			MailConfig mailConfig = PreferenceManager.getInstance().getPreferences().getMailConfig();
-			if (mailConfig != null) {
-			    HtmlEmail email = new HtmlEmail();
-			    email.setHostName(mailConfig.getHostname());
-			    email.setSmtpPort(mailConfig.getPort());
-			    email.setAuthenticator(new DefaultAuthenticator(mailConfig.getUsername(), mailConfig.getPassword()));
-			    email.setSSLOnConnect(mailConfig.isSsl());
-			    if (mailConfig.isSsl()) {
-				email.setSslSmtpPort(String.valueOf(mailConfig.getPort()));
-			    }
-			    email.setStartTLSEnabled(mailConfig.isTls());
-			    email.setFrom(mailConfig.getFrom(), mailConfig.getFromName());
-			    email.setSubject("VNT Schedule - " + schedulerData.getName());
-			    email.setHtmlMsg(mountHtmlMail(schedulerData, torrents));
-			    email.addTo(schedulerData.getEmail());
-			    email.send();
+		    List<Torrent> torrents = new ArrayList<>();
+			TrackerManager trackerManager = TrackerManagerFactory.getInstance(VntUtil.getTrackerConfig(schedulerData.getTrackerUser().getTracker()).getClass());
+			trackerManager.setQueryParameters(schedulerData.getQueryParameters());
+			trackerManager.setTrackerUser(schedulerData.getTrackerUser());
+			if (schedulerData.getServiceParser() != null) {
+			    ServiceParser serviceParser = ServiceFactory.getInstance(schedulerData.getServiceParser());
+			    serviceParser.setQueryParameters(schedulerData.getQueryParameters());
+			    serviceParser.setTrackerUserData(schedulerData.getTrackerUser());
+			    torrents.addAll(serviceParser.fetch());
 			} else {
-			    log.error("MailConfig not set");
+			    torrents.addAll(trackerManager.fetchTorrents());
 			}
-		    }
-		} catch (EmailException e) {
-		    log.error("Problema ao enviar o email do serviço " + schedulerData, e);
-		}
 
-		Date nextRun = new Date(new Date().getTime() + (schedulerData.getInterval() * 60 * 1000));
-		schedulerData.setNextRun(nextRun);
-		PreferenceManager.getInstance().getScheduleData(schedulerData.getName()).setNextRun(nextRun);
-		PreferenceManager.getInstance().savePreferences();
+			try {
+			    if (!torrents.isEmpty()) {
+				MailConfig mailConfig = PreferenceManager.getInstance().getPreferences().getMailConfig();
+				if (mailConfig != null) {
+				    HtmlEmail email = new HtmlEmail();
+				    email.setHostName(mailConfig.getHostname());
+				    email.setSmtpPort(mailConfig.getPort());
+				    email.setAuthenticator(new DefaultAuthenticator(mailConfig.getUsername(), mailConfig.getPassword()));
+				    email.setSSLOnConnect(mailConfig.isSsl());
+				    if (mailConfig.isSsl()) {
+					email.setSslSmtpPort(String.valueOf(mailConfig.getPort()));
+				    }
+				    email.setStartTLSEnabled(mailConfig.isTls());
+				    email.setFrom(mailConfig.getFrom(), mailConfig.getFromName());
+				    email.setSubject("VNT Schedule - " + schedulerData.getName());
+				    email.setHtmlMsg(mountHtmlMail(schedulerData, torrents));
+				    email.addTo(schedulerData.getEmail());
+				    email.send();
+				} else {
+				    log.error("MailConfig not set");
+				}
+			    }
+			} catch (EmailException e) {
+			    log.error("Problema ao enviar o email do serviço " + schedulerData, e);
+			}
+
+			Date nextRun = new Date(new Date().getTime() + (schedulerData.getInterval() * 60 * 1000));
+			schedulerData.setNextRun(nextRun);
+			PreferenceManager.getInstance().getScheduleData(schedulerData.getName()).setNextRun(nextRun);
+			PreferenceManager.getInstance().savePreferences();
+		}
+		catch (Exception e) {
+		    log.error("Problem during schedule", e);
+		}
+		
 
 		log.info("Finished schedule");
 

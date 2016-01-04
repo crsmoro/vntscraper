@@ -379,7 +379,7 @@ function loadTrackers() {
 
 function loadServiceParsers() {
 	$.getJSON('LoadServiceParsers.vnt').done(function(data) {
-		var selects = $('select[name="serviceParser');
+		var selects = $('select[name="serviceParser"]');
 		selects.html('');
 		for (var i=0; i<data.length; i++) {
 			var serviceParsers = data[i];

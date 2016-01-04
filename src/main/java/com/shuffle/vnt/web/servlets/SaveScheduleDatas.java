@@ -99,7 +99,7 @@ public class SaveScheduleDatas implements HttpServlet {
 	scheduleData.setInterval(Long.valueOf(session.getParms().get("interval")));
 	try {
 	    scheduleData.setServiceParser(session.getParms().get("serviceParser") != null ? Class.forName(session.getParms().get("serviceParser")).asSubclass(ServiceParser.class) : null);
-	} catch (ClassNotFoundException e) {
+	} catch (ClassNotFoundException | LinkageError e) {
 	    log.error("ServiceParser not found", e);
 	}
 	PreferenceManager.getInstance().savePreferences();
