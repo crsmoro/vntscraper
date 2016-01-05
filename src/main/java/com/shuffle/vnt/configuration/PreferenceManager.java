@@ -25,7 +25,7 @@ public class PreferenceManager {
 
 	private Preferences preferences;
 
-	private File preferencesFile = new File("./vnt.conf");
+	private File preferencesFile = new File(System.getProperty("config.file", "./vnt.conf"));
 
 	private static PreferenceManager instance;
 

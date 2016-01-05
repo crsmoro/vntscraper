@@ -44,14 +44,9 @@ public class VntMain {
 		}
 	    }
 	});
-	System.out.println("0.1");
 	webServerThread.start();
 	
-	System.out.println("0.2");
-
 	ScheduleManager.getInstance().updateSchedules();
-
-	System.out.println("0.3");
     }
 
     private static void initLogger() {
@@ -59,7 +54,7 @@ public class VntMain {
 	PatternLayout layout = new PatternLayout("%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1}:%L - %m%n");
 
 	try {
-	    RollingFileAppender fileAppender = new RollingFileAppender(layout, "./vnt.log");
+	    RollingFileAppender fileAppender = new RollingFileAppender(layout, System.getProperty("log.file","./vnt.log"));
 	    fileAppender.setImmediateFlush(true);
 	    fileAppender.setThreshold(Level.DEBUG);
 	    fileAppender.setAppend(true);

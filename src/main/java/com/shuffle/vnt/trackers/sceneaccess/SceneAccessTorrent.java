@@ -60,7 +60,7 @@ public class SceneAccessTorrent implements TorrentParser {
 
     @Override
     public double getSize(Row row) {
-	return VntUtil.parseSize(Jsoup.parse(getFullContentToParse(row)).select("tr > td.ttr_size").first().html().split("<br>")[0]);
+	return VntUtil.parseSize(Jsoup.parse(getFullContentToParse(row)).select("tr > td.ttr_size").first().html().split("<br>")[0].replaceAll(",", ""));
     }
 
     @Override
