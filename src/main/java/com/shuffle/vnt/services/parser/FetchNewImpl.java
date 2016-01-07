@@ -94,11 +94,10 @@ public class FetchNewImpl implements FetchNew {
 			{
 				fetchNew.setTrackerUser(getTrackerUserData());
 				fetchNew.setQueryParameters(getQueryParameters());
-				fetchNew.setLast(torrents.get(0).getId());
 				PreferenceManager.getInstance().getPreferences().getFetchNews().add(fetchNew);
 			}
+			fetchNew.setLast(torrents.get(0).getId());
 			PreferenceManager.getInstance().savePreferences();
-			// FIXME ?
 		}
 		return torrents;
 	}
