@@ -13,6 +13,12 @@ public interface TrackerConfig {
 	String getUrl();
 
 	String getAuthenticationUrl();
+	
+	public enum ParameterType {
+	    DEFAULT, PATH
+	}
+	
+	ParameterType getParameterType();
 
 	boolean isAuthenticated(Body body);
 
