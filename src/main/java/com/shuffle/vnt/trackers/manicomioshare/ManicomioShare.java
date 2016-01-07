@@ -20,6 +20,8 @@ public class ManicomioShare implements TrackerConfig {
 	private final String url = "http://www.manicomio-share.com/pesquisa.php?order=desc&sort=id";
 
 	private final String authenticationUrl = "http://www.manicomio-share.com/";
+	
+	private final ParameterType parameterType = ParameterType.DEFAULT;
 
 	private final String usernameField = "username";
 
@@ -224,6 +226,11 @@ public class ManicomioShare implements TrackerConfig {
 	@Override
 	public String getAuthenticationUrl() {
 		return authenticationUrl;
+	}
+	
+	@Override
+	public ParameterType getParameterType() {
+	    return parameterType;
 	}
 
 	@Override

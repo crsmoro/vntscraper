@@ -20,6 +20,8 @@ public class SceneAccess implements TrackerConfig {
 	private final String url = "https://sceneaccess.eu/all?method=2";
 
 	private final String authenticationUrl = "https://sceneaccess.eu/login";
+	
+	private final ParameterType parameterType = ParameterType.DEFAULT;
 
 	private final String usernameField = "username";
 
@@ -83,6 +85,11 @@ public class SceneAccess implements TrackerConfig {
 	@Override
 	public String getAuthenticationUrl() {
 		return authenticationUrl;
+	}
+	
+	@Override
+	public ParameterType getParameterType() {
+	    return parameterType;
 	}
 
 	@Override

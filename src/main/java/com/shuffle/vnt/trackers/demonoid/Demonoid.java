@@ -20,6 +20,8 @@ public class Demonoid implements TrackerConfig {
 	private final String url = "http://www.demonoid.ooo/files/";
 
 	private final String authenticationUrl = "http://www.demonoid.ooo/account_handler.php";
+	
+	private final ParameterType parameterType = ParameterType.DEFAULT;
 
 	private final String usernameField = "nickname";
 
@@ -64,6 +66,11 @@ public class Demonoid implements TrackerConfig {
 	@Override
 	public String getAuthenticationUrl() {
 		return authenticationUrl;
+	}
+
+	@Override
+	public ParameterType getParameterType() {
+	    return parameterType;
 	}
 
 	@Override
