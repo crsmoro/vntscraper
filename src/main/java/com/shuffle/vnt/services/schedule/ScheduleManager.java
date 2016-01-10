@@ -193,15 +193,15 @@ public class ScheduleManager {
 			} catch (EmailException e) {
 			    log.error("Problema ao enviar o email do serviço " + schedulerData, e);
 			}
-
-			Date nextRun = new Date(new Date().getTime() + (schedulerData.getInterval() * 60 * 1000));
-			schedulerData.setNextRun(nextRun);
-			PreferenceManager.getInstance().getScheduleData(schedulerData.getName()).setNextRun(nextRun);
-			PreferenceManager.getInstance().savePreferences();
 		}
 		catch (Exception e) {
 		    log.error("Problem during schedule", e);
 		}
+		
+		Date nextRun = new Date(new Date().getTime() + (schedulerData.getInterval() * 60 * 1000));
+		schedulerData.setNextRun(nextRun);
+		PreferenceManager.getInstance().getScheduleData(schedulerData.getName()).setNextRun(nextRun);
+		PreferenceManager.getInstance().savePreferences();
 		
 
 		log.info("Finished schedule");
