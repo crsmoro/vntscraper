@@ -172,7 +172,11 @@ public class VntTrackerManager implements TrackerManager {
 	    log.debug("Status Code : " + response.statusCode());
 	    log.debug("Status Message : " + response.statusMessage());
 	    document = response.parse();
+	    if (response.statusCode() != 200 || StringUtils.isBlank(document.body().html())) {
+		return null;
+	    }
 	    body.setContent(document.body().html());
+	    log.debug("Body Content : " + body.getContent());
 	    return body;
 	} catch (IOException e) {
 	    e.printStackTrace();
@@ -189,8 +193,11 @@ public class VntTrackerManager implements TrackerManager {
 	    return Collections.emptyList();
 	}
 	Body body = executeSearch();
+	if (body == null) {
+	    return Collections.emptyList();
+	}
 	boolean auth = getTrackerConfig().isAuthenticated(body);
-	while (attempt < maxAttempts && (body == null || !auth)) {
+	while (attempt < maxAttempts && !auth) {
 	    if (attempt > 0) {
 		try {
 		    Thread.sleep(1000);
@@ -382,6 +389,10 @@ public class VntTrackerManager implements TrackerManager {
 		httpGet.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:43.0) Gecko/20100101 Firefox/43.0.3");
 		httpGet.addHeader("Accept-Encoding", "gzip");
 		response = httpClient.execute(httpGet);
+	    }
+	    
+	    if (response.getStatusLine().getStatusCode() != 200) {
+		return false;
 	    }
 
 	    HttpEntity httpEntity = response.getEntity();
