@@ -78,7 +78,7 @@ public class FetchNewImpl implements FetchNew {
 				}
 			}
 			torrents.addAll(addTorrents);
-			if (newTorrents.size() != addTorrents.size()) {
+			if (newTorrents.isEmpty() || newTorrents.size() != addTorrents.size()) {
 				old = true;
 			}
 			try {
