@@ -10,6 +10,7 @@ import org.apache.log4j.PatternLayout;
 import org.apache.log4j.RollingFileAppender;
 
 import com.shuffle.vnt.services.schedule.ScheduleManager;
+import com.shuffle.vnt.util.VntUtil;
 import com.shuffle.vnt.web.WebServer;
 
 public class VntMain {
@@ -21,6 +22,9 @@ public class VntMain {
 	initLogger();
 
 	Logger.getRootLogger().setLevel(Level.toLevel(System.getProperty("level", "WARN")));
+	
+	//FIXME check better solution
+	VntUtil.fetchClasses();
 
 	final WebServer webServer = new WebServer(Integer.getInteger("web.port", 7337));
 

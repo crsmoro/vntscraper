@@ -40,6 +40,10 @@ public abstract class VntUtil {
     }
 
     private static Reflections reflections = null;
+    
+    public static void fetchClasses() {
+	reflections = new Reflections("com.shuffle");
+    }
 
     public static boolean cookieExpired(String trackerName, String username) {
 	TrackerUser trackerData = PreferenceManager.getInstance().getTrackerUser(trackerName, username);
@@ -107,9 +111,8 @@ public abstract class VntUtil {
     }
 
     public static TrackerConfig getTrackerConfig(String trackerName) {
-	//FIXME check better solution, still gets error at first time
 	if (reflections == null) {
-	    reflections = new Reflections("com.shuffle");
+	    fetchClasses();
 	}
 	Set<Class<? extends TrackerConfig>> trackerConfigs = reflections.getSubTypesOf(TrackerConfig.class);
 	TrackerConfig returnTrackerConfig = null;
