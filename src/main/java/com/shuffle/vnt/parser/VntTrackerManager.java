@@ -176,7 +176,7 @@ public class VntTrackerManager implements TrackerManager {
 		return null;
 	    }
 	    body.setContent(document.body().html());
-	    log.debug("Body Content : " + body.getContent());
+	    log.trace("Body Content : " + body.getContent());
 	    return body;
 	} catch (IOException e) {
 	    e.printStackTrace();
@@ -230,7 +230,7 @@ public class VntTrackerManager implements TrackerManager {
 
 	    boolean add = getQueryParameters().getTorrentFilters().isEmpty();
 	    if (!add) {
-		torrent = getDetails(torrent);
+		getDetails(torrent);
 	    }
 	    log.debug(torrent);
 	    for (TorrentFilter torrentFilter : getQueryParameters().getTorrentFilters()) {
@@ -350,7 +350,8 @@ public class VntTrackerManager implements TrackerManager {
 	    torrent.setImdbLink(getTrackerConfig().getTorrentDetailedParser().getImdbLink(body));
 	    return torrent;
 
-	} catch (IOException dontcare) {
+	} catch (IOException e) {
+	    log.warn("Error when trying to get details", e);
 	    return null;
 	}
     }
