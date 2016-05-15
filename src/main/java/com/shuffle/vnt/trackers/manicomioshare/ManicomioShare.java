@@ -17,9 +17,9 @@ public class ManicomioShare implements TrackerConfig {
 
 	private final String name = "ManicomioShare";
 
-	private final String url = "http://www.manicomio-share.com/pesquisa.php?order=desc&sort=id";
+	private final String url = "https://www.manicomio-share.com/pesquisa.php?order=desc&sort=id";
 
-	private final String authenticationUrl = "http://www.manicomio-share.com/";
+	private final String authenticationUrl = "https://www.manicomio-share.com/";
 	
 	private final ParameterType parameterType = ParameterType.DEFAULT;
 
