@@ -198,7 +198,7 @@ public class ScheduleManager {
 		    log.error("Problem during schedule", e);
 		}
 		
-		Date nextRun = new Date(new Date().getTime() + (schedulerData.getInterval() * 60 * 1000));
+		Date nextRun = new Date(schedulerData.getNextRun().getTime() + (schedulerData.getInterval() * 60 * 1000));
 		schedulerData.setNextRun(nextRun);
 		PreferenceManager.getInstance().getScheduleData(schedulerData.getName()).setNextRun(nextRun);
 		PreferenceManager.getInstance().savePreferences();
