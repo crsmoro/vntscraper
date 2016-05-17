@@ -491,6 +491,7 @@ function buildTrackerResultHtml(data) {
 	html += '<th>Added</th>';
 	html += '<th>Category</th>';
 	html += '<th><i class="glyphicon glyphicon-cloud-upload"></i></th>';
+	html += '<th><i class="glyphicon glyphicon-cloud-download" style="color: #337ab7"></i></th>';
 	html += '</tr>';
 	html += '</thead>';
 	html += '<tbody>';
@@ -523,6 +524,7 @@ function buildTrackerTorrentsResultHtml(data) {
 		html += '<td>' + (torrent.added?torrent.added:' - ') + '</td>';
 		html += '<td>' + torrent.category + '</td>';
 		html += '<td><i class="glyphicon glyphicon-cloud-upload modalpickseedbox" style="cursor: pointer;" data-toggle="tooltip" data-placement="top" title="Send to Seedbox"></i></td>';
+		html += '<td><a href="DownloadTorrent.vnt?torrent=' +  encodeURI(JSON.stringify(torrent)) + '"><i class="glyphicon glyphicon-cloud-download" data-toggle="tooltip" data-placement="top" title="Download Torrent"></i></a></td>';
 		html += '</tr>';
 		tbodytorrents.append(html);
 	} 
@@ -547,11 +549,13 @@ $('.dropdown-trackers').on('click', '.advancedli', function(e) {
 });
 
 function loadingTorrents() {
+	$('#advancedsubmit').button('loading');
 	$('#iconfilterleft').addClass('fa fa-spinner fa-spin');
 	$('#iconfilterleft').removeClass('glyphicon glyphicon-search');
 }
 
 function stopLoadingTorrents() {
+	$('#advancedsubmit').button('reset');
 	$('#iconfilterleft').addClass('glyphicon glyphicon-search');
 	$('#iconfilterleft').removeClass('fa fa-spinner fa-spin');
 }
