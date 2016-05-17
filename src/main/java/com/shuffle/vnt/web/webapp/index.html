@@ -41,7 +41,7 @@
 			<div role="tabpanel" class="tab-pane active" id="home">
 				<br>
 				<div class="col-xs-12">
-					<form id="formfilter">
+					<form id="formfilter" action="SearchTrackers.vnt" method="POST">
 						<input type="hidden" id="tracker">
 						<input type="submit" style="margin-left: -1000000px;">
 						<div class="input-group input-group-lg">
@@ -93,7 +93,7 @@
 									</div>
 								</div>
 								<div class="col-xs-12">
-									<button class="btn btn-primary pull-right">Submit</button>
+									<button class="btn btn-primary pull-right" id="advancedsubmit" data-loading-text="Loading...">Submit</button>
 								</div>
 								&nbsp;
 							</div>
