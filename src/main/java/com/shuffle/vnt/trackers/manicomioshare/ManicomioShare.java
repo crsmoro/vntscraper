@@ -39,6 +39,7 @@ public class ManicomioShare implements TrackerConfig {
 	
 	{
 	    
+	    categories.add(new TrackerCategory("Filmes : 4K", "", "189"));
 	    categories.add(new TrackerCategory("Filmes : HD", "", "127"));
 	    categories.add(new TrackerCategory("Filmes : HD Nacionais", "", "148"));
 	    categories.add(new TrackerCategory("Filmes : HD 3D", "", "147"));
