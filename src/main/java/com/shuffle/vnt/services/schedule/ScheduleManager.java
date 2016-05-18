@@ -184,7 +184,7 @@ public class ScheduleManager {
 				    email.setFrom(mailConfig.getFrom(), mailConfig.getFromName());
 				    email.setSubject("VNT Schedule - " + schedulerData.getName());
 				    email.setHtmlMsg(mountHtmlMail(schedulerData, torrents));
-				    email.addTo(schedulerData.getEmail());
+				    email.addTo(schedulerData.getEmail().split(";"));
 				    email.send();
 				} else {
 				    log.error("MailConfig not set");
