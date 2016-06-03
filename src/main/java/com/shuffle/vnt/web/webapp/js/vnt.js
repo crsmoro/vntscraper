@@ -12,6 +12,7 @@ function openModalSchedule(e) {
 	form.find('[name="email"]').val('');
 	form.find('[name="startDate"]').val('');
 	form.find('[name="interval"]').val('');
+	form.find('[name="template"]').val('');
 	
 	var tracker = $(this).data('tracker');
 	if (tracker) {
@@ -81,10 +82,72 @@ $('#divtrackerresults').on('click', '.modalpickseedbox', function(e) {
 	
 });
 
+function buildTorrentDetail(data) {
+	if (!data.success) {
+		alert('Problem when loading data, try again');
+	}
+	else {
+		var torrent = data.data.torrent;
+		if (torrent) {
+			$('#rls-name').html(torrent.name);
+			$('#rls-img').prop('src', '');
+			$('#rls-title').html(torrent.name);
+			$('#rls-rating').html('');
+			$('#rls-plot').html('');
+			var iframe = $('#rls-content');
+			iframe.ready(function() {
+				iframe.contents().find("body").html('');
+				iframe.contents().scrollTop(0);
+			    iframe.contents().scrollLeft(0);
+			    iframe.contents().find("body").html(torrent.content);
+			});
+		}
+		var imdb = data.data.torrent.imdb;
+		if (imdb && imdb.Title) {
+			$('#modaltorrentdetail div.media').show();
+			$('#rls-img').prop('src', 'LoadImageImdb.vnt?image=' + encodeURIComponent(imdb.Poster));
+			$('#rls-title').html(imdb.Title + ' (' + imdb.Year + ')');
+			$('#rls-rating').html('<div class="pull-right">' + imdb.imdbRating + '/10 (' + imdb.imdbVotes + ' votes)</div>');
+			$('#rls-plot').html(imdb.Plot);
+		}
+		else {
+			$('#modaltorrentdetail div.media').hide();
+		}
+		
+		$('#modaltorrentdetail').modal('show');
+	}
+	
+}
+
+function loadTorrentContentNewWindow() {
+	var w = window.open('', '_blank');
+	var iframe = $('#rls-content');
+	w.document.write(iframe.contents().find("body").html());
+}
+
+$('#rls-content-nw-btn').on('click', loadTorrentContentNewWindow);
+
+function loadTorrentDetail(e) {
+	var btn = $(e.currentTarget);
+	var tr = btn.parents('tr');
+	btn.removeClass('fa fa-info-circle');
+	btn.addClass('fa fa-spinner fa-spin');
+	$.getJSON('LoadTorrentDetail.vnt?torrent='+ encodeURIComponent(decodeURI($(tr[0]).data('torrent')))).done(buildTorrentDetail).always(function() {
+		btn.removeClass('fa fa-spinner fa-spin');
+		btn.addClass('fa fa-info-circle');
+	});
+	
+}
+
+$('#divtrackerresults').on('click', '.modaltorrentdetail', loadTorrentDetail);
+
 $('#modalpickseedbox form').on('submit', function(e) {
 	e.preventDefault();
 	var form = $(this);
+	var btn = $('#divtrackerresults tr[data-torrent="' + encodeURI(form.find('[name="torrent"]').val()) + '"] .modalpickseedbox');
 	
+	btn.removeClass('glyphicon glyphicon-info-sign');
+	btn.addClass('fa fa-spinner fa-spin');
 	$.getJSON('UploadTorrentToSeedbox.vnt?c=false&' + form.serialize()).done(function(data) {
 		if (data.success) {
 			alert('Sent with success');
@@ -92,6 +155,9 @@ $('#modalpickseedbox form').on('submit', function(e) {
 		else {
 			alert('Problem when sending the torrent');
 		}
+	}).always(function() {
+		btn.addClass('glyphicon glyphicon-info-sign');
+		btn.removeClass('fa fa-spinner fa-spin');
 	});
 	
 	return false;
@@ -281,7 +347,23 @@ $('a[href="#schedules"]').on('show.bs.tab', function(e) {
 $('#modalschedule form').on('submit', function(e) {
 	e.preventDefault();
 	var form = $(this);
-	$.post('SaveScheduleDatas.vnt', form.serialize()).done(function(data) {
+	var formData = new FormData();
+	$('#modalschedule form input[name], #modalschedule form select[name]').each(function(idx, obj) {
+		if (obj.type != 'file') {
+			formData.append(obj.name, obj.value);
+		}
+		else {
+			formData.append(obj.name, obj.files[0]);
+		}
+	});
+	$.ajax({
+	    url: 'SaveScheduleDatas.vnt?' + form.serialize(),
+	    data: formData,
+	    cache: false,
+	    contentType: false,
+	    processData: false,
+	    type: 'POST'
+	}).done(function(data) {
 		if (data.success) {
 			loadSchedules();
 			$('#modalschedule').modal('hide');
@@ -291,6 +373,18 @@ $('#modalschedule form').on('submit', function(e) {
 			console.log(data.error);
 		}
 	});
+	/*
+	$.post('SaveScheduleDatas.vnt', formData).done(function(data) {
+		if (data.success) {
+			loadSchedules();
+			$('#modalschedule').modal('hide');
+		}
+		else {
+			alert('Problem when saving data');
+			console.log(data.error);
+		}
+	});
+	*/
 	return false;
 });
 
@@ -486,12 +580,12 @@ function buildTrackerResultHtml(data) {
 	html += '<thead>';
 	html += '<tr>';
 	html += '<th>#</th>';
-	html += '<th>Name</th>';
-	html += '<th>Size</th>';
-	html += '<th>Added</th>';
-	html += '<th>Category</th>';
-	html += '<th><i class="glyphicon glyphicon-cloud-upload"></i></th>';
-	html += '<th><i class="glyphicon glyphicon-cloud-download" style="color: #337ab7"></i></th>';
+	html += '<th class="col-xs-7">Name</th>';
+	html += '<th class="col-xs-1">Size</th>';
+	html += '<th class="col-xs-2">Category</th>';
+	html += '<th class="col-xs-2">Added</th>';
+	html += '<th style="width: 4%;"><i class="glyphicon glyphicon-cloud-upload"></i></th>';
+	html += '<th style="width: 4%;"><i class="glyphicon glyphicon-cloud-download" style="color: #337ab7"></i></th>';
 	html += '</tr>';
 	html += '</thead>';
 	html += '<tbody>';
@@ -519,10 +613,10 @@ function buildTrackerTorrentsResultHtml(data) {
 		var html = '';
 		html += '<tr data-torrent="' +  encodeURI(JSON.stringify(torrent)) + '">';
 		html += '<th scope="row">' + torrent.id + '</th>';
-		html += '<td>' + torrent.name + '</td>';
+		html += '<td>' + torrent.name + '&nbsp;&nbsp;<i class="fa fa-info-circle modaltorrentdetail" style="cursor: pointer; font-size: 18px;" title="Details"></i>&nbsp;&nbsp;&nbsp;&nbsp;<a href="' + torrent.link + '" target="_blank" title="Torrent tracker page"><i class="fa fa-external-link-square" style="color: #333; padding-bottom: 2px; font-size: 18px;" aria-hidden="true"></i></a></td>';
 		html += '<td>' + readableFileSize(torrent.size) + '</td>';
-		html += '<td>' + (torrent.added?torrent.added:' - ') + '</td>';
 		html += '<td>' + torrent.category + '</td>';
+		html += '<td>' + (torrent.added?torrent.added:' - ') + '</td>';
 		html += '<td><i class="glyphicon glyphicon-cloud-upload modalpickseedbox" style="cursor: pointer;" data-toggle="tooltip" data-placement="top" title="Send to Seedbox"></i></td>';
 		html += '<td><a href="DownloadTorrent.vnt?torrent=' +  encodeURI(JSON.stringify(torrent)) + '"><i class="glyphicon glyphicon-cloud-download" data-toggle="tooltip" data-placement="top" title="Download Torrent"></i></a></td>';
 		html += '</tr>';

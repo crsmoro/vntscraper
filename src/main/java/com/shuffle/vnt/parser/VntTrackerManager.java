@@ -42,6 +42,7 @@ import com.shuffle.vnt.core.parser.bean.TorrentFilter;
 import com.shuffle.vnt.core.parser.bean.TorrentFilter.FilterOperation;
 import com.shuffle.vnt.core.parser.bean.TrackerCategory;
 import com.shuffle.vnt.core.service.TrackerManager;
+import com.shuffle.vnt.omdbapi.OmdbAPI;
 import com.shuffle.vnt.util.VntUtil;
 
 public class VntTrackerManager implements TrackerManager {
@@ -189,6 +190,7 @@ public class VntTrackerManager implements TrackerManager {
 	if (getTrackerConfig().getTorrentParser() == null) {
 	    throw new IllegalArgumentException("Torrent Parser not set");
 	}
+	attempt = 0;
 	if (!isAuthenticated() && VntUtil.cookieExpired(getTrackerConfig().getName(), getTrackerUser().getUsername()) && !authenticate()) {
 	    return Collections.emptyList();
 	}
@@ -216,6 +218,7 @@ public class VntTrackerManager implements TrackerManager {
     }
 
     private List<Torrent> buildResults(Body body) {
+	log.debug("QueryParameters : " + getQueryParameters());
 	List<Torrent> torrents = new ArrayList<Torrent>();
 	for (Row row : getTrackerConfig().getTorrentParser().getRows(body)) {
 	    Torrent torrent = new Torrent();
@@ -230,6 +233,7 @@ public class VntTrackerManager implements TrackerManager {
 
 	    boolean add = getQueryParameters().getTorrentFilters().isEmpty();
 	    if (!add) {
+		log.debug("getting torrent details");
 		getDetails(torrent);
 	    }
 	    log.debug(torrent);
@@ -327,33 +331,70 @@ public class VntTrackerManager implements TrackerManager {
 	return torrents;
     }
 
+    private Body getDetailsPage(Torrent torrent) {
+	Document document = null;
+	Body body = new Body();
+	try {
+	    log.info("URL : " + torrent.getLink());
+	    cookies = cookies.isEmpty() ? VntUtil.getCookies(VntUtil.getCookies(getTrackerConfig().getName(), getTrackerUser().getUsername())) : cookies;
+	    Connection connection = Jsoup.connect(torrent.getLink()).userAgent("Mozilla").cookies(cookies);
+	    Response response = connection.execute();
+	    log.debug("Status Code : " + response.statusCode());
+	    log.debug("Status Message : " + response.statusMessage());
+	    document = response.parse();
+	    if (response.statusCode() != 200 || StringUtils.isBlank(document.body().html())) {
+		return null;
+	    }
+	    body.setContent(document.body().html());
+	} catch (IOException e) {
+	    log.warn("Error when trying to get details", e);
+	    return null;
+	}
+	return body;
+    }
+
     @Override
     public Torrent getDetails(Torrent torrent) {
 	if (getTrackerConfig().getTorrentDetailedParser() == null) {
 	    throw new IllegalArgumentException("Torrent Detailed Parser not set");
 	}
+	attempt = 0;
+	Body body = getDetailsPage(torrent);
+	
+	boolean auth = body != null ? getTrackerConfig().isAuthenticated(body) : false;
 	if (!isAuthenticated() && VntUtil.cookieExpired(getTrackerConfig().getName(), getTrackerUser().getUsername()) && !authenticate()) {
-	    return null;
+	    auth = false;
 	}
-	Document document = null;
-	Body body = new Body();
-	try {
-	    cookies = cookies.isEmpty() ? VntUtil.getCookies(VntUtil.getCookies(getTrackerConfig().getName(), getTrackerUser().getUsername())) : cookies;
-	    StringBuilder url = new StringBuilder();
-	    url.append(torrent.getLink());
-	    log.info("URL : " + url.toString());
-	    document = Jsoup.connect(url.toString()).userAgent("Mozilla").cookies(cookies).get();
-	    body.setContent(document.body().html());
-	    torrent.setDetailed(true);
-	    torrent.setYear(getTrackerConfig().getTorrentDetailedParser().getAno(body));
-	    torrent.setYoutubeLink(getTrackerConfig().getTorrentDetailedParser().getYoutubeLink(body));
-	    torrent.setImdbLink(getTrackerConfig().getTorrentDetailedParser().getImdbLink(body));
-	    return torrent;
+	while (attempt < maxAttempts && !auth) {
+	    if (attempt > 0) {
+		try {
+		    Thread.sleep(1000);
+		} catch (InterruptedException e) {
 
-	} catch (IOException e) {
-	    log.warn("Error when trying to get details", e);
+		}
+	    }
+	    attempt++;
+	    auth = authenticate();
+	    log.debug("attempt : " + attempt);
+	}
+
+	if (auth && attempt > 0) {
+	    body = getDetailsPage(torrent);
+	}
+	if (body == null) {
 	    return null;
 	}
+
+	torrent.setDetailed(true);
+	torrent.setYear(getTrackerConfig().getTorrentDetailedParser().getAno(body));
+	torrent.setYoutubeLink(getTrackerConfig().getTorrentDetailedParser().getYoutubeLink(body));
+	torrent.setImdbLink(getTrackerConfig().getTorrentDetailedParser().getImdbLink(body));
+	torrent.setContent(getTrackerConfig().getTorrentDetailedParser().getContent(body));
+	if (StringUtils.isNotBlank(torrent.getImdbLink())) {
+	    torrent.setImdb(OmdbAPI.getById(VntUtil.getImdbId(torrent.getImdbLink())));
+	}
+	return torrent;
+
     }
 
     @Override
@@ -391,7 +432,7 @@ public class VntTrackerManager implements TrackerManager {
 		httpGet.addHeader("Accept-Encoding", "gzip");
 		response = httpClient.execute(httpGet);
 	    }
-	    
+
 	    if (response.getStatusLine().getStatusCode() != 200) {
 		return false;
 	    }

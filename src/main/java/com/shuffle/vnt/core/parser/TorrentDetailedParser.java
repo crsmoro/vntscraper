@@ -9,4 +9,6 @@ public interface TorrentDetailedParser {
 	String getYoutubeLink(Body body);
 
 	long getAno(Body body);
+	
+	String getContent(Body body);
 }
