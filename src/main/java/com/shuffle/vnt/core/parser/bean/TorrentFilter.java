@@ -84,4 +84,9 @@ public class TorrentFilter implements Serializable {
 	    return false;
 	return true;
     }
+
+    @Override
+    public String toString() {
+	return "TorrentFilter [field=" + field + ", operation=" + operation + ", value=" + value + "]";
+    }
 }

@@ -83,4 +83,9 @@ public class TrackerCategory implements Serializable {
 	    return false;
 	return true;
     }
+
+    @Override
+    public String toString() {
+	return "TrackerCategory [name=" + name + ", property=" + property + ", code=" + code + "]";
+    }
 }
