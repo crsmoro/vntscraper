@@ -28,6 +28,8 @@ public class WebServer extends NanoHTTPD {
 		extensionsMimes.put("png", MIME_PNG);
 		extensionsMimes.put("xml", MIME_XML);
 	}
+	
+	private Map<String, String> files = new HashMap<>();
 
 	public WebServer(int port) {
 		super(port);
@@ -36,7 +38,6 @@ public class WebServer extends NanoHTTPD {
 	@Override
 	public Response serve(IHTTPSession session) {
 		try {
-
 			String docBase = "com/shuffle/vnt/web/webapp";
 			String servletBase = "com/shuffle/vnt/web/servlets";
 			String urlRequested = session.getUri();
@@ -60,17 +61,17 @@ public class WebServer extends NanoHTTPD {
 					HttpServlet httpServlet = servletClazz.newInstance();
 					httpServlet.setWebServer(this);
 					Response response = new Response("");
-					Map<String, String> params = new HashMap<>();
+					files = new HashMap<>();
 					if (session.getMethod().equals(Method.GET)) {
 						httpServlet.doGet(session, response);
 					} else if (session.getMethod().equals(Method.POST)) {
-						session.parseBody(params);
+						session.parseBody(files);
 						httpServlet.doPost(session, response);
 					} else if (session.getMethod().equals(Method.DELETE)) {
-						session.parseBody(params);
+						session.parseBody(files);
 						httpServlet.doDelete(session, response);
 					} else if (session.getMethod().equals(Method.PUT)) {
-						session.parseBody(params);
+						session.parseBody(files);
 						httpServlet.doPut(session, response);
 					}
 					return response;
@@ -90,6 +91,10 @@ public class WebServer extends NanoHTTPD {
 	@Override
 	public Map<String, List<String>> decodeParameters(String queryString) {
 	    return super.decodeParameters(queryString);
+	}
+
+	public Map<String, String> getFiles() {
+	    return files;
 	}
 	
 	
