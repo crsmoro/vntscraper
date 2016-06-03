@@ -13,6 +13,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.http.impl.cookie.BasicClientCookie;
 import org.reflections.Reflections;
@@ -210,5 +212,14 @@ public abstract class VntUtil {
 	StringBuilder compiledTemplate = new StringBuilder();
 	compiledTemplate.append(writer.getBuffer());
 	return compiledTemplate.toString();
+    }
+    
+    public static String getImdbId(String url) {
+	Pattern pattern = Pattern.compile("\\/(tt(\\d+))", Pattern.CASE_INSENSITIVE);
+	Matcher matcher = pattern.matcher(url);
+	if (matcher.find() && matcher.groupCount() > 1) {
+	    return matcher.group(1);
+	}
+	return "";
     }
 }
