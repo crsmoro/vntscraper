@@ -464,7 +464,10 @@ function loadTrackers() {
 		for (var i=0; i<data.length; i++) {
 			var tracker = data[i];
 			selects.append('<option value="' + tracker.name + '">' + tracker.name + '</option>');
-			dropdowns.append('<li data-tracker="' + tracker.name + '"><a href="#">' + tracker.name + '</a></li>');
+			if (tracker.avaliable) {
+				dropdowns.append('<li data-tracker="' + tracker.name + '"><a href="#">' + tracker.name + '</a></li>');
+			}
+			
 		}
 		dropdowns.append('<li role="separator" class="divider"></li>');
 		dropdowns.append('<li><a href="#" class="advancedli">Advanced</a></li>');
@@ -537,10 +540,14 @@ $('#formfilter').on('submit', function(e) {
 	loadingTorrents();
 	$('#divtrackerresults').html('');
 	if ($('#tracker').val() == '') {
-		$('.dropdown-trackers li[data-tracker]:not([data-tracker=""])').each(function(idx, obj) {
+		var trackersAvaliable = $('.dropdown-trackers li[data-tracker]:not([data-tracker=""])');
+		trackersAvaliable.each(function(idx, obj) {
 			filter($(this).data('tracker'), form.serialize());
 			trackersLoading++;
 		});
+		if (trackersAvaliable.length <= 0) {
+			alert('Please add tracker users before you can search');
+		}
 	}
 	else {
 		filter($('#tracker').val(), form.serialize());
