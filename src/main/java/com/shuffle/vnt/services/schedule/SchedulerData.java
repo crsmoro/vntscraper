@@ -26,6 +26,8 @@ public class SchedulerData implements Serializable {
 	private Date nextRun;
 
 	private long interval;
+	
+	private byte[] template;
 
 	public String getName() {
 		return name;
@@ -89,6 +91,14 @@ public class SchedulerData implements Serializable {
 
 	public void setInterval(long interval) {
 		this.interval = interval;
+	}
+
+	public byte[] getTemplate() {
+	    return template;
+	}
+
+	public void setTemplate(byte[] template) {
+	    this.template = template;
 	}
 
 	@Override

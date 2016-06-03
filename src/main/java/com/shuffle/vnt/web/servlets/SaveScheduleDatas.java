@@ -1,5 +1,7 @@
 package com.shuffle.vnt.web.servlets;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -7,6 +9,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -44,8 +47,9 @@ public class SaveScheduleDatas implements HttpServlet {
 
     @Override
     public void doPost(IHTTPSession session, Response response) {
-
+	
 	Map<String, List<String>> parameters = webServer.decodeParameters(session.getQueryParameterString());
+	
 	DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm");
 	response.setMimeType("application/json");
 	ReturnObject returnObject;
@@ -102,6 +106,17 @@ public class SaveScheduleDatas implements HttpServlet {
 	} catch (ClassNotFoundException | LinkageError e) {
 	    log.error("ServiceParser not found", e);
 	}
+	
+	if (webServer.getFiles().get("template") != null && !"".equals(webServer.getFiles().get("template"))) {
+	    try {
+		    FileInputStream fileInputStream = new FileInputStream(webServer.getFiles().get("template"));
+		    scheduleData.setTemplate(IOUtils.toByteArray(fileInputStream));
+		    log.info(IOUtils.toString(fileInputStream));
+		} catch (IOException e2) {
+		    log.error("Error saving schedule template", e2);
+		}
+	}
+	
 	PreferenceManager.getInstance().savePreferences();
 
 	ScheduleManager.getInstance().clearSchedules();
@@ -121,7 +136,7 @@ public class SaveScheduleDatas implements HttpServlet {
 	SchedulerData schedulerData = PreferenceManager.getInstance().getScheduleData(session.getParms().get("pkname"));
 	PreferenceManager.getInstance().getPreferences().getSchedulerDatas().remove(schedulerData);
 	PreferenceManager.getInstance().savePreferences();
-	
+
 	ScheduleManager.getInstance().clearSchedules();
 	ScheduleManager.getInstance().updateSchedules();
 
