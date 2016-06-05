@@ -13,6 +13,7 @@ function openModalSchedule(e) {
 	form.find('[name="startDate"]').val('');
 	form.find('[name="interval"]').val('');
 	form.find('[name="template"]').val('');
+	$('#div-torrent-filter-schedule .table-torrent-filter').html('');
 	
 	var tracker = $(this).data('tracker');
 	if (tracker) {
@@ -132,7 +133,10 @@ function loadTorrentDetail(e) {
 	var tr = btn.parents('tr');
 	btn.removeClass('fa fa-info-circle');
 	btn.addClass('fa fa-spinner fa-spin');
-	$.getJSON('LoadTorrentDetail.vnt?torrent='+ encodeURIComponent(decodeURI($(tr[0]).data('torrent')))).done(buildTorrentDetail).always(function() {
+	var torrent = JSON.parse(decodeURI($(tr[0]).data('torrent')));
+	torrent.content = '';
+	torrent.detailed = false;
+	$.getJSON('LoadTorrentDetail.vnt?torrent='+ encodeURIComponent(JSON.stringify(torrent))).done(buildTorrentDetail).always(function() {
 		btn.removeClass('fa fa-spinner fa-spin');
 		btn.addClass('fa fa-info-circle');
 	});
@@ -427,10 +431,12 @@ $('#schedulestable').on('click', 'tr td:not(:last-child)', function(e) {
 			$("#trackercategoriesschedule").val(cats).trigger('change');
 		});
 		
+		var divorigin = $('#div-torrent-filter-schedule');
+		divorigin.find('table.table-torrent-filter > tbody').html('');
 		var fields = [];
 		for (var i=0; i<schedule.queryParameters.torrentFilters.length; i++) {
 			var torrentFilter = schedule.queryParameters.torrentFilters[i];
-			addTorrentFilter(torrentFilter.field, $('#torrentfieldsschedule option[value="' + torrentFilter.field + '"]').text(), $('#div-torrent-filter-schedule'));
+			addTorrentFilter(torrentFilter.field, $('#torrentfieldsschedule option[value="' + torrentFilter.field + '"]').text(), divorigin);
 			var filterschedule = $('#div-torrent-filter-schedule .table-torrent-filter > tbody > tr');
 			var trSchedule = $(filterschedule[i]);
 			trSchedule.find('[name="torrentfilteroperation"]').val(torrentFilter.operation);
