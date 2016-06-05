@@ -449,8 +449,9 @@ $('#schedulestable').on('click', 'tr td:not(:last-child)', function(e) {
 	
 });
 
-$('#modalschedule form [name="tracker"]').on('click', function(e) {
+$('#modalschedule form [name="tracker"]').on('change', function(e) {
 	loadTrackerUsersSelect($(this).val());
+	loadTrackerCategoriesSchedule($(this).val());
 });
 
 
@@ -740,6 +741,10 @@ function addTorrentFilter(value, title, origin) {
 }
 
 function loadTrackerCategoriesSchedule(tracker) {
+	var sel2Jq = $("#trackercategoriesschedule");
+	sel2Jq.html('');
+	sel2Jq.select2();
+	sel2Jq.select2('destroy');
 	var dataTrackerCategories = [];
 	var jqxhr = $.getJSON('LoadTrackerCategories.vnt' + (tracker? '?tracker=' + tracker : '')).done(function(data) {
 		for (var i=0; i<data.length; i++) {
