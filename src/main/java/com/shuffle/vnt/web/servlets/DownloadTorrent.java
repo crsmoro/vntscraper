@@ -31,7 +31,7 @@ public class DownloadTorrent implements HttpServlet {
 	    inputStream = torrentManager.downloadTorrent(torrent, username);
 	}
 
-	response.addHeader("Content-Disposition", "attachment; filename=" + torrent.getName() + ".torrent");
+	response.addHeader("Content-Disposition", "attachment; filename=\"" + torrent.getName() + ".torrent\"");
 	response.setMimeType("application/octet-stream; charset=UTF-8");
 	response.setChunkedTransfer(true);
 	response.setData(inputStream);

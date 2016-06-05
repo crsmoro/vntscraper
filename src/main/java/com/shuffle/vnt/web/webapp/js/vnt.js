@@ -628,7 +628,7 @@ function buildTrackerTorrentsResultHtml(data) {
 		html += '<td>' + torrent.category + '</td>';
 		html += '<td>' + (torrent.added?torrent.added:' - ') + '</td>';
 		html += '<td><i class="glyphicon glyphicon-cloud-upload modalpickseedbox" style="cursor: pointer;" data-toggle="tooltip" data-placement="top" title="Send to Seedbox"></i></td>';
-		html += '<td><a href="DownloadTorrent.vnt?torrent=' +  encodeURI(JSON.stringify(torrent)) + '"><i class="glyphicon glyphicon-cloud-download" data-toggle="tooltip" data-placement="top" title="Download Torrent"></i></a></td>';
+		html += '<td><a href="DownloadTorrent.vnt?torrent=' +  encodeURIComponent(JSON.stringify(torrent)) + '"><i class="glyphicon glyphicon-cloud-download" data-toggle="tooltip" data-placement="top" title="Download Torrent"></i></a></td>';
 		html += '</tr>';
 		tbodytorrents.append(html);
 	} 
