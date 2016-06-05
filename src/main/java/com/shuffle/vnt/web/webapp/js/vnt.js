@@ -103,13 +103,13 @@ function buildTorrentDetail(data) {
 			    iframe.contents().find("body").html(torrent.content);
 			});
 		}
-		var imdb = data.data.torrent.imdb;
-		if (imdb && imdb.Title) {
+		var movie = data.data.torrent.movie;
+		if (movie && movie.title) {
 			$('#modaltorrentdetail div.media').show();
-			$('#rls-img').prop('src', 'LoadImageImdb.vnt?image=' + encodeURIComponent(imdb.Poster));
-			$('#rls-title').html(imdb.Title + ' (' + imdb.Year + ')');
-			$('#rls-rating').html('<div class="pull-right">' + imdb.imdbRating + '/10 (' + imdb.imdbVotes + ' votes)</div>');
-			$('#rls-plot').html(imdb.Plot);
+			$('#rls-img').prop('src', 'LoadImageImdb.vnt?image=' + encodeURIComponent(movie.poster));
+			$('#rls-title').html(movie.title + ' (' + movie.year + ')');
+			$('#rls-rating').html('<div class="pull-right">' + movie.imdbRating + '/10 (' + movie.imdbVotes + ' votes)</div>');
+			$('#rls-plot').html(movie.plot);
 		}
 		else {
 			$('#modaltorrentdetail div.media').hide();
@@ -828,8 +828,22 @@ $('#modalgeneralconfig').on('show.bs.modal', function(e) {
 	$.getJSON('Settings.vnt?configuration=generalConfig').done(function(data) {
 		if (data.success) {
 			form.find('[name="baseUrl"]').val(data.data.baseUrl);
+			form.find('[name="imdbActive"]').prop('checked', data.data.imdbActive);
+			form.find('[name="tmdbActive"]').prop('checked', data.data.tmdbActive).trigger('change');
+			form.find('[name="tmdbapikey"]').val(data.data.tmdbapikey);
+			form.find('[name="tmdbLanguage"]').val(data.data.tmdbLanguage).trigger('change');
+			
 		}
 	});
+});
+
+$('#modalgeneralconfig form [name="tmdbActive"]').on('change', function(e) {
+	if ($(e.currentTarget).prop('checked')) {
+		$('#tmdbapikeydiv').show();
+	}
+	else {
+		$('#tmdbapikeydiv').hide();
+	}
 });
 
 $('#modalgeneralconfig form').on('submit', function(e) {
@@ -846,4 +860,8 @@ $('#modalgeneralconfig form').on('submit', function(e) {
 		alert('Problem when saving data');
 	});
 	return false;
+});
+
+$('[name="tmdbLanguage"]').select2({
+	allowClear : true
 });

@@ -1,6 +1,8 @@
 package com.shuffle.vnt.web.servlets;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -17,9 +19,11 @@ import fi.iki.elonen.NanoHTTPD.Response;
 
 public class Settings implements HttpServlet {
 
+    private WebServer webServer;
+    
     @Override
     public void setWebServer(WebServer webServer) {
-
+	this.webServer = webServer;
     }
 
     @Override
@@ -35,6 +39,11 @@ public class Settings implements HttpServlet {
 	    response.setMimeType("application/json; charset=UTF-8");
 	    Map<String, Object> generalConfig = new HashMap<>();
 	    generalConfig.put("baseUrl", PreferenceManager.getInstance().getPreferences().getBaseUrl());
+	    generalConfig.put("imdbActive", PreferenceManager.getInstance().getPreferences().isImdbActive());
+	    generalConfig.put("tmdbActive", PreferenceManager.getInstance().getPreferences().isTmdbActive());
+	    generalConfig.put("tmdbapikey", PreferenceManager.getInstance().getPreferences().getTmdbApiKey());
+	    generalConfig.put("tmdbLanguage", Arrays.asList(PreferenceManager.getInstance().getPreferences().getTmdbLanguage().split(",")));
+	    
 	    ReturnObject returnObject = new ReturnObject(true, generalConfig);
 	    response.setData(VntUtil.getInputStream(VntUtil.getGson().toJson(returnObject)));
 	}
@@ -66,9 +75,19 @@ public class Settings implements HttpServlet {
 	    response.setData(VntUtil.getInputStream(VntUtil.getGson().toJson(returnObject)));
 	}
 	else if (configuration.equals("generalConfig")) {
+	    Map<String, List<String>> parameters = webServer.decodeParameters(session.getQueryParameterString());
+	    
 	    String baseUrl = session.getParms().get("baseUrl");
+	    boolean imdbActive = Boolean.parseBoolean(session.getParms().get("imdbActive"));
+	    boolean tmdbActive = Boolean.parseBoolean(session.getParms().get("tmdbActive"));
+	    String tmdbapikey = session.getParms().get("tmdbapikey");
+	    String tmdbLanguage = StringUtils.join(parameters.get("tmdbLanguage"), ",");
 	    if (StringUtils.isNotBlank(baseUrl)) {
 		PreferenceManager.getInstance().getPreferences().setBaseUrl(baseUrl);
+		PreferenceManager.getInstance().getPreferences().setImdbActive(imdbActive);
+		PreferenceManager.getInstance().getPreferences().setTmdbActive(tmdbActive);
+		PreferenceManager.getInstance().getPreferences().setTmdbApiKey(tmdbapikey);
+		PreferenceManager.getInstance().getPreferences().setTmdbLanguage(tmdbLanguage);
 	    }
 	    
 	    PreferenceManager.getInstance().savePreferences();
@@ -76,6 +95,10 @@ public class Settings implements HttpServlet {
 	    response.setMimeType("application/json; charset=UTF-8");
 	    Map<String, Object> generalConfig = new HashMap<>();
 	    generalConfig.put("baseUrl", PreferenceManager.getInstance().getPreferences().getBaseUrl());
+	    generalConfig.put("imdbActive", PreferenceManager.getInstance().getPreferences().isImdbActive());
+	    generalConfig.put("tmdbActive", PreferenceManager.getInstance().getPreferences().isTmdbActive());
+	    generalConfig.put("tmdbapikey", PreferenceManager.getInstance().getPreferences().getTmdbApiKey());
+	    generalConfig.put("tmdbLanguage", Arrays.asList(PreferenceManager.getInstance().getPreferences().getTmdbLanguage().split(",")));
 	    ReturnObject returnObject = new ReturnObject(true, generalConfig);
 	    response.setData(VntUtil.getInputStream(VntUtil.getGson().toJson(returnObject)));
 	}

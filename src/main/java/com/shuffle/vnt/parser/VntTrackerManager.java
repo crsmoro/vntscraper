@@ -31,6 +31,9 @@ import org.jsoup.Connection.Response;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
+import com.omertron.themoviedbapi.MovieDbException;
+import com.omertron.themoviedbapi.model.movie.MovieInfo;
+import com.shuffle.vnt.configuration.PreferenceManager;
 import com.shuffle.vnt.configuration.bean.TrackerUser;
 import com.shuffle.vnt.core.parser.TrackerConfig;
 import com.shuffle.vnt.core.parser.TrackerConfig.ParameterType;
@@ -43,6 +46,7 @@ import com.shuffle.vnt.core.parser.bean.TorrentFilter.FilterOperation;
 import com.shuffle.vnt.core.parser.bean.TrackerCategory;
 import com.shuffle.vnt.core.service.TrackerManager;
 import com.shuffle.vnt.omdbapi.OmdbAPI;
+import com.shuffle.vnt.themoviedbapi.TheMovieDbApi;
 import com.shuffle.vnt.util.VntUtil;
 
 public class VntTrackerManager implements TrackerManager {
@@ -391,7 +395,17 @@ public class VntTrackerManager implements TrackerManager {
 	torrent.setImdbLink(getTrackerConfig().getTorrentDetailedParser().getImdbLink(body));
 	torrent.setContent(getTrackerConfig().getTorrentDetailedParser().getContent(body));
 	if (StringUtils.isNotBlank(torrent.getImdbLink())) {
-	    torrent.setImdb(OmdbAPI.getById(VntUtil.getImdbId(torrent.getImdbLink())));
+	    if (PreferenceManager.getInstance().getPreferences().isImdbActive()) {
+		OmdbAPI.getMovie(OmdbAPI.getById(VntUtil.getImdbId(torrent.getImdbLink())), torrent);
+	    }
+	    if (PreferenceManager.getInstance().getPreferences().isTmdbActive()) {
+		try {
+		    MovieInfo movieInfo = TheMovieDbApi.getInstance().getMovieInfoImdb(VntUtil.getImdbId(torrent.getImdbLink()), PreferenceManager.getInstance().getPreferences().getTmdbLanguage());
+		    TheMovieDbApi.getMovie(movieInfo, torrent);
+		} catch (MovieDbException e) {
+		    e.printStackTrace();
+		}
+	    }
 	}
 	return torrent;
 

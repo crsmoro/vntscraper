@@ -2,8 +2,6 @@ package com.shuffle.vnt.core.parser.bean;
 
 import java.util.Date;
 
-import com.shuffle.vnt.omdbapi.OmdbResponse;
-
 public class Torrent {
 
     private String tracker;
@@ -27,12 +25,12 @@ public class Torrent {
     private String imdbLink;
 
     private String youtubeLink;
-    
+
     private String content;
 
     private boolean detailed;
-    
-    private OmdbResponse imdb;
+
+    private Movie movie;
 
     public String getTracker() {
 	return tracker;
@@ -123,11 +121,11 @@ public class Torrent {
     }
 
     public String getContent() {
-        return content;
+	return content;
     }
 
     public void setContent(String content) {
-        this.content = content;
+	this.content = content;
     }
 
     public boolean isDetailed() {
@@ -138,18 +136,18 @@ public class Torrent {
 	this.detailed = detailed;
     }
 
-    public OmdbResponse getImdb() {
-        return imdb;
+    public Movie getMovie() {
+	return movie;
     }
 
-    public void setImdb(OmdbResponse imdb) {
-        this.imdb = imdb;
+    public void setMovie(Movie movie) {
+	this.movie = movie;
     }
 
     @Override
     public String toString() {
 	return "Torrent [tracker=" + tracker + ", id=" + id + ", name=" + name + ", year=" + year + ", size=" + size + ", added=" + added + ", category=" + category + ", link=" + link + ", downloadLink=" + downloadLink + ", imdbLink=" + imdbLink
-		+ ", youtubeLink=" + youtubeLink + ", content=" + content + ", detailed=" + detailed + ", imdb=" + imdb + "]";
+		+ ", youtubeLink=" + youtubeLink + ", content=" + content + ", detailed=" + detailed + ", movie=" + movie + "]";
     }
 
 }

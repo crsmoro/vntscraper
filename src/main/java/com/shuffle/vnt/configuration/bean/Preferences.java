@@ -12,6 +12,14 @@ public class Preferences implements Serializable {
 	
 	private String baseUrl;
 	
+	private boolean imdbActive;
+	
+	private boolean tmdbActive;
+	
+	private String tmdbApiKey = "";
+	
+	private String tmdbLanguage = "";
+	
 	private MailConfig mailConfig;
 
 	private List<TrackerUser> trackerUsers = new ArrayList<>();
@@ -28,6 +36,38 @@ public class Preferences implements Serializable {
 
 	public void setBaseUrl(String baseUrl) {
 	    this.baseUrl = baseUrl;
+	}
+
+	public boolean isImdbActive() {
+	    return imdbActive;
+	}
+
+	public void setImdbActive(boolean imdbActive) {
+	    this.imdbActive = imdbActive;
+	}
+
+	public boolean isTmdbActive() {
+	    return tmdbActive;
+	}
+
+	public void setTmdbActive(boolean tmdbActive) {
+	    this.tmdbActive = tmdbActive;
+	}
+
+	public String getTmdbApiKey() {
+	    return tmdbApiKey;
+	}
+
+	public void setTmdbApiKey(String tmdbApiKey) {
+	    this.tmdbApiKey = tmdbApiKey;
+	}
+
+	public String getTmdbLanguage() {
+	    return tmdbLanguage;
+	}
+
+	public void setTmdbLanguage(String tmdbLanguage) {
+	    this.tmdbLanguage = tmdbLanguage;
 	}
 
 	public MailConfig getMailConfig() {
@@ -72,7 +112,7 @@ public class Preferences implements Serializable {
 
 	@Override
 	public String toString() {
-		return "Preferences [trackerUsers=" + trackerUsers + ", fetchNews=" + fetchNews + ", schedulerDatas="
-				+ schedulerDatas + ", seedboexs=" + seedboxes + "]";
+	    return "Preferences [baseUrl=" + baseUrl + ", imdbActive=" + imdbActive + ", tmdbActive=" + tmdbActive + ", tmdbApiKey=" + tmdbApiKey + ", tmdbLanguage=" + tmdbLanguage + ", mailConfig=" + mailConfig + ", trackerUsers=" + trackerUsers
+		    + ", fetchNews=" + fetchNews + ", schedulerDatas=" + schedulerDatas + ", seedboxes=" + seedboxes + "]";
 	}
 }

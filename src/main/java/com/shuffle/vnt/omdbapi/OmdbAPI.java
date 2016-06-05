@@ -17,10 +17,12 @@ import org.apache.http.impl.client.LaxRedirectStrategy;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 
+import com.shuffle.vnt.core.parser.bean.Movie;
+import com.shuffle.vnt.core.parser.bean.Torrent;
 import com.shuffle.vnt.util.VntUtil;
 
 public class OmdbAPI {
-    
+
     private static final Log log = LogFactory.getLog(OmdbAPI.class);
 
     private String imdbId;
@@ -36,12 +38,12 @@ public class OmdbAPI {
     private long yearRelease;
 
     private boolean tomatoes;
-    
+
     public static OmdbResponse getById(String imdbId) {
 	OmdbAPI omdbAPI = new OmdbAPI(imdbId);
 	return omdbAPI.fetchResult();
     }
-    
+
     public static OmdbResponse getByTitle(String title) {
 	OmdbAPI omdbAPI = new OmdbAPI();
 	omdbAPI.setTitle(title);
@@ -165,5 +167,24 @@ public class OmdbAPI {
 	    e.printStackTrace();
 	}
 	return omdbResponse;
+    }
+
+    public static Movie getMovie(OmdbResponse omdbResponse, Torrent torrent) {
+	Movie movie = torrent != null ? torrent.getMovie() : null;
+	if (movie == null) {
+	    movie = new Movie();
+	    if (torrent != null) {
+		torrent.setMovie(movie);
+	    }
+	}
+	movie.setTitle(omdbResponse.getTitle());
+	movie.setOriginalTitle(omdbResponse.getTitle());
+	movie.setYear(Long.valueOf(omdbResponse.getYear()));
+	movie.setPlot(omdbResponse.getPlot());
+	movie.setRuntime(StringUtils.isNotBlank(omdbResponse.getRuntime()) ? Long.valueOf(omdbResponse.getRuntime().split(" ")[0]) : 0l);
+	movie.setImdbRating(Double.valueOf(omdbResponse.getImdbRating()));
+	movie.setImdbVotes(Long.valueOf(omdbResponse.getImdbVotes().replaceAll(",", "")));
+	movie.setPoster(omdbResponse.getPoster());
+	return movie;
     }
 }

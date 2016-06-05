@@ -194,7 +194,7 @@
 					<ul class="list-group">
 						<a href="#" class="list-group-item" data-toggle="modal" data-target="#modalgeneralconfig">
 							<h4 class="list-group-item-heading">General</h4>
-							<p class="list-group-item-text">Configure Base URL and for now is pretty much it...</p>
+							<p class="list-group-item-text">Configure Base URL, IMDB, TMDb, TMDb Language...</p>
 						</a>
 						<a href="#" class="list-group-item" data-toggle="modal" data-target="#modalmailconfig">
 							<h4 class="list-group-item-heading">Email</h4>
@@ -221,6 +221,28 @@
 						<div class="form-group">
 							<label for="baseUrl">Base URL</label> <input type="text" class="form-control" name="baseUrl" placeholder="Base URL">
 							<p class="">Set the base URL used on the emails</p>
+						</div>
+						<div class="checkbox">
+							<label> <input type="checkbox" name="imdbActive" value="true"> Active IMDB Integration (Over OMDb)
+							</label>
+						</div>
+						<div class="checkbox">
+							<label> <input type="checkbox" name="tmdbActive" value="true"> Active The Movie Database Integration
+							</label>
+						</div>
+						<div id="tmdbapikeydiv">
+							<div class="form-group">
+								<label for="tmdbapikey">The Movie Database API Key</label> <input type="text" class="form-control" name="tmdbapikey" placeholder="The Movie Database API Key">
+								<p class="">Use your <a href="https://www.themoviedb.org/account">account page</a> to request an API</p>
+							</div>
+							<div class="form-group">
+								<label for="tmdbLanguage">The Movie Database Language </label> <select class="form-control" name="tmdbLanguage" multiple style="width: 100%;">
+									<option value="pt-BR">pt-BR</option>
+									<option value="pt-PT">pt-PT</option>
+									<option value="es-ES">es-ES</option>
+									<option value="en-US">en-US</option>
+								</select>
+							</div>
 						</div>
 					</div>
 					<div class="modal-footer">
@@ -509,9 +531,14 @@
 							<p id="rls-plot"></p>
 						</div>
 					</div>
-					<br/>
+					<br />
 					<div class="panel panel-default">
-						<div class="panel-heading">Content <div class="pull-right"><i class="glyphicon glyphicon-new-window" style="cursor: pointer;" id="rls-content-nw-btn" title="Open in a new window"></i></div></div>
+						<div class="panel-heading">
+							Content
+							<div class="pull-right">
+								<i class="glyphicon glyphicon-new-window" style="cursor: pointer;" id="rls-content-nw-btn" title="Open in a new window"></i>
+							</div>
+						</div>
 						<div class="panel-body">
 							<iframe id="rls-content" width="100%" style="border: 0px;"></iframe>
 						</div>

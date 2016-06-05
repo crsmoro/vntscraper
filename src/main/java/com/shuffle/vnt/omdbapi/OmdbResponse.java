@@ -47,7 +47,7 @@ public class OmdbResponse {
     private String imdbVotes;
 
     private String seriesID;
-    
+
     private String Error;
 
     public String getActors() {
@@ -235,11 +235,11 @@ public class OmdbResponse {
     }
 
     public String getError() {
-        return Error;
+	return Error;
     }
 
     public void setError(String error) {
-        Error = error;
+	Error = error;
     }
 
     @Override
