@@ -195,6 +195,7 @@ $('#modaltrackeruser form').on('submit', function(e) {
 	$.post('SaveTrackerUsers.vnt', form.serialize()).done(function(data) {
 		if (data.success) {
 			loadTrackerUsers();
+			loadTrackers();
 			$('#modaltrackeruser').modal('hide');
 		}
 		else {
@@ -214,6 +215,7 @@ $('#trackeruserstable').on('click', 'tr td:last-child', function(e) {
 	}).done(function(data) {
 		if (data.success) {
 			loadTrackerUsers();
+			loadTrackers();
 		}
 	});
 });
