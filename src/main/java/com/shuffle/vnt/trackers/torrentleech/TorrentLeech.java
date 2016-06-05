@@ -43,10 +43,12 @@ public class TorrentLeech implements TrackerConfig {
 	    categories.add(new TrackerCategory("Movies: R5/Screeners", "", "10"));
 	    categories.add(new TrackerCategory("Movies: DVDRip/DVDScreener", "", "11"));
 	    categories.add(new TrackerCategory("Movies: DVD-R", "", "12"));
-	    categories.add(new TrackerCategory("Movies: HD", "", "13"));
+	    categories.add(new TrackerCategory("Movies: Bluray", "", "13"));
 	    categories.add(new TrackerCategory("Movies: BDRip", "", "14"));
 	    categories.add(new TrackerCategory("Movies: Boxsets", "", "15"));
 	    categories.add(new TrackerCategory("Movies: Documentaries", "", "29"));
+	    categories.add(new TrackerCategory("Movies: Foreign", "", "36"));
+	    categories.add(new TrackerCategory("Movies: WEBRip", "", "37"));
 	    
 	    categories.add(new TrackerCategory("TV: Episodes", "", "26"));
 	    categories.add(new TrackerCategory("TV: BoxSets", "", "27"));
