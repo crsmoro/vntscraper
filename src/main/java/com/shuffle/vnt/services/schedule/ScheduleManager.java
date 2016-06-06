@@ -139,6 +139,9 @@ public class ScheduleManager {
 		log.error("Template file with incorrect encode", e);
 	    }
 	}
+	else {
+	    template = defaultTemplate.toString();
+	}
 	return VntUtil.compileTemplate(template, scopes);
     }
 
