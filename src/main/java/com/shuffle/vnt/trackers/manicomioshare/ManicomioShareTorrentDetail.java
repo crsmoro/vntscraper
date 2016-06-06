@@ -40,6 +40,9 @@ public class ManicomioShareTorrentDetail implements TorrentDetailedParser {
     public String getYoutubeLink(Body body) {
 	String youtubeLink = "";
 	String embedLink = Jsoup.parse(body.getContent()).select("iframe[src^=\"http://www.youtube.com/embed\"]").attr("src");
+	if (StringUtils.isBlank(embedLink)) {
+	    embedLink = Jsoup.parse(body.getContent()).select("iframe[src^=\"https://www.youtube.com/embed\"]").attr("src");
+	}
 	if (embedLink != null && !"".equalsIgnoreCase(embedLink)) {
 	    String[] elSplit = embedLink.split("/");
 	    youtubeLink = elSplit[elSplit.length - 1].split("\\?")[0];
