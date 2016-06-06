@@ -240,7 +240,7 @@ public class VntTrackerManager implements TrackerManager {
 		log.debug("getting torrent details");
 		getDetails(torrent);
 	    }
-	    log.debug(torrent);
+	    log.trace(torrent);
 	    for (TorrentFilter torrentFilter : getQueryParameters().getTorrentFilters()) {
 		try {
 		    Field field = Torrent.class.getDeclaredField(torrentFilter.getField());
