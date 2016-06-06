@@ -179,11 +179,14 @@ public class OmdbAPI {
 	}
 	movie.setTitle(omdbResponse.getTitle());
 	movie.setOriginalTitle(omdbResponse.getTitle());
-	movie.setYear(Long.valueOf(omdbResponse.getYear()));
+	movie.setYear(Long.valueOf(omdbResponse.getYear().replaceAll("[^0-9&&[^\\.]]", "")));
 	movie.setPlot(omdbResponse.getPlot());
-	movie.setRuntime(StringUtils.isNotBlank(omdbResponse.getRuntime()) ? Long.valueOf(omdbResponse.getRuntime().split(" ")[0]) : 0l);
-	movie.setImdbRating(Double.valueOf(omdbResponse.getImdbRating()));
-	movie.setImdbVotes(Long.valueOf(omdbResponse.getImdbVotes().replaceAll(",", "")));
+	omdbResponse.setRuntime(omdbResponse.getRuntime().replaceAll("[^0-9&&[^\\.]]", ""));
+	movie.setRuntime(StringUtils.isNotBlank(omdbResponse.getRuntime())? Long.valueOf(omdbResponse.getRuntime()) : 0l);
+	omdbResponse.setImdbRating(omdbResponse.getImdbRating().replaceAll("[^0-9&&[^\\.]]", ""));
+	movie.setImdbRating(StringUtils.isNotBlank(omdbResponse.getImdbRating()) ? Double.valueOf(omdbResponse.getImdbRating()) : 0d);
+	omdbResponse.setImdbVotes(omdbResponse.getImdbVotes().replaceAll("[^0-9&&[^\\.]]", "").replaceAll(",", ""));
+	movie.setImdbVotes(StringUtils.isNotBlank(omdbResponse.getImdbVotes()) ? Long.valueOf(omdbResponse.getImdbVotes()) : 0l);
 	movie.setPoster(omdbResponse.getPoster());
 	return movie;
     }
