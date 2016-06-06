@@ -328,7 +328,7 @@ public class VntTrackerManager implements TrackerManager {
 		}
 	    }
 	    if (add) {
-		log.debug("added on return list!");
+		log.trace("added on return list!");
 		torrents.add(torrent);
 	    }
 	}
