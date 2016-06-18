@@ -1,9 +1,12 @@
 package com.shuffle.vnt.web.servlets;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.reflections.Reflections;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import com.shuffle.vnt.core.service.ServiceParser;
 import com.shuffle.vnt.util.VntUtil;
 import com.shuffle.vnt.web.HttpServlet;
@@ -15,24 +18,24 @@ import fi.iki.elonen.NanoHTTPD.Response;
 public class LoadServiceParsers implements HttpServlet {
 
 	@Override
-    public void setWebServer(WebServer webServer) {
-	
-    }
+	public void setWebServer(WebServer webServer) {
+
+	}
 
 	@Override
 	public void doGet(IHTTPSession session, Response response) {
-		JsonArray jsonArray = new JsonArray();
-		Reflections reflections = new Reflections("com.shuffle.vnt.services.parser");
+		List<Map<String, Object>> jsonArray = new ArrayList<>();
+		Reflections reflections = new Reflections("com.shuffle.vnt.service.parser");
 		for (Class<? extends ServiceParser> serviceParserClass : reflections.getSubTypesOf(ServiceParser.class)) {
 			if (serviceParserClass.isInterface()) {
-				JsonObject jsonObject = new JsonObject();
-				jsonObject.addProperty("name", serviceParserClass.getSimpleName());
-				jsonObject.addProperty("value", serviceParserClass.getName());
+				Map<String, Object> jsonObject = new HashMap<>();
+				jsonObject.put("name", serviceParserClass.getSimpleName());
+				jsonObject.put("value", serviceParserClass.getName());
 				jsonArray.add(jsonObject);
 			}
 		}
 		response.setMimeType("application/json");
-		response.setData(VntUtil.getInputStream(VntUtil.getGson().toJson(jsonArray)));
+		response.setData(VntUtil.getInputStream(VntUtil.toJson(jsonArray)));
 	}
 
 	@Override
@@ -42,12 +45,12 @@ public class LoadServiceParsers implements HttpServlet {
 
 	@Override
 	public void doPut(IHTTPSession session, Response response) {
-		
+
 	}
 
 	@Override
 	public void doDelete(IHTTPSession session, Response response) {
-		
+
 	}
 
 }

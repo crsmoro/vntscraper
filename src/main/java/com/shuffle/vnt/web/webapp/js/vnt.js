@@ -20,7 +20,12 @@ function openModalSchedule(e) {
 		form.find('[name="tracker"]').val(tracker);
 		loadTrackerUsersSelect(tracker);
 		loadTrackerCategoriesSchedule(tracker).done(function() {
-			$("#trackercategoriesschedule").val($("#trackercategories").val()).trigger('change');
+			var trackercategoriesVal = $("#trackercategories").val();
+			var cats = [];
+			for (var i=0; i<trackercategoriesVal.length; i++) {
+				cats.push(trackercategoriesVal[i].split('|')[1]);
+			}
+			$("#trackercategoriesschedule").val(cats).trigger('change');
 		});
 		form.find('[name="tracker"]').attr('readonly', 'readonly');
 	
@@ -53,6 +58,7 @@ $('.modaltrackeruser').on('click', function(e) {
 	form.find('[name="tracker"]').val('');
 	form.find('[name="username"]').val('');
 	form.find('[name="password"]').val('');
+	form.find('[name="shared"]').prop('checked', false);
 	$('#modaltrackeruser').modal('show');
 });
 
@@ -68,6 +74,15 @@ $('.modalseedbox').on('click', function(e) {
 	$('#modalseedbox').modal('show');
 });
 
+$('.modaluser').on('click', function(e) {
+	var form = $('#modaluser form');
+	form.find('input[name="new"]').val('true');
+	form.find('[name="username"]').val('');
+	form.find('[name="password"]').val('');
+	form.find('[name="admin"]').prop('checked', false);
+	$('#modaluser').modal('show');
+});
+
 $('#divtrackerresults').on('click', '.modalpickseedbox', function(e) {
 	var tr = $(e.currentTarget).parents('tr');
 	$('#modalpickseedbox form [name="torrent"]').val(decodeURI($(tr[0]).data('torrent')));
@@ -75,6 +90,7 @@ $('#divtrackerresults').on('click', '.modalpickseedbox', function(e) {
 		$('#modalpickseedbox').modal('show');
 	}
 	else {
+		$('#modalpickseedbox form [name="seedbox"]').val($('#modalpickseedbox form [name="seedbox"] option').val());
 		if (confirm('Are you sure?')) {
 			$('#modalpickseedbox form button[type="submit"]').trigger('click');
 		}
@@ -88,7 +104,7 @@ function buildTorrentDetail(data) {
 		alert('Problem when loading data, try again');
 	}
 	else {
-		var torrent = data.data.torrent;
+		var torrent = data.data;
 		if (torrent) {
 			$('#rls-name').html(torrent.name);
 			$('#rls-img').prop('src', '');
@@ -103,7 +119,7 @@ function buildTorrentDetail(data) {
 			    iframe.contents().find("body").html(torrent.content);
 			});
 		}
-		var movie = data.data.torrent.movie;
+		var movie = torrent.movie;
 		if (movie && movie.title) {
 			$('#modaltorrentdetail div.media').show();
 			$('#rls-img').prop('src', 'LoadImageImdb.vnt?image=' + encodeURIComponent(movie.poster));
@@ -176,13 +192,14 @@ function loadTrackerUsers() {
 						for (var i = 0; i < data.length; i++) {
 							var trackerUser = data[i];
 							var html = '';
-							html += '<tr data-tracker="' + trackerUser.tracker + '" data-username="' + trackerUser.username + '">';
+							html += '<tr data-id="' + (trackerUser.owned ? trackerUser.id : 0) + '" data-tracker="' + trackerUser.tracker + '" data-trackerclass="' + trackerUser.trackerClass + '"  data-username="' + trackerUser.username + '" data-shared="' + trackerUser.shared + '" data-owned="' + trackerUser.owned + '">';
 							html += '<td>' + trackerUser.tracker + '</td>';
 							html += '<td>' + trackerUser.username + '</td>';
+							html += '<td>' + (trackerUser.owned ? (trackerUser.shared?'Yes':'No') : 'Owner: ' + trackerUser.owner) + '</td>';
 							html += '<td>'
 									+ (trackerUser.authenticatedUntil ? trackerUser.authenticatedUntil
 											: 'Never Authenticated') + '</td>';
-							html += '<td><i class="glyphicon glyphicon-remove" style="color:red;"></i></td>';
+							html += '<td>' + (trackerUser.owned ? '<i class="glyphicon glyphicon-remove" style="color:red;"></i>' : '') + '</td>';
 							html += '</tr>';
 							tbody.append(html);
 						}
@@ -212,29 +229,38 @@ $('#modaltrackeruser form').on('submit', function(e) {
 
 $('#trackeruserstable').on('click', 'tr td:last-child', function(e) {
 	var tr = $(this).parents('tr');
-	var pktracker = $(tr).data('tracker');
-	var pkusername = $(tr).data('username');
-	$.ajax('SaveTrackerUsers.vnt?pktracker=' + pktracker + '&pkusername=' + pkusername, {
-		method : 'DELETE'
-	}).done(function(data) {
-		if (data.success) {
-			loadTrackerUsers();
-			loadTrackers();
-		}
-	});
+	var id = $(tr).data('id');
+	if (id) {
+		$.ajax('SaveTrackerUsers.vnt?id=' + id, {
+			method : 'DELETE'
+		}).done(function(data) {
+			if (data.success) {
+				loadTrackerUsers();
+				loadTrackers();
+			}
+		});
+	}
 });
 
 $('#trackeruserstable').on('click', 'tr td:not(:last-child)', function(e) {
 	var tr = $(this).parents('tr');
 	var form = $('#modaltrackeruser form');
+	var id = $(tr).data('id');
 	var pktracker = $(tr).data('tracker');
 	var pkusername = $(tr).data('username');
-	form.find('input[name="new"]').val('false');
-	form.find('input[name="pktracker"]').val(pktracker);
-	form.find('input[name="pkusername"]').val(pkusername);
-	form.find('[name="tracker"]').val(pktracker);
-	form.find('[name="username"]').val(pkusername);
-	$('#modaltrackeruser').modal('show');
+	var trackerclass = $(tr).data('trackerclass');
+	var shared = $(tr).data('shared');
+	var owned  = $(tr).data('owned');
+	if (owned) {
+		form.find('input[name="new"]').val('false');
+		form.find('input[name="id"]').val(id);
+		form.find('input[name="pktracker"]').val(pktracker);
+		form.find('input[name="pkusername"]').val(pkusername);
+		form.find('[name="tracker"]').val(trackerclass);
+		form.find('[name="username"]').val(pkusername);
+		form.find('[name="shared"]').prop('checked', shared);
+		$('#modaltrackeruser').modal('show');
+	}
 });
 
 
@@ -242,12 +268,14 @@ function loadSeedboxes() {
 	$.getJSON('LoadSeedboxes.vnt')
 			.done(
 					function(data) {
+						var pickseedboxselect = $('#modalpickseedbox form [name="seedbox"');
+						pickseedboxselect.html('');
 						var tbody = $('#seedboxestable > tbody');
 						tbody.html('');
 						for (var i = 0; i < data.length; i++) {
 							var seedbox = data[i];
 							var html = '';
-							html += '<tr data-name="' + seedbox.name + '">';
+							html += '<tr data-id="' + seedbox.id + '">';
 							html += '<td>' + seedbox.name + '</td>';
 							html += '<td>' + seedbox.username + '</td>';
 							var webClient = '';
@@ -259,6 +287,8 @@ function loadSeedboxes() {
 							html += '<td><i class="glyphicon glyphicon-remove" style="color:red;"></i></td>';
 							html += '</tr>';
 							tbody.append(html);
+							
+							pickseedboxselect.append('<option value="' + seedbox.id + '">' + seedbox.name + '</option>');
 						}
 					});
 }
@@ -285,8 +315,8 @@ $('#modalseedbox form').on('submit', function(e) {
 
 $('#seedboxestable').on('click', 'tr td:last-child', function(e) {
 	var tr = $(this).parents('tr');
-	var pkname = $(tr).data('name');
-	$.ajax('SaveSeedboxes.vnt?pkname=' + pkname , {
+	var pk = $(tr).data('id');
+	$.ajax('SaveSeedboxes.vnt?id=' + pk, {
 		method : 'DELETE'
 	}).done(function(data) {
 		if (data.success) {
@@ -298,10 +328,10 @@ $('#seedboxestable').on('click', 'tr td:last-child', function(e) {
 $('#seedboxestable').on('click', 'tr td:not(:last-child)', function(e) {
 	var tr = $(this).parents('tr');
 	var form = $('#modalseedbox form');
-	var pkname = $(tr).data('name');
+	var pk = $(tr).data('id');
 	form.find('input[name="new"]').val('false');
-	form.find('input[name="pkname"]').val(pkname);
-	$.getJSON('LoadSeedboxes.vnt?pkname=' + pkname).done(function(data){
+	form.find('input[name="id"]').val(pk);
+	$.getJSON('LoadSeedboxes.vnt?id=' + pk).done(function(data){
 		var seedbox = data;
 		
 		form.find('[name="name"]').val(seedbox.name);
@@ -313,8 +343,78 @@ $('#seedboxestable').on('click', 'tr td:not(:last-child)', function(e) {
 		
 		$('#modalseedbox').modal('show');
 	});
-	
-	
+});
+
+
+function loadUsers() {
+	$.getJSON('LoadUsers.vnt')
+			.done(
+					function(data) {
+						var tbody = $('#userstable > tbody');
+						tbody.html('');
+						for (var i = 0; i < data.length; i++) {
+							var user = data[i];
+							var html = '';
+							html += '<tr data-id="' + user.id + '">';
+							html += '<td>' + user.username + '</td>';
+							html += '<td>' + (user.admin?'Yes':'No') + '</td>';
+							html += '<td>' + (user.session ? user.session : '-') + '</td>';
+							html += '<td>' + (user.lastRequest ? user.lastRequest : '-') + '</td>';
+							html += '<td>' + (user.lastIP ? user.lastIP : '-') + '</td>';
+							html += '<td><i class="glyphicon glyphicon-remove" style="color:red;"></i></td>';
+							html += '</tr>';
+							tbody.append(html);
+						}
+					});
+}
+
+$('a[href="#users"]').on('show.bs.tab', function(e) {
+	loadUsers();
+})
+
+$('#modaluser form').on('submit', function(e) {
+	e.preventDefault();
+	var form = $(this);
+	$.post('SaveUser.vnt', form.serialize()).done(function(data) {
+		if (data.success) {
+			loadUsers();
+			$('#modaluser').modal('hide');
+		}
+		else {
+			alert('Problem when saving data');
+			console.log(data.error);
+		}
+	});
+	return false;
+});
+
+$('#userstable').on('click', 'tr td:last-child', function(e) {
+	var tr = $(this).parents('tr');
+	var pk = $(tr).data('id');
+	$.ajax('SaveUser.vnt?id=' + pk, {
+		method : 'DELETE'
+	}).done(function(data) {
+		if (data.success) {
+			loadUsers();
+		}
+	});
+});
+
+$('#userstable').on('click', 'tr td:not(:last-child)', function(e) {
+	var tr = $(this).parents('tr');
+	var form = $('#modaluser form');
+	var pk = $(tr).data('id');
+	form.find('input[name="new"]').val('false');
+	form.find('input[name="id"]').val(pk);
+	$.getJSON('LoadUsers.vnt?id=' + pk).done(function(data){
+		var user = data;
+		
+		form.find('[name="username"]').val(user.username);
+		form.find('[name="password"]').val(user.password);
+		form.find('[name="admin"]').prop('checked', user.admin);
+		
+		$('#modaluser').modal('show');
+	});
 });
 
 function loadSchedules() {
@@ -326,9 +426,9 @@ function loadSchedules() {
 						for (var i = 0; i < data.length; i++) {
 							var schedule = data[i];
 							var html = '';
-							html += '<tr data-name="' + schedule.name + '">';
+							html += '<tr data-id="' + schedule.id + '">';
 							html += '<td>' + schedule.name + '</td>';
-							html += '<td>' + schedule.trackerUser.tracker + ' - ' + schedule.trackerUser.username + '</td>';
+							html += '<td>' + schedule.trackerUser.trackerName + ' - ' + schedule.trackerUser.username + '</td>';
 							
 							var service = '';
 							if (schedule.serviceParser) {
@@ -379,25 +479,13 @@ $('#modalschedule form').on('submit', function(e) {
 			console.log(data.error);
 		}
 	});
-	/*
-	$.post('SaveScheduleDatas.vnt', formData).done(function(data) {
-		if (data.success) {
-			loadSchedules();
-			$('#modalschedule').modal('hide');
-		}
-		else {
-			alert('Problem when saving data');
-			console.log(data.error);
-		}
-	});
-	*/
 	return false;
 });
 
 $('#schedulestable').on('click', 'tr td:last-child', function(e) {
 	var tr = $(this).parents('tr');
-	var pkname = $(tr).data('name');
-	$.ajax('SaveScheduleDatas.vnt?pkname=' + pkname , {
+	var pk = $(tr).data('id');
+	$.ajax('SaveScheduleDatas.vnt?id=' + pk , {
 		method : 'DELETE'
 	}).done(function(data) {
 		if (data.success) {
@@ -409,18 +497,18 @@ $('#schedulestable').on('click', 'tr td:last-child', function(e) {
 $('#schedulestable').on('click', 'tr td:not(:last-child)', function(e) {
 	var tr = $(this).parents('tr');
 	var form = $('#modalschedule form');
-	var pkname = $(tr).data('name');
+	var pk = $(tr).data('id');
 	
 	form.find('[name="tracker"]').removeAttr('readonly');
 	form.find('input[name="new"]').val('false');
-	form.find('input[name="pkname"]').val(pkname);
-	$.getJSON('LoadSchedulerDatas.vnt?pkname=' + pkname).done(function(data){
+	form.find('input[name="id"]').val(pk);
+	$.getJSON('LoadSchedulerDatas.vnt?id=' + pk).done(function(data){
 		var schedule = data;
 		
 		form.find('[name="name"]').val(schedule.name);
 		form.find('[name="tracker"]').val(schedule.trackerUser.tracker);
 		loadTrackerUsersSelect(schedule.trackerUser.tracker).done(function() {
-			form.find('[name="trackerUser"]').val(schedule.trackerUser.username);
+			form.find('[name="trackerUser"]').val(schedule.trackerUser.id);
 		});
 		form.find('[name="search"]').val(schedule.queryParameters.search);
 		loadTrackerCategoriesSchedule(schedule.trackerUser.tracker).done(function() {
@@ -468,13 +556,16 @@ function loadTrackers() {
 		var dropdowns = $('.dropdown-trackers');
 		dropdowns.html('');
 		dropdowns.append('<li data-tracker=""><a href="#">All</a></li>');
-		var selects = $('select[name="tracker"]');
-		selects.html('');
+		var selectschedule = $('#modalschedule select[name="tracker"]');
+		var selecttrackeruser = $('#modaltrackeruser select[name="tracker"]');
+		selectschedule.html('');
+		selecttrackeruser.html('');
 		for (var i=0; i<data.length; i++) {
 			var tracker = data[i];
-			selects.append('<option value="' + tracker.name + '">' + tracker.name + '</option>');
+			selecttrackeruser.append('<option value="' + tracker.clazz + '">' + tracker.name + '</option>');
 			if (tracker.avaliable) {
-				dropdowns.append('<li data-tracker="' + tracker.name + '"><a href="#">' + tracker.name + '</a></li>');
+				selectschedule.append('<option value="' + tracker.clazz + '">' + tracker.name + '</option>');
+				dropdowns.append('<li data-tracker="' + tracker.name + '" data-clazz="' + tracker.clazz + '"><a href="#">' + tracker.name + '</a></li>');
 			}
 			
 		}
@@ -500,7 +591,7 @@ function loadTrackerUsersSelect(tracker) {
 		selects.html('');
 		for (var i=0; i<data.length; i++) {
 			var trackeruser = data[i];
-			selects.append('<option value="' + trackeruser.username + '">' + trackeruser.username + '</option>');
+			selects.append('<option value="' + trackeruser.id + '">' + trackeruser.username + '</option>');
 		}
 	});
 	return jqxhr;
@@ -523,10 +614,11 @@ loadTotalSchedules();
 $('.dropdown-trackers').on('click', 'li[data-tracker] > a', function(e) {
 	e.preventDefault();
 	var tracker = $(e.currentTarget).parent().data('tracker');
+	var clazz = $(e.currentTarget).parent().data('clazz');
 	var btnSelect = $(e.currentTarget).parent().parent().parent().find('button');
 	btnSelect.html((tracker?tracker:'All') + ' <span class="caret"></span>');
-	$('#tracker').val(tracker);
-	loadTrackerCategories(tracker);
+	$('#tracker').val(clazz);
+	loadTrackerCategories(clazz);
 });
 
 var trackersLoading = 0;
@@ -551,7 +643,7 @@ $('#formfilter').on('submit', function(e) {
 	if ($('#tracker').val() == '') {
 		var trackersAvaliable = $('.dropdown-trackers li[data-tracker]:not([data-tracker=""])');
 		trackersAvaliable.each(function(idx, obj) {
-			filter($(this).data('tracker'), form.serialize());
+			filter($(this).data('clazz'), form.serialize());
 			trackersLoading++;
 		});
 		if (trackersAvaliable.length <= 0) {
@@ -568,6 +660,7 @@ $('#formfilter').on('submit', function(e) {
 });
 
 function filter(tracker, formData) {
+	loadSeedboxes();
 	$.getJSON('SearchTrackers.vnt', formData + '&tracker=' + tracker).done(function(data) {
 		if (data.success) {
 			buildTrackerResultHtml(data.data);
@@ -590,7 +683,7 @@ function buildTrackerResultHtml(data) {
 	}
 	var html = '';
 	html += '<div class="col-xs-12" id="divtracker-' + data.tracker + '">';
-	html += '<h4>' + data.tracker + ' <i style="cursor: pointer;" class="glyphicon glyphicon-time modalschedule" data-tracker="' + data.tracker + '" data-toggle="tooltip" data-placement="top" title="Create schedule with this filters"></i></h4>';
+	html += '<h4>' + data.tracker + ' <i style="cursor: pointer;" class="glyphicon glyphicon-time modalschedule" data-tracker="' + data.trackerClass + '" data-toggle="tooltip" data-placement="top" title="Create schedule with this filters"></i></h4>';
 	html += '<div class="table-responsive table-responsive-tor">';
 	html += '<table class="table table-striped table-hover table-results-tor">';
 	html += '<thead>';
@@ -689,7 +782,7 @@ function loadTrackerCategories(tracker) {
 		var dataTrackerCategories = [];
 		for (var i=0; i<data.length; i++) {
 			var trackerCategory = data[i];
-			var item = {id: trackerCategory.tracker + '|' + trackerCategory.code, text:trackerCategory.name + (!tracker ? (' - ' + trackerCategory.tracker) : '') };
+			var item = {id: trackerCategory.trackerClass + '|' + trackerCategory.code, text:trackerCategory.name + (!tracker ? (' - ' + trackerCategory.tracker) : '') };
 			dataTrackerCategories.push(item);
 		}
 		var select2 = $("#trackercategories").select2({
@@ -760,10 +853,10 @@ function loadTrackerCategoriesSchedule(tracker) {
 			var item = {id: trackerCategory.code, text:trackerCategory.name + (!tracker ? (' - ' + trackerCategory.tracker) : '') };
 			dataTrackerCategories.push(item);
 		}
-		var select2 = $("#trackercategoriesschedule").select2({
+		var select2 = sel2Jq.select2({
 			  data: dataTrackerCategories
 		});
-		select2.val(null).trigger('change');
+		sel2Jq.val(null).trigger('change');
 	});
 	return jqxhr;
 }
@@ -865,3 +958,14 @@ $('#modalgeneralconfig form').on('submit', function(e) {
 $('[name="tmdbLanguage"]').select2({
 	allowClear : true
 });
+
+function isAdmin() {
+	$.getJSON('IsAdmin.vnt').done(function(data) {
+		if (data && data.success && data.data) {
+			$('#liusers').removeClass('hide');
+			$('#lisettings').removeClass('hide');
+		}
+	});
+}
+
+isAdmin();

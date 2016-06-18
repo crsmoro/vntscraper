@@ -2,16 +2,16 @@ package com.shuffle.vnt.core.service;
 
 import java.util.List;
 
-import com.shuffle.vnt.configuration.bean.TrackerUser;
-import com.shuffle.vnt.core.parser.TrackerConfig;
+import com.shuffle.vnt.core.model.TrackerUser;
+import com.shuffle.vnt.core.parser.Tracker;
 import com.shuffle.vnt.core.parser.bean.QueryParameters;
 import com.shuffle.vnt.core.parser.bean.Torrent;
 
 public interface TrackerManager extends Service {
 
-	TrackerConfig getTrackerConfig();
+	Tracker getTrackerConfig();
 
-	void setTrackerConfig(TrackerConfig trackerConfig);
+	void setTrackerConfig(Tracker trackerConfig);
 
 	TrackerUser getTrackerUser();
 

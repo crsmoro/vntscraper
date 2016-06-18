@@ -3,24 +3,26 @@ package com.shuffle.vnt.web.servlets;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.shuffle.vnt.configuration.PreferenceManager;
-import com.shuffle.vnt.configuration.bean.Seedbox;
-import com.shuffle.vnt.services.torrentmanager.WebClient;
+import com.shuffle.vnt.core.db.PersistenceManager;
+import com.shuffle.vnt.core.model.Seedbox;
+import com.shuffle.vnt.core.service.WebClient;
 import com.shuffle.vnt.util.VntUtil;
 import com.shuffle.vnt.web.HttpServlet;
-import com.shuffle.vnt.web.ReturnObject;
 import com.shuffle.vnt.web.WebServer;
+import com.shuffle.vnt.web.bean.ReturnObject;
 
 import fi.iki.elonen.NanoHTTPD.IHTTPSession;
 import fi.iki.elonen.NanoHTTPD.Response;
 
 public class SaveSeedboxes implements HttpServlet {
-	
+
 	private static final Log log = LogFactory.getLog(SaveSeedboxes.class);
+
+	private WebServer webServer;
 
 	@Override
 	public void setWebServer(WebServer webServer) {
-	    
+		this.webServer = webServer;
 	}
 
 	@Override
@@ -35,21 +37,19 @@ public class SaveSeedboxes implements HttpServlet {
 		ReturnObject returnObject;
 		Seedbox seedbox = null;
 		boolean isNew = Boolean.valueOf(session.getParms().get("new"));
-		
+
 		if (isNew) {
 			seedbox = new Seedbox();
-			PreferenceManager.getInstance().getPreferences().getSeedboxes().add(seedbox);
+		} else {
+			seedbox = PersistenceManager.findOne(Seedbox.class, Long.valueOf(session.getParms().get("id")));
 		}
-		else {
-			seedbox = PreferenceManager.getInstance().getSeedbox(session.getParms().get("pkname"));
-		}
-		
+
 		if (!isNew && seedbox == null) {
 			returnObject = new ReturnObject(false, "Seedbox not found to update", new IllegalArgumentException("Invalid Seedbox"));
-			response.setData(VntUtil.getInputStream(VntUtil.getGson().toJson(returnObject)));
+			response.setData(VntUtil.getInputStream(VntUtil.toJson(returnObject)));
 			return;
 		}
-		
+
 		seedbox.setName(session.getParms().get("name"));
 		seedbox.setUrl(session.getParms().get("url"));
 		seedbox.setUsername(session.getParms().get("username"));
@@ -59,30 +59,33 @@ public class SaveSeedboxes implements HttpServlet {
 		seedbox.setLabel(session.getParms().get("label"));
 		try {
 			seedbox.setWebClient(Class.forName(session.getParms().get("webClient")).asSubclass(WebClient.class));
-		}
-		catch (ClassNotFoundException e) {
+		} catch (ClassNotFoundException e) {
 			log.error("Webclient not found", e);
 		}
-		PreferenceManager.getInstance().savePreferences();
+		PersistenceManager.save(seedbox);
+		if (!webServer.getUser().getSeedboxes().contains(seedbox)) {
+			webServer.getUser().getSeedboxes().add(seedbox);
+			PersistenceManager.save(webServer.getUser());
+		}
 
 		returnObject = new ReturnObject(true, null);
-		response.setData(VntUtil.getInputStream(VntUtil.getGson().toJson(returnObject)));
+		response.setData(VntUtil.getInputStream(VntUtil.toJson(returnObject)));
 	}
 
 	@Override
 	public void doPut(IHTTPSession session, Response response) {
-		
+
 	}
 
 	@Override
 	public void doDelete(IHTTPSession session, Response response) {
-		Seedbox seedbox = PreferenceManager.getInstance().getSeedbox(session.getParms().get("pkname"));
-		PreferenceManager.getInstance().getPreferences().getSeedboxes().remove(seedbox);
-		PreferenceManager.getInstance().savePreferences();
-		
+		Seedbox seedbox = PersistenceManager.findOne(Seedbox.class, Long.valueOf(session.getParms().get("id")));
+		webServer.getUser().getSeedboxes().remove(seedbox);
+		PersistenceManager.save(webServer.getUser());
+
 		response.setMimeType("application/json");
 		ReturnObject returnObject = new ReturnObject(true, null);
-		response.setData(VntUtil.getInputStream(VntUtil.getGson().toJson(returnObject)));
+		response.setData(VntUtil.getInputStream(VntUtil.toJson(returnObject)));
 	}
 
 }

@@ -25,7 +25,9 @@
 			</a></li>
 			<li role="presentation"><a href="#trackerusers" aria-controls="trackerusers" role="tab" data-toggle="tab">Tracker Users</a></li>
 			<li role="presentation"><a href="#seedboxes" aria-controls="seedboxes" role="tab" data-toggle="tab">Seedboxes </a></li>
-			<li role="presentation"><a href="#settings" aria-controls="settings" role="tab" data-toggle="tab">Settings</a></li>
+			<li role="presentation" id="liusers" class="hide"><a href="#users" aria-controls="users" role="tab" data-toggle="tab">Users</a></li>
+			<li role="presentation" id="lisettings" class="hide"><a href="#settings" aria-controls="settings" role="tab" data-toggle="tab">Settings</a></li>
+			<li role="presentation"><a href="Logout.vnt">Logout</a></li>
 		</ul>
 
 		<!-- Tab panes -->
@@ -143,6 +145,7 @@
 								<tr>
 									<th>Tracker</th>
 									<th>Username</th>
+									<th>Shared</th>
 									<th>Authenticated Until</th>
 									<th><i class="glyphicon glyphicon-remove" style="color: red;"></i></th>
 								</tr>
@@ -174,6 +177,38 @@
 									<th>Name</th>
 									<th>Username</th>
 									<th>Web Client</th>
+									<th><i class="glyphicon glyphicon-remove" style="color: red;"></i></th>
+								</tr>
+							</thead>
+							<tbody style="cursor: pointer;">
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+			<div role="tabpanel" class="tab-pane" id="users">
+				<br>
+				<div class="col-xs-12">
+					<div class="col-xs-8">
+						<h4>Users</h4>
+					</div>
+					<div class="col-xs-4">
+						<div class="pull-right">
+							<button type="button" class="btn btn-primary modaluser">New User</button>
+						</div>
+					</div>
+				</div>
+				<br>
+				<div class="col-xs-12">
+					<div class="table-responsive">
+						<table class="table table-striped table-hover" id="userstable">
+							<thead>
+								<tr>
+									<th>Username</th>
+									<th>Admin</th>
+									<th>Session</th>
+									<th>Last Request</th>
+									<th>Last IP</th>
 									<th><i class="glyphicon glyphicon-remove" style="color: red;"></i></th>
 								</tr>
 							</thead>
@@ -233,7 +268,9 @@
 						<div id="tmdbapikeydiv">
 							<div class="form-group">
 								<label for="tmdbapikey">The Movie Database API Key</label> <input type="text" class="form-control" name="tmdbapikey" placeholder="The Movie Database API Key">
-								<p class="">Use your <a href="https://www.themoviedb.org/account">account page</a> to request an API</p>
+								<p class="">
+									Use your <a href="https://www.themoviedb.org/account">account page</a> to request an API
+								</p>
 							</div>
 							<div class="form-group">
 								<label for="tmdbLanguage">The Movie Database Language </label> <select class="form-control" name="tmdbLanguage" multiple style="width: 100%;">
@@ -308,7 +345,7 @@
 	<div class="modal fade" tabindex="-1" role="dialog" id="modalschedule">
 		<div class="modal-dialog">
 			<form>
-				<input type="hidden" name="new"> <input type="hidden" name="pkname">
+				<input type="hidden" name="new"> <input type="hidden" name="id">
 				<div class="modal-content">
 					<div class="modal-header">
 						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -403,7 +440,7 @@
 	<div class="modal fade" tabindex="-1" role="dialog" id="modaltrackeruser">
 		<div class="modal-dialog">
 			<form>
-				<input type="hidden" name="new"> <input type="hidden" name="pktracker"> <input type="hidden" name="pkusername">
+				<input type="hidden" name="new"> <input type="hidden" name="id"> <input type="hidden" name="pktracker"> <input type="hidden" name="pkusername">
 				<div class="modal-content">
 					<div class="modal-header">
 						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -422,6 +459,11 @@
 						<div class="form-group">
 							<label for="search">Password</label> <input type="password" class="form-control" name="password" placeholder="Password">
 						</div>
+						<div class="checkbox">
+							<label> <input type="checkbox" name="shared" value="true"> Share account?
+							</label>
+							<p class="help-block">You can share this account with another users.</p>
+						</div>
 					</div>
 					<div class="modal-footer">
 						<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
@@ -438,7 +480,7 @@
 	<div class="modal fade" tabindex="-1" role="dialog" id="modalseedbox">
 		<div class="modal-dialog">
 			<form>
-				<input type="hidden" name="new"> <input type="hidden" name="pkname">
+				<input type="hidden" name="new"> <input type="hidden" name="id">
 				<div class="modal-content">
 					<div class="modal-header">
 						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -465,8 +507,43 @@
 						</div>
 						<div class="form-group">
 							<label for="webclient">Web Client</label> <select class="form-control" name="webClient">
-								<option value="com.shuffle.vnt.services.torrentmanager.RuTorrent">RuTorrent</option>
+								<option value="com.shuffle.vnt.service.torrentmanager.RuTorrent">RuTorrent</option>
 							</select>
+						</div>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+						<button type="submit" class="btn btn-primary">Submit</button>
+					</div>
+				</div>
+				<!-- /.modal-content -->
+			</form>
+		</div>
+		<!-- /.modal-dialog -->
+	</div>
+	<!-- /.modal -->
+	
+	<div class="modal fade" tabindex="-1" role="dialog" id="modaluser">
+		<div class="modal-dialog">
+			<form>
+				<input type="hidden" name="new"> <input type="hidden" name="id">
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+							<span aria-hidden="true">&times;</span>
+						</button>
+						<h4 class="modal-title">Seedbox</h4>
+					</div>
+					<div class="modal-body">
+						<div class="form-group">
+							<label for="username">Username</label> <input type="text" class="form-control" name="username" placeholder="Username">
+						</div>
+						<div class="form-group">
+							<label for="search">Password</label> <input type="password" class="form-control" name="password" placeholder="Password">
+						</div>
+						<div class="checkbox">
+							<label> <input type="checkbox" name="admin" value="true"> Admin?
+							</label>
 						</div>
 					</div>
 					<div class="modal-footer">
@@ -495,7 +572,6 @@
 					<div class="modal-body">
 						<div class="form-group">
 							<label for="seedbox">Seedbox</label> <select class="form-control" name="seedbox">
-								<option value="Molusco">Molusco</option>
 							</select>
 						</div>
 					</div>

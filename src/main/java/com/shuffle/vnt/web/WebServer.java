@@ -1,5 +1,6 @@
 package com.shuffle.vnt.web;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -7,6 +8,10 @@ import java.util.Map;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hibernate.criterion.Restrictions;
+
+import com.shuffle.vnt.core.db.PersistenceManager;
+import com.shuffle.vnt.web.model.User;
 
 import fi.iki.elonen.NanoHTTPD;
 
@@ -14,9 +19,7 @@ public class WebServer extends NanoHTTPD {
 
 	private static final transient Log log = LogFactory.getLog(WebServer.class);
 
-	private static final String MIME_PLAINTEXT = "text/plain", MIME_HTML = "text/html",
-			MIME_JS = "application/javascript", MIME_CSS = "text/css", MIME_PNG = "image/png",
-			MIME_DEFAULT_BINARY = "application/octet-stream", MIME_XML = "text/xml";
+	private static final String MIME_PLAINTEXT = "text/plain", MIME_HTML = "text/html", MIME_JS = "application/javascript", MIME_CSS = "text/css", MIME_PNG = "image/png", MIME_DEFAULT_BINARY = "application/octet-stream", MIME_XML = "text/xml";
 	private static final Map<String, String> extensionsMimes = new HashMap<String, String>();
 
 	static {
@@ -28,8 +31,10 @@ public class WebServer extends NanoHTTPD {
 		extensionsMimes.put("png", MIME_PNG);
 		extensionsMimes.put("xml", MIME_XML);
 	}
-	
+
 	private Map<String, String> files = new HashMap<>();
+
+	private User user;
 
 	public WebServer(int port) {
 		super(port);
@@ -41,8 +46,9 @@ public class WebServer extends NanoHTTPD {
 			String docBase = "com/shuffle/vnt/web/webapp";
 			String servletBase = "com/shuffle/vnt/web/servlets";
 			String urlRequested = session.getUri();
-			// System.out.println(urlRequested);
 			String extension = "";
+			user = PersistenceManager.findOne(User.class, Restrictions.eq("session", session.getCookies().read("session")));
+
 			if (urlRequested == null || urlRequested.equals("") || urlRequested.equals("/")) {
 				urlRequested = "";
 				if (!urlRequested.endsWith("/")) {
@@ -51,9 +57,17 @@ public class WebServer extends NanoHTTPD {
 				urlRequested += "index.html";
 			}
 			extension = urlRequested.split("\\.")[urlRequested.split("\\.").length - 1];
+			if (user == null && !urlRequested.endsWith("Login.vnt") && !urlRequested.endsWith("UploadTorrentToSeedbox.vnt") && !urlRequested.endsWith("DownloadTorrent.vnt") && !urlRequested.contains("css/") && !urlRequested.contains("js/") && !urlRequested.contains("less/") && !urlRequested.contains("fonts/")) {
+				return new Response(Response.Status.OK, MIME_HTML, getClass().getProtectionDomain().getClassLoader().getResourceAsStream(docBase + "/login.html"));
+			}
 
 			if (extension.equals("vnt")) {
 
+				if (getUser() != null) {
+					getUser().setLastRequest(new Date());
+					getUser().setLastIP(session.getHeaders().get("remote-addr"));
+					PersistenceManager.save(getUser());
+				}
 				String servlet = urlRequested.replace("." + extension, "");
 				Class<?> clazz = Class.forName((servletBase + servlet).replaceAll("/", "."));
 				if (ClassUtils.isAssignable(clazz, HttpServlet.class, true)) {
@@ -78,8 +92,7 @@ public class WebServer extends NanoHTTPD {
 				}
 			}
 
-			return new Response(Response.Status.OK,
-					(extensionsMimes.get(extension) != null ? extensionsMimes.get(extension) : MIME_DEFAULT_BINARY),
+			return new Response(Response.Status.OK, (extensionsMimes.get(extension) != null ? extensionsMimes.get(extension) : MIME_DEFAULT_BINARY),
 					getClass().getProtectionDomain().getClassLoader().getResourceAsStream(docBase + urlRequested));
 
 		} catch (Exception e) {
@@ -90,12 +103,15 @@ public class WebServer extends NanoHTTPD {
 
 	@Override
 	public Map<String, List<String>> decodeParameters(String queryString) {
-	    return super.decodeParameters(queryString);
+		return super.decodeParameters(queryString);
 	}
 
 	public Map<String, String> getFiles() {
-	    return files;
+		return files;
 	}
-	
-	
+
+	public User getUser() {
+		return user;
+	}
+
 }

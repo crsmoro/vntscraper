@@ -1,21 +1,25 @@
 package com.shuffle.vnt.web.servlets;
 
-import com.shuffle.vnt.configuration.PreferenceManager;
-import com.shuffle.vnt.configuration.bean.TrackerUser;
+import com.shuffle.vnt.core.db.PersistenceManager;
+import com.shuffle.vnt.core.model.TrackerUser;
+import com.shuffle.vnt.core.parser.Tracker;
 import com.shuffle.vnt.util.VntUtil;
 import com.shuffle.vnt.web.HttpServlet;
-import com.shuffle.vnt.web.ReturnObject;
 import com.shuffle.vnt.web.WebServer;
+import com.shuffle.vnt.web.bean.ReturnObject;
+import com.shuffle.vnt.web.model.TrackerUserUser;
 
 import fi.iki.elonen.NanoHTTPD.IHTTPSession;
 import fi.iki.elonen.NanoHTTPD.Response;
 
 public class SaveTrackerUsers implements HttpServlet {
 
+	private WebServer webServer;
+
 	@Override
-    public void setWebServer(WebServer webServer) {
-	
-    }
+	public void setWebServer(WebServer webServer) {
+		this.webServer = webServer;
+	}
 
 	@Override
 	public void doGet(IHTTPSession session, Response response) {
@@ -28,47 +32,52 @@ public class SaveTrackerUsers implements HttpServlet {
 		response.setMimeType("application/json");
 		ReturnObject returnObject;
 		TrackerUser trackerUser = null;
+		TrackerUserUser trackerUserUser = null;
 		boolean isNew = Boolean.valueOf(session.getParms().get("new"));
-		
+
 		if (isNew) {
 			trackerUser = new TrackerUser();
-			PreferenceManager.getInstance().getPreferences().getTrackerUsers().add(trackerUser);
+			trackerUserUser = new TrackerUserUser();
+		} else {
+			trackerUserUser = PersistenceManager.findOne(TrackerUserUser.class, Long.valueOf(session.getParms().get("id")));
+			trackerUser = trackerUserUser.getTrackerUser();
 		}
-		else {
-			trackerUser = PreferenceManager.getInstance().getTrackerUser(session.getParms().get("pktracker"), session.getParms().get("pkusername"));
-		}
-		
+
 		if (!isNew && trackerUser == null) {
 			returnObject = new ReturnObject(false, "Tracker user not found to update", new IllegalArgumentException("Invalid Tracker User"));
-			response.setData(VntUtil.getInputStream(VntUtil.getGson().toJson(returnObject)));
+			response.setData(VntUtil.getInputStream(VntUtil.toJson(returnObject)));
 			return;
 		}
-		
-		trackerUser.setTracker(session.getParms().get("tracker"));
+
+		trackerUser.setTracker(Tracker.getInstance(session.getParms().get("tracker")));
 		trackerUser.setUsername(session.getParms().get("username"));
 		if (session.getParms().get("password") != null && !"".equals(session.getParms().get("password"))) {
 			trackerUser.setPassword(session.getParms().get("password"));
 		}
-		PreferenceManager.getInstance().savePreferences();
+		PersistenceManager.save(trackerUser);
+
+		trackerUserUser.setTrackerUser(trackerUser);
+		trackerUserUser.setUser(webServer.getUser());
+		trackerUserUser.setShared(Boolean.valueOf(session.getParms().get("shared")));
+		PersistenceManager.save(trackerUserUser);
 
 		returnObject = new ReturnObject(true, null);
-		response.setData(VntUtil.getInputStream(VntUtil.getGson().toJson(returnObject)));
+		response.setData(VntUtil.getInputStream(VntUtil.toJson(returnObject)));
 	}
 
 	@Override
 	public void doPut(IHTTPSession session, Response response) {
-		
+
 	}
 
 	@Override
 	public void doDelete(IHTTPSession session, Response response) {
-		TrackerUser trackerUser = PreferenceManager.getInstance().getTrackerUser(session.getParms().get("pktracker"), session.getParms().get("pkusername"));
-		PreferenceManager.getInstance().getPreferences().getTrackerUsers().remove(trackerUser);
-		PreferenceManager.getInstance().savePreferences();
-		
+		TrackerUserUser trackerUserUser = PersistenceManager.findOne(TrackerUserUser.class, Long.valueOf(session.getParms().get("id")));
+		PersistenceManager.remove(trackerUserUser);
+
 		response.setMimeType("application/json");
 		ReturnObject returnObject = new ReturnObject(true, null);
-		response.setData(VntUtil.getInputStream(VntUtil.getGson().toJson(returnObject)));
+		response.setData(VntUtil.getInputStream(VntUtil.toJson(returnObject)));
 	}
 
 }

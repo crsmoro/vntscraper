@@ -9,18 +9,18 @@ import org.jsoup.Jsoup;
 
 import com.shuffle.vnt.core.parser.TorrentDetailedParser;
 import com.shuffle.vnt.core.parser.TorrentParser;
-import com.shuffle.vnt.core.parser.TrackerConfig;
+import com.shuffle.vnt.core.parser.Tracker;
 import com.shuffle.vnt.core.parser.bean.Body;
 import com.shuffle.vnt.core.parser.bean.TrackerCategory;
 
-public class Demonoid implements TrackerConfig {
+public class Demonoid implements Tracker {
 
 	private final String name = "Demonoid";
 
 	private final String url = "http://www.demonoid.ooo/files/";
 
 	private final String authenticationUrl = "http://www.demonoid.ooo/account_handler.php";
-	
+
 	private final ParameterType parameterType = ParameterType.DEFAULT;
 
 	private final String usernameField = "nickname";
@@ -34,23 +34,23 @@ public class Demonoid implements TrackerConfig {
 	private final String searchField = "query";
 
 	private final String categoryField = "category";
-	
+
 	private final List<TrackerCategory> categories = new ArrayList<>();
-	
+
 	{
-	    categories.add(new TrackerCategory("Applications", "", "5"));
-	    categories.add(new TrackerCategory("Audio Books", "", "17"));
-	    categories.add(new TrackerCategory("Books", "", "11"));
-	    categories.add(new TrackerCategory("Comics", "", "10"));
-	    categories.add(new TrackerCategory("Games", "", "4"));
-	    categories.add(new TrackerCategory("Japanese Anime", "", "9"));
-	    categories.add(new TrackerCategory("Miscellaneous", "", "6"));
-	    categories.add(new TrackerCategory("Movies", "", "1"));
-	    categories.add(new TrackerCategory("Music", "", "2"));
-	    categories.add(new TrackerCategory("Music Videos", "", "13"));
-	    categories.add(new TrackerCategory("Pictures", "", "8"));
-	    categories.add(new TrackerCategory("TV", "", "3"));
-	    
+		categories.add(new TrackerCategory("Applications", "", "5"));
+		categories.add(new TrackerCategory("Audio Books", "", "17"));
+		categories.add(new TrackerCategory("Books", "", "11"));
+		categories.add(new TrackerCategory("Comics", "", "10"));
+		categories.add(new TrackerCategory("Games", "", "4"));
+		categories.add(new TrackerCategory("Japanese Anime", "", "9"));
+		categories.add(new TrackerCategory("Miscellaneous", "", "6"));
+		categories.add(new TrackerCategory("Movies", "", "1"));
+		categories.add(new TrackerCategory("Music", "", "2"));
+		categories.add(new TrackerCategory("Music Videos", "", "13"));
+		categories.add(new TrackerCategory("Pictures", "", "8"));
+		categories.add(new TrackerCategory("TV", "", "3"));
+
 	}
 
 	@Override
@@ -70,7 +70,7 @@ public class Demonoid implements TrackerConfig {
 
 	@Override
 	public ParameterType getParameterType() {
-	    return parameterType;
+		return parameterType;
 	}
 
 	@Override
@@ -118,7 +118,7 @@ public class Demonoid implements TrackerConfig {
 
 	@Override
 	public List<TrackerCategory> getCategories() {
-	    return categories;
+		return categories;
 	}
 
 	@Override

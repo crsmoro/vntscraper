@@ -4,7 +4,7 @@
 
 	<groupId>com.shuffle</groupId>
 	<artifactId>vnt</artifactId>
-	<version>1.1.5</version>
+	<version>2.0.0</version>
 	<packaging>jar</packaging>
 
 	<name>vnt</name>
@@ -15,6 +15,16 @@
 	</properties>
 
 	<dependencies>
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-entitymanager</artifactId>
+			<version>5.1.0.Final</version>
+		</dependency>
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<version>1.4.192</version>
+		</dependency>
 		<dependency>
 			<groupId>com.omertron</groupId>
 			<artifactId>themoviedbapi</artifactId>
@@ -90,8 +100,8 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.3</version>
 				<configuration>
-					<source>1.7</source>
-					<target>1.7</target>
+					<source>1.8</source>
+					<target>1.8</target>
 				</configuration>
 			</plugin>
 			<plugin>

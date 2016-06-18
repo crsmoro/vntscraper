@@ -4,54 +4,68 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.shuffle.vnt.configuration.PreferenceManager;
-import com.shuffle.vnt.configuration.bean.Cookie;
-import com.shuffle.vnt.configuration.bean.TrackerUser;
+import org.apache.commons.lang3.StringUtils;
+import org.hibernate.criterion.Restrictions;
+
+import com.shuffle.vnt.core.db.PersistenceManager;
+import com.shuffle.vnt.core.model.Cookie;
+import com.shuffle.vnt.core.parser.Tracker;
 import com.shuffle.vnt.util.VntUtil;
 import com.shuffle.vnt.web.HttpServlet;
 import com.shuffle.vnt.web.WebServer;
+import com.shuffle.vnt.web.model.TrackerUserUser;
 
 import fi.iki.elonen.NanoHTTPD.IHTTPSession;
 import fi.iki.elonen.NanoHTTPD.Response;
 
 public class LoadTrackerUsers implements HttpServlet {
 
+	private WebServer webServer;
+
 	@Override
-    public void setWebServer(WebServer webServer) {
-	
-    }
+	public void setWebServer(WebServer webServer) {
+		this.webServer = webServer;
+	}
 
 	@Override
 	public void doGet(IHTTPSession session, Response response) {
 		DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm");
-		List<TrackerUser> trackerUsers = new ArrayList<>();
-		String tracker = session.getParms().get("tracker");
-		if (tracker != null && !"".equals(tracker)) {
-			trackerUsers.addAll(PreferenceManager.getInstance().getTrackerUsers(tracker));
+		List<TrackerUserUser> trackerUserUsers = new ArrayList<>();
+		Tracker tracker = null;
+		if (StringUtils.isNotBlank(session.getParms().get("tracker"))) {
+			tracker = Tracker.getInstance(session.getParms().get("tracker"));
+		}
+		if (tracker != null) {
+			trackerUserUsers.addAll(PersistenceManager.findAll(TrackerUserUser.class, Restrictions.and(Restrictions.or(Restrictions.eq("user", webServer.getUser()), Restrictions.eq("shared", true)), Restrictions.eq("trackerUser", webServer.getUser().getTrackerUser(tracker)))));
 		} else {
-			trackerUsers.addAll(PreferenceManager.getInstance().getPreferences().getTrackerUsers());
+			trackerUserUsers.addAll(PersistenceManager.findAll(TrackerUserUser.class, Restrictions.or(Restrictions.eq("user", webServer.getUser()), Restrictions.eq("shared", true))));
 		}
 
 		response.setMimeType("application/json");
-		JsonArray jsonArray = new JsonArray();
-		for (TrackerUser trackerUser : trackerUsers) {
-			JsonObject jsonObject = new JsonObject();
-			jsonObject.addProperty("tracker", trackerUser.getTracker());
-			jsonObject.addProperty("username", trackerUser.getUsername());
+		List<Map<String, Object>> jsonArray = new ArrayList<>();
+		for (TrackerUserUser trackerUserUser : trackerUserUsers) {
+			Map<String, Object> jsonObject = new HashMap<>();
+			jsonObject.put("id", trackerUserUser.getId());
+			jsonObject.put("tracker", trackerUserUser.getTrackerUser().getTracker().getName());
+			jsonObject.put("trackerClass", trackerUserUser.getTrackerUser().getTracker().getClass().getName());
+			jsonObject.put("username", trackerUserUser.getTrackerUser().getUsername());
 			Date au = null;
-			for (Cookie cookie : trackerUser.getCookies()) {
+			for (Cookie cookie : trackerUserUser.getTrackerUser().getCookies()) {
 				if (au == null || au.before(new Date(cookie.getExpiration()))) {
 					au = new Date(cookie.getExpiration());
 				}
 			}
-			jsonObject.addProperty("authenticatedUntil", au != null ? dateFormat.format(au) : null);
+			jsonObject.put("authenticatedUntil", au != null ? dateFormat.format(au) : null);
+			jsonObject.put("shared", trackerUserUser.isShared());
+			jsonObject.put("owner", trackerUserUser.getUser().getUsername());
+			jsonObject.put("owned", webServer.getUser().equals(trackerUserUser.getUser()));
 			jsonArray.add(jsonObject);
 		}
-		response.setData(VntUtil.getInputStream(VntUtil.getGson().toJson(jsonArray)));
+		response.setData(VntUtil.getInputStream(VntUtil.toJson(jsonArray)));
 	}
 
 	@Override
