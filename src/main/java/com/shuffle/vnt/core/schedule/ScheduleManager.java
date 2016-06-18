@@ -77,11 +77,9 @@ public class ScheduleManager {
 		try {
 			BeanInfo info = Introspector.getBeanInfo(object.getClass());
 			for (PropertyDescriptor pd : info.getPropertyDescriptors()) {
-				if (!pd.getName().equals("trackerUser")) {
-					Method reader = pd.getReadMethod();
-					if (reader != null)
-						objectAsMap.put(pd.getName(), reader.invoke(object));
-				}
+				Method reader = pd.getReadMethod();
+				if (reader != null)
+					objectAsMap.put(pd.getName(), reader.invoke(object));
 			}
 		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | IntrospectionException e) {
 			log.error("Error converting Object to Map", e);
@@ -93,8 +91,8 @@ public class ScheduleManager {
 	private String mountHtmlMail(Job job, List<Torrent> torrents) {
 		List<Object> torrentTpls = new ArrayList<>();
 		for (Torrent torrent : torrents) {
-			Map<String, Object> torrentObject = clazzToObject(torrent);
 			torrent.setContent("");
+			Map<String, Object> torrentObject = clazzToObject(torrent);
 			try {
 				torrentObject.put("stringify", URLEncoder.encode(VntUtil.toJson(torrent), "UTF-8"));
 			} catch (UnsupportedEncodingException e) {
@@ -138,7 +136,7 @@ public class ScheduleManager {
 
 		Map<String, Object> scopes = new HashMap<String, Object>();
 		scopes.put("baseUrl", PreferenceManager.getPreferences().getBaseUrl());
-		// scopes.put("schedulerData", job);
+		scopes.put("job", job);
 		scopes.put("torrents", torrentTpls);
 		scopes.put("seedboxes", job.getSeedboxes());
 		log.debug("scopes");
