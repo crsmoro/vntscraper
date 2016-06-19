@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.reflections.Reflections;
-
 import com.shuffle.vnt.core.service.ServiceParser;
 import com.shuffle.vnt.util.VntUtil;
 import com.shuffle.vnt.web.HttpServlet;
@@ -25,8 +23,7 @@ public class LoadServiceParsers implements HttpServlet {
 	@Override
 	public void doGet(IHTTPSession session, Response response) {
 		List<Map<String, Object>> jsonArray = new ArrayList<>();
-		Reflections reflections = new Reflections("com.shuffle.vnt.service.parser");
-		for (Class<? extends ServiceParser> serviceParserClass : reflections.getSubTypesOf(ServiceParser.class)) {
+		for (Class<? extends ServiceParser> serviceParserClass : VntUtil.fetchClasses().getSubTypesOf(ServiceParser.class)) {
 			if (serviceParserClass.isInterface()) {
 				Map<String, Object> jsonObject = new HashMap<>();
 				jsonObject.put("name", serviceParserClass.getSimpleName());

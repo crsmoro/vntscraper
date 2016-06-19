@@ -23,6 +23,8 @@ public class Preferences extends GenericEntity implements Serializable {
 
 	private String tmdbLanguage = "";
 
+	private Long maxSessionsPerUser = 5l;
+
 	@ManyToOne(targetEntity = MailConfig.class, optional = true)
 	@JoinColumn(name = "mailconfig_id")
 	private MailConfig mailConfig;
@@ -75,8 +77,17 @@ public class Preferences extends GenericEntity implements Serializable {
 		this.mailConfig = mailConfig;
 	}
 
+	public Long getMaxSessionsPerUser() {
+		return maxSessionsPerUser;
+	}
+
+	public void setMaxSessionsPerUser(Long maxSessionsPerUser) {
+		this.maxSessionsPerUser = maxSessionsPerUser;
+	}
+
 	@Override
 	public String toString() {
-		return "Preferences [baseUrl=" + baseUrl + ", imdbActive=" + imdbActive + ", tmdbActive=" + tmdbActive + ", tmdbApiKey=" + tmdbApiKey + ", tmdbLanguage=" + tmdbLanguage + ", mailConfig=" + mailConfig + ", id=" + id + "]";
+		return "Preferences [baseUrl=" + baseUrl + ", imdbActive=" + imdbActive + ", tmdbActive=" + tmdbActive + ", tmdbApiKey=" + tmdbApiKey + ", tmdbLanguage=" + tmdbLanguage + ", maxSessionsPerUser=" + maxSessionsPerUser + ", mailConfig="
+				+ mailConfig + ", id=" + id + "]";
 	}
 }

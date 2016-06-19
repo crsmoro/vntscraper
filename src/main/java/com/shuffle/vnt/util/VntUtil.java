@@ -67,7 +67,7 @@ public abstract class VntUtil {
 		return jsonString;
 	}
 
-	public static <E extends Object> E fromJson(String json, Class<E> clazz) {
+	public static <E> E fromJson(String json, Class<E> clazz) {
 		try {
 			return getObjectMapper().readValue(json, clazz);
 		} catch (IOException e) {

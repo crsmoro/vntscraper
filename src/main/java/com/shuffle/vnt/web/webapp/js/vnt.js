@@ -22,8 +22,10 @@ function openModalSchedule(e) {
 		loadTrackerCategoriesSchedule(tracker).done(function() {
 			var trackercategoriesVal = $("#trackercategories").val();
 			var cats = [];
-			for (var i=0; i<trackercategoriesVal.length; i++) {
-				cats.push(trackercategoriesVal[i].split('|')[1]);
+			if (trackercategoriesVal) {
+				for (var i=0; i<trackercategoriesVal.length; i++) {
+					cats.push(trackercategoriesVal[i].split('|')[1]);
+				}
 			}
 			$("#trackercategoriesschedule").val(cats).trigger('change');
 		});
@@ -358,9 +360,9 @@ function loadUsers() {
 							html += '<tr data-id="' + user.id + '">';
 							html += '<td>' + user.username + '</td>';
 							html += '<td>' + (user.admin?'Yes':'No') + '</td>';
-							html += '<td>' + (user.session ? user.session : '-') + '</td>';
-							html += '<td>' + (user.lastRequest ? user.lastRequest : '-') + '</td>';
-							html += '<td>' + (user.lastIP ? user.lastIP : '-') + '</td>';
+							html += '<td>' + (user.sessions && user.sessions.length ? (user.sessions[0].session ? user.sessions[0].session : '-') : '-') + '</td>';
+							html += '<td>' + (user.sessions && user.sessions.length ? (user.sessions[0].lastRequest ? user.sessions[0].lastRequest : '-') : '-') + '</td>';
+							html += '<td>' + (user.sessions && user.sessions.length ? (user.sessions[0].lastIP ? user.sessions[0].lastIP : '-') : '-') + '</td>';
 							html += '<td><i class="glyphicon glyphicon-remove" style="color:red;"></i></td>';
 							html += '</tr>';
 							tbody.append(html);
@@ -921,6 +923,7 @@ $('#modalgeneralconfig').on('show.bs.modal', function(e) {
 	$.getJSON('Settings.vnt?configuration=generalConfig').done(function(data) {
 		if (data.success) {
 			form.find('[name="baseUrl"]').val(data.data.baseUrl);
+			form.find('[name="maxSessionsPerUser"]').val(data.data.maxSessionsPerUser);
 			form.find('[name="imdbActive"]').prop('checked', data.data.imdbActive);
 			form.find('[name="tmdbActive"]').prop('checked', data.data.tmdbActive).trigger('change');
 			form.find('[name="tmdbapikey"]').val(data.data.tmdbapikey);
@@ -959,13 +962,18 @@ $('[name="tmdbLanguage"]').select2({
 	allowClear : true
 });
 
-function isAdmin() {
-	$.getJSON('IsAdmin.vnt').done(function(data) {
-		if (data && data.success && data.data) {
-			$('#liusers').removeClass('hide');
-			$('#lisettings').removeClass('hide');
+function loadUserData() {
+	$.getJSON('LoadUserData.vnt').done(function(data) {
+		if (data && data.success) {
+			if (data.data.admin) {
+				$('#liusers').removeClass('hide');
+				$('#lisettings').removeClass('hide');
+			}
+			var liuserdata = $('#liuserdata');
+			liuserdata.find('> a').html(data.data.user + ' <span class="caret"></span>');
+			liuserdata.removeClass('hide');
 		}
 	});
 }
 
-isAdmin();
+loadUserData();

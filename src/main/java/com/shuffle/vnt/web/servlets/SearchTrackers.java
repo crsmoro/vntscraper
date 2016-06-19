@@ -79,6 +79,7 @@ public class SearchTrackers implements HttpServlet {
 				trackerManager.setPage(Long.valueOf(session.getParms().get("page")));
 			}
 			torrents.addAll(trackerManager.fetchTorrents());
+			torrents.forEach(torrent -> torrent.setContent(""));
 		}
 
 		response.setMimeType("application/json; charset=UTF-8");

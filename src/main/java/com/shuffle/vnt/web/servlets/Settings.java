@@ -44,6 +44,7 @@ public class Settings implements HttpServlet {
 			response.setMimeType("application/json; charset=UTF-8");
 			Map<String, Object> generalConfig = new HashMap<>();
 			generalConfig.put("baseUrl", PreferenceManager.getPreferences().getBaseUrl());
+			generalConfig.put("maxSessionsPerUser", PreferenceManager.getPreferences().getMaxSessionsPerUser());
 			generalConfig.put("imdbActive", PreferenceManager.getPreferences().isImdbActive());
 			generalConfig.put("tmdbActive", PreferenceManager.getPreferences().isTmdbActive());
 			generalConfig.put("tmdbapikey", PreferenceManager.getPreferences().getTmdbApiKey());
@@ -88,12 +89,14 @@ public class Settings implements HttpServlet {
 			Map<String, List<String>> parameters = webServer.decodeParameters(session.getQueryParameterString());
 
 			String baseUrl = session.getParms().get("baseUrl");
+			Long maxSessionsPerUser = StringUtils.isNumeric(session.getParms().get("maxSessionsPerUser")) ? Long.valueOf(session.getParms().get("maxSessionsPerUser")) : 5;
 			boolean imdbActive = Boolean.parseBoolean(session.getParms().get("imdbActive"));
 			boolean tmdbActive = Boolean.parseBoolean(session.getParms().get("tmdbActive"));
 			String tmdbapikey = session.getParms().get("tmdbapikey");
 			String tmdbLanguage = StringUtils.join(parameters.get("tmdbLanguage"), ",");
 			if (StringUtils.isNotBlank(baseUrl)) {
 				PreferenceManager.getPreferences().setBaseUrl(baseUrl);
+				PreferenceManager.getPreferences().setMaxSessionsPerUser(maxSessionsPerUser);
 				PreferenceManager.getPreferences().setImdbActive(imdbActive);
 				PreferenceManager.getPreferences().setTmdbActive(tmdbActive);
 				PreferenceManager.getPreferences().setTmdbApiKey(tmdbapikey);

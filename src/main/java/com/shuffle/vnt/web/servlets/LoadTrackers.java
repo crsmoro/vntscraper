@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.reflections.Reflections;
-
 import com.shuffle.vnt.core.model.TrackerUser;
 import com.shuffle.vnt.core.parser.Tracker;
 import com.shuffle.vnt.util.VntUtil;
@@ -28,22 +26,23 @@ public class LoadTrackers implements HttpServlet {
 	@Override
 	public void doGet(IHTTPSession session, Response response) {
 		List<Map<String, Object>> jsonArray = new ArrayList<>();
-		Reflections reflections = new Reflections("com.shuffle.vnt.trackers");
-		for (Class<? extends Tracker> trackerClass : reflections.getSubTypesOf(Tracker.class)) {
+		for (Class<? extends Tracker> trackerClass : VntUtil.fetchClasses().getSubTypesOf(Tracker.class)) {
 			try {
-				Tracker tracker = trackerClass.newInstance();
-				Map<String, Object> jsonObject = new HashMap<>();
-				jsonObject.put("name", tracker.getName());
-				jsonObject.put("clazz", tracker.getClass().getName());
-				boolean avaliable = false;
-				for (TrackerUser trackerUser : webServer.getUser().getTrackerUsers()) {
-					if (trackerUser.getTracker().getName().equals(tracker.getName())) {
-						avaliable = true;
-						break;
+				if (!trackerClass.isInterface()) {
+					Tracker tracker = trackerClass.newInstance();
+					Map<String, Object> jsonObject = new HashMap<>();
+					jsonObject.put("name", tracker.getName());
+					jsonObject.put("clazz", tracker.getClass().getName());
+					boolean avaliable = false;
+					for (TrackerUser trackerUser : webServer.getUser().getTrackerUsers()) {
+						if (trackerUser.getTracker().getName().equals(tracker.getName())) {
+							avaliable = true;
+							break;
+						}
 					}
+					jsonObject.put("avaliable", avaliable);
+					jsonArray.add(jsonObject);
 				}
-				jsonObject.put("avaliable", avaliable);
-				jsonArray.add(jsonObject);
 			} catch (InstantiationException | IllegalAccessException e) {
 				e.printStackTrace();
 			}

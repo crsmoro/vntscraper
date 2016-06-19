@@ -3,12 +3,15 @@ package com.shuffle.vnt.web.servlets;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Comparator;
 
 import org.hibernate.criterion.Restrictions;
 
+import com.shuffle.vnt.core.configuration.PreferenceManager;
 import com.shuffle.vnt.core.db.PersistenceManager;
 import com.shuffle.vnt.web.HttpServlet;
 import com.shuffle.vnt.web.WebServer;
+import com.shuffle.vnt.web.model.Session;
 import com.shuffle.vnt.web.model.User;
 
 import fi.iki.elonen.NanoHTTPD.IHTTPSession;
@@ -32,16 +35,25 @@ public class Login implements HttpServlet {
 		String username = session.getParms().get("username");
 		String password = session.getParms().get("password");
 		User user = PersistenceManager.findOne(User.class, Restrictions.and(Restrictions.eq("username", username), Restrictions.eq("password", password)));
+		Session sessionUser = null;
 		if (user != null) {
 			String sessionhash = "";
 			try {
 				MessageDigest messageDigest = MessageDigest.getInstance("MD5");
 				sessionhash = new BigInteger(1, messageDigest.digest((username + password + String.valueOf(System.currentTimeMillis())).getBytes())).toString(16);
-				user.setSession(sessionhash);
+				long maxSessionsPerUser = (PreferenceManager.getPreferences().getMaxSessionsPerUser() != null ? PreferenceManager.getPreferences().getMaxSessionsPerUser() : 5l);
+				if (Long.compare(user.getSessions().size(), maxSessionsPerUser) < 0) {
+					sessionUser = new Session();
+				}
+				else {
+					sessionUser = user.getSessions().stream().sorted(Comparator.comparing(Session::getLastRequest)).findFirst().get();
+				}
 			} catch (NoSuchAlgorithmException e) {
 				e.printStackTrace();
 			}
-			PersistenceManager.save(user);
+			sessionUser.setSession(sessionhash);
+			sessionUser.setUser(user);
+			PersistenceManager.save(sessionUser);
 			session.getCookies().set("session", sessionhash, 30);
 			response.setStatus(Status.REDIRECT);
 			response.addHeader("Location", "/");

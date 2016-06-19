@@ -12,8 +12,8 @@ import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.Lob;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 
 import com.shuffle.vnt.core.db.model.GenericEntity;
 import com.shuffle.vnt.core.model.Seedbox;
@@ -55,7 +55,7 @@ public class Job extends GenericEntity implements Serializable {
 	@Lob
 	private byte[] template;
 
-	@OneToMany(targetEntity = Seedbox.class, fetch = FetchType.EAGER)
+	@ManyToMany(targetEntity = Seedbox.class, fetch = FetchType.EAGER)
 	@JoinTable(inverseJoinColumns = { @JoinColumn(name = "seedbox_id") }, joinColumns = { @JoinColumn(name = "job_id") }, name = "job_seedboxes")
 	private Set<Seedbox> seedboxes = new HashSet<>();
 

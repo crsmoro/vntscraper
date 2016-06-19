@@ -27,7 +27,12 @@
 			<li role="presentation"><a href="#seedboxes" aria-controls="seedboxes" role="tab" data-toggle="tab">Seedboxes </a></li>
 			<li role="presentation" id="liusers" class="hide"><a href="#users" aria-controls="users" role="tab" data-toggle="tab">Users</a></li>
 			<li role="presentation" id="lisettings" class="hide"><a href="#settings" aria-controls="settings" role="tab" data-toggle="tab">Settings</a></li>
-			<li role="presentation"><a href="Logout.vnt">Logout</a></li>
+			<li role="presentation" id="liuserdata" class="hide dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">User <span class="caret"></span></a>
+				<ul class="dropdown-menu">
+					<li class="disabled"><a href="javascript:;">Perfil</a></li>
+					<li role="separator" class="divider"></li>
+					<li><a href="Logout.vnt">Logout</a></li>
+				</ul></li>
 		</ul>
 
 		<!-- Tab panes -->
@@ -254,8 +259,11 @@
 					</div>
 					<div class="modal-body">
 						<div class="form-group">
-							<label for="baseUrl">Base URL</label> <input type="text" class="form-control" name="baseUrl" placeholder="Base URL">
+							<label for="baseUrl">Base URL</label> <input type="text" class="form-control" name="baseUrl" placeholder="Base URL" required>
 							<p class="">Set the base URL used on the emails</p>
+						</div>
+						<div class="form-group">
+							<label for="baseUrl">Max Sessions per User</label> <input type="text" class="form-control" name="maxSessionsPerUser" placeholder="5">
 						</div>
 						<div class="checkbox">
 							<label> <input type="checkbox" name="imdbActive" value="true"> Active IMDB Integration (Over OMDb)
@@ -522,7 +530,7 @@
 		<!-- /.modal-dialog -->
 	</div>
 	<!-- /.modal -->
-	
+
 	<div class="modal fade" tabindex="-1" role="dialog" id="modaluser">
 		<div class="modal-dialog">
 			<form>

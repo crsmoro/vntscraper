@@ -11,6 +11,7 @@ import org.apache.commons.logging.LogFactory;
 import org.hibernate.criterion.Restrictions;
 
 import com.shuffle.vnt.core.db.PersistenceManager;
+import com.shuffle.vnt.web.model.Session;
 import com.shuffle.vnt.web.model.User;
 
 import fi.iki.elonen.NanoHTTPD;
@@ -36,6 +37,8 @@ public class WebServer extends NanoHTTPD {
 
 	private User user;
 
+	private Session session;
+
 	public WebServer(int port) {
 		super(port);
 	}
@@ -47,7 +50,10 @@ public class WebServer extends NanoHTTPD {
 			String servletBase = "com/shuffle/vnt/web/servlets";
 			String urlRequested = session.getUri();
 			String extension = "";
-			user = PersistenceManager.findOne(User.class, Restrictions.eq("session", session.getCookies().read("session")));
+			this.session = PersistenceManager.findOne(Session.class, Restrictions.eq("session", session.getCookies().read("session")));
+			if (this.session != null) {
+				user = this.session.getUser();
+			}
 
 			if (urlRequested == null || urlRequested.equals("") || urlRequested.equals("/")) {
 				urlRequested = "";
@@ -57,16 +63,16 @@ public class WebServer extends NanoHTTPD {
 				urlRequested += "index.html";
 			}
 			extension = urlRequested.split("\\.")[urlRequested.split("\\.").length - 1];
-			if (user == null && !urlRequested.endsWith("Login.vnt") && !urlRequested.endsWith("UploadTorrentToSeedbox.vnt") && !urlRequested.endsWith("DownloadTorrent.vnt") && !urlRequested.contains("css/") && !urlRequested.contains("js/") && !urlRequested.contains("less/") && !urlRequested.contains("fonts/")) {
+			if (this.session == null && !urlRequested.endsWith("Login.vnt") && !urlRequested.endsWith("UploadTorrentToSeedbox.vnt") && !urlRequested.endsWith("DownloadTorrent.vnt") && !urlRequested.contains("css/")
+					&& !urlRequested.contains("js/") && !urlRequested.contains("less/") && !urlRequested.contains("fonts/")) {
 				return new Response(Response.Status.OK, MIME_HTML, getClass().getProtectionDomain().getClassLoader().getResourceAsStream(docBase + "/login.html"));
 			}
 
 			if (extension.equals("vnt")) {
-
-				if (getUser() != null) {
-					getUser().setLastRequest(new Date());
-					getUser().setLastIP(session.getHeaders().get("remote-addr"));
-					PersistenceManager.save(getUser());
+				if (this.session != null) {
+					this.session.setLastRequest(new Date());
+					this.session.setLastIP(session.getHeaders().get("remote-addr"));
+					PersistenceManager.save(this.session);
 				}
 				String servlet = urlRequested.replace("." + extension, "");
 				Class<?> clazz = Class.forName((servletBase + servlet).replaceAll("/", "."));
@@ -112,6 +118,10 @@ public class WebServer extends NanoHTTPD {
 
 	public User getUser() {
 		return user;
+	}
+
+	public Session getSession() {
+		return session;
 	}
 
 }

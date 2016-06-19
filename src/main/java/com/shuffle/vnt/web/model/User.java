@@ -1,10 +1,12 @@
 package com.shuffle.vnt.web.model;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -12,11 +14,13 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 
 import org.hibernate.criterion.Restrictions;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.shuffle.vnt.core.db.PersistenceManager;
 import com.shuffle.vnt.core.db.model.GenericEntity;
 import com.shuffle.vnt.core.model.Seedbox;
@@ -37,18 +41,16 @@ public class User extends GenericEntity implements Serializable {
 
 	private boolean admin;
 
-	private String session;
-	
-	private Date lastRequest;
-	
-	private String lastIP;
+	@OneToMany(orphanRemoval = true, mappedBy = "user", targetEntity = Session.class, fetch = FetchType.EAGER)
+	@JsonManagedReference
+	private List<Session> sessions = new ArrayList<>();
 
-	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, targetEntity = Seedbox.class, fetch = FetchType.EAGER)
+	@ManyToMany(cascade = CascadeType.ALL, targetEntity = Seedbox.class, fetch = FetchType.EAGER)
 	@JoinTable(inverseJoinColumns = { @JoinColumn(name = "seedbox_id") }, joinColumns = { @JoinColumn(name = "user_id") }, name = "user_seedboxes")
 	@JsonIgnore
 	private Set<Seedbox> seedboxes = new HashSet<>();
 
-	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, targetEntity = Job.class, fetch = FetchType.EAGER)
+	@ManyToMany(cascade = CascadeType.ALL, targetEntity = Job.class, fetch = FetchType.EAGER)
 	@JoinTable(inverseJoinColumns = { @JoinColumn(name = "job_id") }, joinColumns = { @JoinColumn(name = "user_id") }, name = "user_jobs")
 	@JsonIgnore
 	private Set<Job> jobs = new HashSet<>();
@@ -77,28 +79,12 @@ public class User extends GenericEntity implements Serializable {
 		this.admin = admin;
 	}
 
-	public String getSession() {
-		return session;
+	public List<Session> getSessions() {
+		return sessions.stream().sorted(Comparator.comparing(Session::getLastRequest).reversed()).collect(Collectors.toList());
 	}
 
-	public void setSession(String session) {
-		this.session = session;
-	}
-
-	public Date getLastRequest() {
-		return lastRequest;
-	}
-
-	public void setLastRequest(Date lastRequest) {
-		this.lastRequest = lastRequest;
-	}
-
-	public String getLastIP() {
-		return lastIP;
-	}
-
-	public void setLastIP(String lastIP) {
-		this.lastIP = lastIP;
+	public void setSessions(List<Session> sessions) {
+		this.sessions = sessions;
 	}
 
 	public Set<Seedbox> getSeedboxes() {
@@ -132,7 +118,7 @@ public class User extends GenericEntity implements Serializable {
 
 	@Override
 	public String toString() {
-		return "User [username=" + username + ", password=[Protected], admin=" + admin + ", session=" + session + ", seedboxes=" + seedboxes + ", jobs=" + jobs + ", id=" + id + "]";
+		return "User [username=" + username + ", password=[Protected], admin=" + admin + ", seedboxes=" + seedboxes + ", jobs=" + jobs + ", id=" + id + "]";
 	}
 
 	@Override

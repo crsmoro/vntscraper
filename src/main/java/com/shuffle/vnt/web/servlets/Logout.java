@@ -9,7 +9,7 @@ import fi.iki.elonen.NanoHTTPD.Response;
 import fi.iki.elonen.NanoHTTPD.Response.Status;
 
 public class Logout implements HttpServlet {
-	
+
 	private WebServer webServer;
 
 	@Override
@@ -19,8 +19,8 @@ public class Logout implements HttpServlet {
 
 	@Override
 	public void doGet(IHTTPSession session, Response response) {
-		webServer.getUser().setSession(null);
-		PersistenceManager.save(webServer.getUser());
+		webServer.getSession().setSession(null);
+		PersistenceManager.save(webServer.getSession());
 		session.getCookies().delete("session");
 		response.setStatus(Status.REDIRECT);
 		response.addHeader("Location", "/login.html");

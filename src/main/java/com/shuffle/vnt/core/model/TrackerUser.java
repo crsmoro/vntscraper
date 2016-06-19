@@ -4,15 +4,18 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.OneToMany;
 import javax.persistence.Transient;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.http.impl.cookie.BasicClientCookie;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -30,6 +33,8 @@ public class TrackerUser extends GenericEntity implements Serializable {
 
 	private static final long serialVersionUID = 5696427569781451442L;
 
+	private static final Log log = LogFactory.getLog(TrackerUser.class);
+
 	@Transient
 	@JsonIgnore
 	private Tracker tracker;
@@ -42,9 +47,9 @@ public class TrackerUser extends GenericEntity implements Serializable {
 	@JsonIgnore
 	private String password;
 
-	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "trackerUser", targetEntity = Cookie.class, fetch = FetchType.EAGER)
+	@OneToMany(orphanRemoval = true, mappedBy = "trackerUser", targetEntity = Cookie.class, fetch = FetchType.EAGER)
 	@JsonManagedReference
-	private List<Cookie> cookies = new ArrayList<Cookie>();
+	private Set<Cookie> cookies = new HashSet<Cookie>();
 
 	public Tracker getTracker() {
 		if (trackerClass == null || tracker == null || !trackerClass.equals(tracker.getClass())) {
@@ -87,11 +92,11 @@ public class TrackerUser extends GenericEntity implements Serializable {
 		this.password = password;
 	}
 
-	public List<Cookie> getCookies() {
+	public Set<Cookie> getCookies() {
 		return cookies;
 	}
 
-	public void setCookies(List<Cookie> cookies) {
+	public void setCookies(Set<Cookie> cookies) {
 		this.cookies = cookies;
 	}
 
@@ -135,16 +140,21 @@ public class TrackerUser extends GenericEntity implements Serializable {
 	}
 
 	public void updateCookies(Map<String, String> cookies) {
-		getCookies().clear();
+		getCookies().removeIf(cookie -> {
+			PersistenceManager.remove(cookie);
+			return true;
+		});
+
 		for (String cookieName : cookies.keySet()) {
 			Cookie cookie = new Cookie();
 			cookie.setName(cookieName);
 			cookie.setValue(cookies.get(cookieName));
 			cookie.setExpiration(new Date().getTime() + (72 * 60 * 60 * 1000));
 			cookie.setTrackerUser(this);
+			PersistenceManager.save(cookie);
 			getCookies().add(cookie);
 		}
-		PersistenceManager.save(this);
+		log.debug("Updating Cookies of : " + this);
 	}
 
 	@Override
