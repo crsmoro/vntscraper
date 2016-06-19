@@ -15,6 +15,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
+import javax.persistence.Transient;
 
 import org.hibernate.criterion.Restrictions;
 
@@ -102,6 +103,8 @@ public class User extends GenericEntity implements Serializable {
 		this.jobs = jobs;
 	}
 
+	@Transient
+	@JsonIgnore
 	private Set<TrackerUser> trackerUsers = new HashSet<>();
 
 	public Set<TrackerUser> getTrackerUsers() {
