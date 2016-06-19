@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
@@ -41,16 +40,16 @@ public class User extends GenericEntity implements Serializable {
 
 	private boolean admin;
 
-	@OneToMany(orphanRemoval = true, mappedBy = "user", targetEntity = Session.class, fetch = FetchType.EAGER)
+	@OneToMany(orphanRemoval = true, mappedBy = "user", targetEntity = Session.class)
 	@JsonManagedReference
 	private List<Session> sessions = new ArrayList<>();
 
-	@ManyToMany(cascade = CascadeType.ALL, targetEntity = Seedbox.class, fetch = FetchType.EAGER)
+	@ManyToMany(cascade = CascadeType.ALL, targetEntity = Seedbox.class)
 	@JoinTable(inverseJoinColumns = { @JoinColumn(name = "seedbox_id") }, joinColumns = { @JoinColumn(name = "user_id") }, name = "user_seedboxes")
 	@JsonIgnore
 	private Set<Seedbox> seedboxes = new HashSet<>();
 
-	@ManyToMany(cascade = CascadeType.ALL, targetEntity = Job.class, fetch = FetchType.EAGER)
+	@ManyToMany(cascade = CascadeType.ALL, targetEntity = Job.class)
 	@JoinTable(inverseJoinColumns = { @JoinColumn(name = "job_id") }, joinColumns = { @JoinColumn(name = "user_id") }, name = "user_jobs")
 	@JsonIgnore
 	private Set<Job> jobs = new HashSet<>();
@@ -103,17 +102,20 @@ public class User extends GenericEntity implements Serializable {
 		this.jobs = jobs;
 	}
 
+	private Set<TrackerUser> trackerUsers = new HashSet<>();
+
 	public Set<TrackerUser> getTrackerUsers() {
-		Set<TrackerUser> trackerUsers = new HashSet<>();
-		List<TrackerUserUser> trackerUserUsers = PersistenceManager.findAll(TrackerUserUser.class, Restrictions.or(Restrictions.eq("user", this), Restrictions.eq("shared", true)));
-		for (TrackerUserUser trackerUserUser : trackerUserUsers) {
-			trackerUsers.add(trackerUserUser.getTrackerUser());
+		if (trackerUsers.isEmpty()) {
+			List<TrackerUserUser> trackerUserUsers = PersistenceManager.findAll(TrackerUserUser.class, Restrictions.or(Restrictions.eq("user", this), Restrictions.eq("shared", true)));
+			for (TrackerUserUser trackerUserUser : trackerUserUsers) {
+				trackerUsers.add(trackerUserUser.getTrackerUser());
+			}
 		}
 		return trackerUsers;
 	}
 
 	public TrackerUser getTrackerUser(Tracker tracker) {
-		return getTrackerUsers().stream().filter(p -> p.getTracker().getClass().equals(tracker.getClass())).findFirst().orElse(null);
+		return getTrackerUsers().stream().filter(trackerUser -> trackerUser.getTracker().getClass().equals(tracker.getClass())).findFirst().orElse(null);
 	}
 
 	@Override

@@ -2,6 +2,7 @@ package com.shuffle.vnt.web.servlets;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hibernate.criterion.Restrictions;
 
 import com.shuffle.vnt.core.db.PersistenceManager;
 import com.shuffle.vnt.core.model.Seedbox;
@@ -10,6 +11,7 @@ import com.shuffle.vnt.util.VntUtil;
 import com.shuffle.vnt.web.HttpServlet;
 import com.shuffle.vnt.web.WebServer;
 import com.shuffle.vnt.web.bean.ReturnObject;
+import com.shuffle.vnt.web.model.User;
 
 import fi.iki.elonen.NanoHTTPD.IHTTPSession;
 import fi.iki.elonen.NanoHTTPD.Response;
@@ -63,9 +65,10 @@ public class SaveSeedboxes implements HttpServlet {
 			log.error("Webclient not found", e);
 		}
 		PersistenceManager.save(seedbox);
-		if (!webServer.getUser().getSeedboxes().contains(seedbox)) {
-			webServer.getUser().getSeedboxes().add(seedbox);
-			PersistenceManager.save(webServer.getUser());
+		User user = PersistenceManager.findOne(User.class, Restrictions.idEq(webServer.getUser().getId()), "seedboxes");
+		if (!user.getSeedboxes().contains(seedbox)) {
+			user.getSeedboxes().add(seedbox);
+			PersistenceManager.save(user);
 		}
 
 		returnObject = new ReturnObject(true, null);
@@ -80,8 +83,9 @@ public class SaveSeedboxes implements HttpServlet {
 	@Override
 	public void doDelete(IHTTPSession session, Response response) {
 		Seedbox seedbox = PersistenceManager.findOne(Seedbox.class, Long.valueOf(session.getParms().get("id")));
-		webServer.getUser().getSeedboxes().remove(seedbox);
-		PersistenceManager.save(webServer.getUser());
+		User user = PersistenceManager.findOne(User.class, Restrictions.idEq(webServer.getUser().getId()), "seedboxes");
+		user.getSeedboxes().remove(seedbox);
+		PersistenceManager.save(user);
 
 		response.setMimeType("application/json");
 		ReturnObject returnObject = new ReturnObject(true, null);

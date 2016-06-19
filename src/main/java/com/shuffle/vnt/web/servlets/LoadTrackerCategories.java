@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.shuffle.vnt.core.VntContext;
 import com.shuffle.vnt.core.parser.Tracker;
 import com.shuffle.vnt.core.parser.bean.TrackerCategory;
 import com.shuffle.vnt.util.VntUtil;
@@ -29,6 +30,7 @@ public class LoadTrackerCategories implements HttpServlet {
 		List<TrackerCategoryTracker> categories = new ArrayList<>();
 		List<Tracker> trackerConfigs = new ArrayList<>();
 		String tracker = session.getParms().get("tracker");
+		/*
 		for (Class<? extends Tracker> trackerClass : VntUtil.fetchClasses().getSubTypesOf(Tracker.class)) {
 			Tracker trackerInstance = Tracker.getInstance(trackerClass);
 			if (webServer.getUser().getTrackerUser(trackerInstance) != null) {
@@ -37,6 +39,16 @@ public class LoadTrackerCategories implements HttpServlet {
 				}
 			}
 		}
+		*/
+		VntContext.getTrackers().stream().filter(trackerInstance -> {
+			if (webServer.getUser().getTrackerUser(trackerInstance) != null) {
+				if (StringUtils.isBlank(tracker) || trackerInstance.getClass().getName().equals(tracker)) {
+					return true;
+				}
+			}
+			return false;
+		}).forEach(trackerConfigs::add);
+		
 		for (Tracker trackerConfig : trackerConfigs) {
 			for (TrackerCategory trackerCategory : trackerConfig.getCategories()) {
 				TrackerCategoryTracker categoryTracker = new TrackerCategoryTracker();

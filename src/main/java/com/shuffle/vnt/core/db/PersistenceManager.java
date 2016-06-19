@@ -10,8 +10,10 @@ import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
 
 import org.hibernate.Criteria;
+import org.hibernate.FetchMode;
 import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.Restrictions;
 
 import com.shuffle.vnt.core.db.model.GenericEntity;
 
@@ -26,11 +28,7 @@ public class PersistenceManager {
 	}
 
 	public static <E extends GenericEntity> E findOne(Class<E> entity, Object primaryKey) {
-		EntityManager entityManager = entityManagerFactory.createEntityManager();
-		E object = entityManager.find(entity, primaryKey);
-		entityManager.clear();
-		entityManager.close();
-		return object;
+		return findOne(entity, Restrictions.idEq(primaryKey));
 	}
 
 	public static <E extends GenericEntity> E save(E object) {
@@ -65,14 +63,21 @@ public class PersistenceManager {
 		return findAll(entity, null);
 	}
 
-	@SuppressWarnings("unchecked")
 	public static <E extends GenericEntity> List<E> findAll(Class<E> entity, Criterion criterion) {
+		return findAll(entity, criterion, new String[0]);
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <E extends GenericEntity> List<E> findAll(Class<E> entity, Criterion criterion, String... lazyFieldsToLoad) {
 		EntityManager entityManager = entityManagerFactory.createEntityManager();
 		Session session = entityManager.unwrap(Session.class);
 		Criteria criteria = session.createCriteria(entity);
 		criteria.setResultTransformer(Criteria.DISTINCT_ROOT_ENTITY);
 		if (criterion != null) {
 			criteria.add(criterion);
+		}
+		for (String field : lazyFieldsToLoad) {
+			criteria.setFetchMode(field, FetchMode.JOIN);
 		}
 		List<E> results = criteria.list();
 		entityManager.clear();
@@ -81,7 +86,11 @@ public class PersistenceManager {
 	}
 
 	public static <E extends GenericEntity> E findOne(Class<E> entity, Criterion criterion) {
-		List<E> results = findAll(entity, criterion);
+		return findOne(entity, criterion, new String[0]);
+	}
+
+	public static <E extends GenericEntity> E findOne(Class<E> entity, Criterion criterion, String... lazyFieldsToLoad) {
+		List<E> results = findAll(entity, criterion, lazyFieldsToLoad);
 		return results != null && !results.isEmpty() ? results.get(0) : null;
 	}
 }

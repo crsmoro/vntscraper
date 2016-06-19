@@ -12,8 +12,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.reflections.Reflections;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.mustachejava.DefaultMustacheFactory;
@@ -23,19 +21,6 @@ import com.github.mustachejava.MustacheFactory;
 public abstract class VntUtil {
 	private VntUtil() {
 
-	}
-
-	private static Reflections reflections = null;
-
-	public static Reflections fetchClasses() {
-		return fetchClasses(false);
-	}
-
-	public static Reflections fetchClasses(boolean forceReload) {
-		if (reflections == null || forceReload) {
-			reflections = new Reflections("com.shuffle");
-		}
-		return reflections;
 	}
 
 	public static String getDomain(String url) {

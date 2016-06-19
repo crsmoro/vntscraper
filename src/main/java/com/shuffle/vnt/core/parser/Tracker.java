@@ -1,5 +1,6 @@
 package com.shuffle.vnt.core.parser;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -47,6 +48,8 @@ public interface Tracker {
 
 	@JsonIgnore
 	TorrentDetailedParser getTorrentDetailedParser();
+	
+	static List<Tracker> loadedTrackers = new ArrayList<>();
 
 	@SuppressWarnings("unchecked")
 	static Class<? extends Tracker> getClass(String className) {

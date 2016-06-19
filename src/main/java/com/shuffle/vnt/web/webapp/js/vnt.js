@@ -863,8 +863,6 @@ function loadTrackerCategoriesSchedule(tracker) {
 	return jqxhr;
 }
 
-loadTrackerCategoriesSchedule();
-
 var select2TorrentFieldsSchedule = $("#torrentfieldsschedule").select2({
 	allowClear: true
 });

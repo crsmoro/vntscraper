@@ -12,6 +12,7 @@ import java.util.Map;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hibernate.criterion.Restrictions;
 
 import com.shuffle.vnt.core.db.PersistenceManager;
 import com.shuffle.vnt.core.model.Seedbox;
@@ -28,6 +29,7 @@ import com.shuffle.vnt.util.VntUtil;
 import com.shuffle.vnt.web.HttpServlet;
 import com.shuffle.vnt.web.WebServer;
 import com.shuffle.vnt.web.bean.ReturnObject;
+import com.shuffle.vnt.web.model.User;
 
 import fi.iki.elonen.NanoHTTPD.IHTTPSession;
 import fi.iki.elonen.NanoHTTPD.Response;
@@ -120,18 +122,19 @@ public class SaveScheduleDatas implements HttpServlet {
 				log.error("Error saving schedule template", e2);
 			}
 		}
+		User user = PersistenceManager.findOne(User.class, Restrictions.idEq(webServer.getUser().getId()), "jobs");
 		if (parameters.get("seedboxes") != null) {
 			for (String seedbox : parameters.get("seedboxes")) {
 				job.getSeedboxes().add(PersistenceManager.findOne(Seedbox.class, Long.valueOf(seedbox)));
 			}
 		} else {
-			job.getSeedboxes().addAll(webServer.getUser().getSeedboxes());
+			job.getSeedboxes().addAll(user.getSeedboxes());
 		}
 
 		PersistenceManager.save(job);
-		if (!webServer.getUser().getJobs().contains(job)) {
-			webServer.getUser().getJobs().add(job);
-			PersistenceManager.save(webServer.getUser());
+		if (!user.getJobs().contains(job)) {
+			user.getJobs().add(job);
+			PersistenceManager.save(user);
 		}
 
 		ScheduleManager.getInstance().clearSchedules();
@@ -149,8 +152,9 @@ public class SaveScheduleDatas implements HttpServlet {
 	@Override
 	public void doDelete(IHTTPSession session, Response response) {
 		Job job = PersistenceManager.findOne(Job.class, Long.valueOf(session.getParms().get("id")));
-		webServer.getUser().getJobs().remove(job);
-		PersistenceManager.save(webServer.getUser());
+		User user = PersistenceManager.findOne(User.class, Restrictions.idEq(webServer.getUser().getId()), "jobs");
+		user.getJobs().remove(job);
+		PersistenceManager.save(user);
 
 		ScheduleManager.getInstance().clearSchedules();
 		ScheduleManager.getInstance().updateSchedules();

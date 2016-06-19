@@ -11,9 +11,9 @@ import org.apache.log4j.PatternLayout;
 import org.apache.log4j.RollingFileAppender;
 import org.h2.tools.Server;
 
+import com.shuffle.vnt.core.VntContext;
 import com.shuffle.vnt.core.db.PersistenceManager;
 import com.shuffle.vnt.core.schedule.ScheduleManager;
-import com.shuffle.vnt.util.VntUtil;
 import com.shuffle.vnt.web.WebServer;
 import com.shuffle.vnt.web.model.User;
 
@@ -30,7 +30,7 @@ public class VntMain {
 		Logger.getLogger("com.shuffle").setLevel(Level.DEBUG);
 
 		// FIXME check better solution
-		VntUtil.fetchClasses();
+		VntContext.fetchClasses();
 
 		if (Boolean.getBoolean("db.webadmin")) {
 			try {
