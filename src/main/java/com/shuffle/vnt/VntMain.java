@@ -2,6 +2,7 @@ package com.shuffle.vnt;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Date;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -22,12 +23,16 @@ public class VntMain {
 	private static final Log log = LogFactory.getLog(VntMain.class);
 
 	public static void main(String[] args) {
+		
+		Date start = new Date();
 
 		initLogger();
 
 		Logger.getRootLogger().setLevel(Level.toLevel(System.getProperty("level", "WARN")));
 
 		Logger.getLogger("com.shuffle").setLevel(Level.DEBUG);
+		
+		log.info("Starting...");
 
 		// FIXME check better solution
 		VntContext.fetchClasses();
@@ -73,6 +78,11 @@ public class VntMain {
 		webServerThread.start();
 
 		ScheduleManager.getInstance().updateSchedules();
+		
+		Date finish = new Date();
+		
+		log.info("Finished startup");
+		log.info("Took " +  (finish.getTime() - start.getTime()) + " ms");
 	}
 
 	private static void initLogger() {

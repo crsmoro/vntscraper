@@ -1,6 +1,7 @@
 package com.shuffle.vnt.web.servlets;
 
 import org.apache.commons.lang3.StringUtils;
+import org.hibernate.criterion.Restrictions;
 
 import com.shuffle.vnt.core.db.PersistenceManager;
 import com.shuffle.vnt.util.VntUtil;
@@ -31,12 +32,12 @@ public class LoadUsers implements HttpServlet {
 
 		String pkname = session.getParms().get("id");
 		if (StringUtils.isNotBlank(pkname)) {
-			User user = PersistenceManager.findOne(User.class, Long.valueOf(pkname));
+			User user = PersistenceManager.findOne(User.class, Restrictions.idEq(Long.valueOf(pkname)), "sessions");
 			if (user != null) {
 				response.setData(VntUtil.getInputStream(VntUtil.toJson(user)));
 			}
 		} else {
-			response.setData(VntUtil.getInputStream(VntUtil.toJson(PersistenceManager.findAll(User.class))));
+			response.setData(VntUtil.getInputStream(VntUtil.toJson(PersistenceManager.findAll(User.class, Restrictions.and(), "sessions"))));
 		}
 	}
 
