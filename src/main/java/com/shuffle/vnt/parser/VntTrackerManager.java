@@ -401,7 +401,7 @@ public class VntTrackerManager implements TrackerManager {
 			}
 			if (PreferenceManager.getPreferences().isTmdbActive()) {
 				try {
-					MovieInfo movieInfo = TheMovieDbApi.getInstance().getMovieInfoImdb(VntUtil.getImdbId(torrent.getImdbLink()), PreferenceManager.getPreferences().getTmdbLanguage());
+					MovieInfo movieInfo = TheMovieDbApi.getInstance().getMovieInfoImdb("tt" + StringUtils.leftPad(VntUtil.getImdbId(torrent.getImdbLink()).replace("tt", ""), 7, "0"), PreferenceManager.getPreferences().getTmdbLanguage());
 					TheMovieDbApi.getMovie(movieInfo, torrent);
 				} catch (MovieDbException e) {
 					e.printStackTrace();
