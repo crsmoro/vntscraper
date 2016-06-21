@@ -79,7 +79,8 @@ public class Settings implements HttpServlet {
 			mailConfig.setPort(Integer.valueOf(session.getParms().get("port")));
 			mailConfig.setSsl(Boolean.valueOf(session.getParms().get("ssl")));
 			mailConfig.setTls(Boolean.valueOf(session.getParms().get("tls")));
-			PersistenceManager.save(mailConfig);
+			PersistenceManager.getDao(MailConfig.class).save(mailConfig);
+			PreferenceManager.getPreferences().setMailConfig(mailConfig);
 			PreferenceManager.savePreferences();
 
 			response.setMimeType("application/json; charset=UTF-8");

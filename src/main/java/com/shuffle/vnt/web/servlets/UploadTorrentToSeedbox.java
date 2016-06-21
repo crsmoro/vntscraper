@@ -29,7 +29,7 @@ public class UploadTorrentToSeedbox implements HttpServlet {
 		Torrent torrent = VntUtil.fromJson(session.getParms().get("torrent"), Torrent.class);
 		if (StringUtils.isNotBlank(seedbox) && torrent != null) {
 			TorrentManager torrentManager = ServiceFactory.getInstance(TorrentManager.class);
-			torrentManager.sendToSeedbox(PersistenceManager.findOne(Seedbox.class, Long.valueOf(seedbox)), torrentManager.downloadTorrent(torrent));
+			torrentManager.sendToSeedbox(PersistenceManager.getDao(Seedbox.class).findOne(Long.valueOf(seedbox)), torrentManager.downloadTorrent(torrent));
 		}
 		if (close) {
 			response.setData(VntUtil.getInputStream("<script type='text/javascript'>alert('Torrent sent with success.');window.close();</script>"));

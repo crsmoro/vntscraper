@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
-import org.hibernate.criterion.Restrictions;
 
 import com.shuffle.vnt.core.db.PersistenceManager;
 import com.shuffle.vnt.core.model.Cookie;
@@ -40,9 +39,13 @@ public class LoadTrackerUsers implements HttpServlet {
 			tracker = Tracker.getInstance(session.getParms().get("tracker"));
 		}
 		if (tracker != null) {
-			trackerUserUsers.addAll(PersistenceManager.findAll(TrackerUserUser.class, Restrictions.and(Restrictions.or(Restrictions.eq("user", webServer.getUser()), Restrictions.eq("shared", true)), Restrictions.eq("trackerUser", webServer.getUser().getTrackerUser(tracker)))));
+			//FIXME
+			//Restrictions.and(Restrictions.or(Restrictions.eq("user", webServer.getUser()), Restrictions.eq("shared", true)), Restrictions.eq("trackerUser", webServer.getUser().getTrackerUser(tracker)))
+			trackerUserUsers.addAll(PersistenceManager.getDao(TrackerUserUser.class).eq("user", webServer.getUser()).eq("shared", true).eq("trackerUser", webServer.getUser().getTrackerUser(tracker)).and(3).findAll());
 		} else {
-			trackerUserUsers.addAll(PersistenceManager.findAll(TrackerUserUser.class, Restrictions.or(Restrictions.eq("user", webServer.getUser()), Restrictions.eq("shared", true))));
+			//FIXME
+			//Restrictions.or(Restrictions.eq("user", webServer.getUser()), Restrictions.eq("shared", true))
+			trackerUserUsers.addAll(PersistenceManager.getDao(TrackerUserUser.class).eq("user", webServer.getUser()).eq("shared", true).and(2).findAll());
 		}
 
 		response.setMimeType("application/json");

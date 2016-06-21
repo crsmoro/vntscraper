@@ -2,7 +2,6 @@ package com.shuffle.vnt.web.servlets;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.hibernate.criterion.Restrictions;
 
 import com.shuffle.vnt.core.db.PersistenceManager;
 import com.shuffle.vnt.core.model.Seedbox;
@@ -11,7 +10,7 @@ import com.shuffle.vnt.util.VntUtil;
 import com.shuffle.vnt.web.HttpServlet;
 import com.shuffle.vnt.web.WebServer;
 import com.shuffle.vnt.web.bean.ReturnObject;
-import com.shuffle.vnt.web.model.User;
+import com.shuffle.vnt.web.model.UserSeedbox;
 
 import fi.iki.elonen.NanoHTTPD.IHTTPSession;
 import fi.iki.elonen.NanoHTTPD.Response;
@@ -43,7 +42,7 @@ public class SaveSeedboxes implements HttpServlet {
 		if (isNew) {
 			seedbox = new Seedbox();
 		} else {
-			seedbox = PersistenceManager.findOne(Seedbox.class, Long.valueOf(session.getParms().get("id")));
+			seedbox = PersistenceManager.getDao(Seedbox.class).findOne(Long.valueOf(session.getParms().get("id")));
 		}
 
 		if (!isNew && seedbox == null) {
@@ -64,12 +63,14 @@ public class SaveSeedboxes implements HttpServlet {
 		} catch (ClassNotFoundException e) {
 			log.error("Webclient not found", e);
 		}
-		PersistenceManager.save(seedbox);
-		User user = PersistenceManager.findOne(User.class, Restrictions.idEq(webServer.getUser().getId()), "seedboxes");
-		if (!user.getSeedboxes().contains(seedbox)) {
-			user.getSeedboxes().add(seedbox);
-			PersistenceManager.save(user);
+		PersistenceManager.getDao(Seedbox.class).save(seedbox);
+		UserSeedbox userSeedbox = PersistenceManager.getDao(UserSeedbox.class).eq("user", webServer.getUser()).eq("seedbox", seedbox).and(2).findOne();
+		if (userSeedbox == null) {
+			userSeedbox = new UserSeedbox();
 		}
+		userSeedbox.setUser(webServer.getUser());
+		userSeedbox.setSeedbox(seedbox);
+		PersistenceManager.getDao(UserSeedbox.class).save(userSeedbox);
 
 		returnObject = new ReturnObject(true, null);
 		response.setData(VntUtil.getInputStream(VntUtil.toJson(returnObject)));
@@ -82,10 +83,9 @@ public class SaveSeedboxes implements HttpServlet {
 
 	@Override
 	public void doDelete(IHTTPSession session, Response response) {
-		Seedbox seedbox = PersistenceManager.findOne(Seedbox.class, Long.valueOf(session.getParms().get("id")));
-		User user = PersistenceManager.findOne(User.class, Restrictions.idEq(webServer.getUser().getId()), "seedboxes");
-		user.getSeedboxes().remove(seedbox);
-		PersistenceManager.save(user);
+		Seedbox seedbox = PersistenceManager.getDao(Seedbox.class).findOne(Long.valueOf(session.getParms().get("id")));
+		UserSeedbox userSeedbox = PersistenceManager.getDao(UserSeedbox.class).eq("user", webServer.getUser()).eq("seedbox", seedbox).and(2).findOne();
+		PersistenceManager.getDao(UserSeedbox.class).remove(userSeedbox);
 
 		response.setMimeType("application/json");
 		ReturnObject returnObject = new ReturnObject(true, null);

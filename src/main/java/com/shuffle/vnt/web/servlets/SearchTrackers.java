@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
-import org.hibernate.criterion.Restrictions;
 
 import com.shuffle.vnt.core.db.PersistenceManager;
 import com.shuffle.vnt.core.parser.Tracker;
@@ -72,8 +71,9 @@ public class SearchTrackers implements HttpServlet {
 			}
 
 			trackerManager.setQueryParameters(queryParameters);
-			TrackerUserUser trackerUserUser = PersistenceManager.findOne(TrackerUserUser.class,
-					Restrictions.and(Restrictions.or(Restrictions.eq("user", webServer.getUser()), Restrictions.eq("shared", true)), Restrictions.eq("trackerUser", webServer.getUser().getTrackerUser(trackerInstance))));
+			//FIXME
+			//Restrictions.and(Restrictions.or(Restrictions.eq("user", webServer.getUser()), Restrictions.eq("shared", true)), Restrictions.eq("trackerUser", webServer.getUser().getTrackerUser(trackerInstance)))
+			TrackerUserUser trackerUserUser = PersistenceManager.getDao(TrackerUserUser.class).eq("user", webServer.getUser()).eq("shared", true).eq("trackerUser", webServer.getUser().getTrackerUser(trackerInstance)).and(3).findOne();
 			trackerManager.setTrackerUser(trackerUserUser.getTrackerUser());
 			if (StringUtils.isNotBlank(session.getParms().get("page"))) {
 				trackerManager.setPage(Long.valueOf(session.getParms().get("page")));

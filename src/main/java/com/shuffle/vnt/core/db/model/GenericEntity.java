@@ -2,18 +2,15 @@ package com.shuffle.vnt.core.db.model;
 
 import java.io.Serializable;
 
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.MappedSuperclass;
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.table.DatabaseTable;
 
-@MappedSuperclass
+@DatabaseTable
 public class GenericEntity implements Serializable {
 
 	private static final long serialVersionUID = -794669348577143712L;
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@DatabaseField(generatedId = true)
 	protected Long id;
 
 	public Long getId() {

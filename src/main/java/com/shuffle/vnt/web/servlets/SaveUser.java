@@ -41,7 +41,7 @@ public class SaveUser implements HttpServlet {
 		if (isNew) {
 			user = new User();
 		} else {
-			user = PersistenceManager.findOne(User.class, Long.valueOf(session.getParms().get("id")));
+			user = PersistenceManager.getDao(User.class).findOne(Long.valueOf(session.getParms().get("id")));
 		}
 
 		if (!isNew && user == null) {
@@ -55,7 +55,7 @@ public class SaveUser implements HttpServlet {
 			user.setPassword(session.getParms().get("password"));
 		}
 		user.setAdmin(Boolean.valueOf(session.getParms().get("admin")));
-		PersistenceManager.save(user);
+		PersistenceManager.getDao(User.class).save(user);
 
 		returnObject = new ReturnObject(true, null);
 		response.setData(VntUtil.getInputStream(VntUtil.toJson(returnObject)));
@@ -73,8 +73,8 @@ public class SaveUser implements HttpServlet {
 			return;
 		}
 
-		User user = PersistenceManager.findOne(User.class, Long.valueOf(session.getParms().get("id")));
-		PersistenceManager.remove(user);
+		User user = PersistenceManager.getDao(User.class).findOne(Long.valueOf(session.getParms().get("id")));
+		PersistenceManager.getDao(User.class).remove(user);
 
 		response.setMimeType("application/json");
 		ReturnObject returnObject = new ReturnObject(true, null);

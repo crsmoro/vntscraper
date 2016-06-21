@@ -1,26 +1,22 @@
 package com.shuffle.vnt.web.model;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.table.DatabaseTable;
 import com.shuffle.vnt.core.db.model.GenericEntity;
 import com.shuffle.vnt.core.model.TrackerUser;
 
-@Entity
+@DatabaseTable
 public class TrackerUserUser extends GenericEntity {
 
 	private static final long serialVersionUID = 294194393774566374L;
 
-	@ManyToOne(targetEntity = TrackerUser.class, optional = false, cascade = CascadeType.REMOVE)
-	@JoinColumn(name = "trackeruser_id")
+	@DatabaseField(foreign = true, foreignAutoRefresh = true)
 	private TrackerUser trackerUser;
 
-	@ManyToOne(targetEntity = User.class, optional = false)
-	@JoinColumn(name = "user_id")
+	@DatabaseField(foreign = true, foreignAutoRefresh = true)
 	private User user;
 
+	@DatabaseField
 	private boolean shared;
 
 	public TrackerUser getTrackerUser() {

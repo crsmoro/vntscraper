@@ -2,25 +2,18 @@ package com.shuffle.vnt.web.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.OneToMany;
-import javax.persistence.Transient;
-
-import org.hibernate.criterion.Restrictions;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.field.ForeignCollectionField;
+import com.j256.ormlite.table.DatabaseTable;
 import com.shuffle.vnt.core.db.PersistenceManager;
 import com.shuffle.vnt.core.db.model.GenericEntity;
 import com.shuffle.vnt.core.model.Seedbox;
@@ -28,32 +21,32 @@ import com.shuffle.vnt.core.model.TrackerUser;
 import com.shuffle.vnt.core.parser.Tracker;
 import com.shuffle.vnt.core.schedule.model.Job;
 
-@Entity
+@DatabaseTable
 public class User extends GenericEntity implements Serializable {
 
 	private static final long serialVersionUID = -1611137472835797283L;
 
-	@Column(unique = true)
+	@DatabaseField
 	private String username;
 
 	@JsonIgnore
+	@DatabaseField
 	private String password;
 
+	@DatabaseField
 	private boolean admin;
 
-	@OneToMany(orphanRemoval = true, mappedBy = "user", targetEntity = Session.class)
 	@JsonManagedReference
-	private List<Session> sessions = new ArrayList<>();
+	@ForeignCollectionField(foreignFieldName = "user", eager = true)
+	private Collection<Session> sessions = new ArrayList<>();
 
-	@ManyToMany(cascade = CascadeType.ALL, targetEntity = Seedbox.class)
-	@JoinTable(inverseJoinColumns = { @JoinColumn(name = "seedbox_id") }, joinColumns = { @JoinColumn(name = "user_id") }, name = "user_seedboxes")
 	@JsonIgnore
-	private Set<Seedbox> seedboxes = new HashSet<>();
+	@DatabaseField(persisted = false)
+	private Collection<Seedbox> seedboxes = new HashSet<>();
 
-	@ManyToMany(cascade = CascadeType.ALL, targetEntity = Job.class)
-	@JoinTable(inverseJoinColumns = { @JoinColumn(name = "job_id") }, joinColumns = { @JoinColumn(name = "user_id") }, name = "user_jobs")
 	@JsonIgnore
-	private Set<Job> jobs = new HashSet<>();
+	@DatabaseField(persisted = false)
+	private Collection<Job> jobs = new HashSet<>();
 
 	public String getUsername() {
 		return username;
@@ -87,29 +80,56 @@ public class User extends GenericEntity implements Serializable {
 		this.sessions = sessions;
 	}
 
-	public Set<Seedbox> getSeedboxes() {
+	public Collection<Seedbox> getSeedboxes() {
+		seedboxes.clear();
+		PersistenceManager.getDao(UserSeedbox.class).eq("user", this).findAll().forEach(us -> seedboxes.add(us.getSeedbox()));
 		return seedboxes;
 	}
 
-	public void setSeedboxes(Set<Seedbox> seedboxes) {
+	public void setSeedboxes(Collection<Seedbox> seedboxes) {
+		seedboxes.forEach(seedbox -> {
+			UserSeedbox userSeedbox = PersistenceManager.getDao(UserSeedbox.class).eq("user", this).eq("seedbox", seedbox).and(2).findOne();
+			if (userSeedbox == null) {
+				userSeedbox = new UserSeedbox();
+			}
+			userSeedbox.setUser(this);
+			userSeedbox.setSeedbox(seedbox);
+			PersistenceManager.getDao(UserSeedbox.class).save(userSeedbox);
+		});
 		this.seedboxes = seedboxes;
 	}
 
-	public Set<Job> getJobs() {
+	public Collection<Job> getJobs() {
+		jobs.clear();
+		PersistenceManager.getDao(UserJob.class).eq("user", this).findAll().forEach(uj -> {
+			jobs.add(uj.getJob());
+		});
 		return jobs;
 	}
 
-	public void setJobs(Set<Job> jobs) {
+	public void setJobs(Collection<Job> jobs) {
+		jobs.forEach(job -> {
+			UserJob userJob = PersistenceManager.getDao(UserJob.class).eq("user", this).eq("job", job).and(2).findOne();
+			if (userJob == null) {
+				userJob = new UserJob();
+			}
+			userJob.setUser(this);
+			userJob.setJob(job);
+			PersistenceManager.getDao(UserJob.class).save(userJob);
+		});
 		this.jobs = jobs;
 	}
 
-	@Transient
+	@DatabaseField(persisted = false)
 	@JsonIgnore
 	private Set<TrackerUser> trackerUsers = new HashSet<>();
 
 	public Set<TrackerUser> getTrackerUsers() {
 		if (trackerUsers.isEmpty()) {
-			List<TrackerUserUser> trackerUserUsers = PersistenceManager.findAll(TrackerUserUser.class, Restrictions.or(Restrictions.eq("user", this), Restrictions.eq("shared", true)));
+			// FIXME
+			// Restrictions.or(Restrictions.eq("user", this),
+			// Restrictions.eq("shared", true))
+			List<TrackerUserUser> trackerUserUsers = PersistenceManager.getDao(TrackerUserUser.class).eq("user", this).eq("shared", true).and(2).findAll();
 			for (TrackerUserUser trackerUserUser : trackerUserUsers) {
 				trackerUsers.add(trackerUserUser.getTrackerUser());
 			}

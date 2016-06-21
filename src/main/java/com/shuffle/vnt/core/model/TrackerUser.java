@@ -2,17 +2,12 @@ package com.shuffle.vnt.core.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.OneToMany;
-import javax.persistence.Transient;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -22,34 +17,41 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.field.ForeignCollectionField;
+import com.j256.ormlite.table.DatabaseTable;
 import com.shuffle.vnt.core.db.PersistenceManager;
 import com.shuffle.vnt.core.db.model.GenericEntity;
 import com.shuffle.vnt.core.parser.Tracker;
+import com.shuffle.vnt.util.ClassPersister;
 import com.shuffle.vnt.util.VntUtil;
 
-@Entity
 @JsonIgnoreProperties(ignoreUnknown = true)
+@DatabaseTable
 public class TrackerUser extends GenericEntity implements Serializable {
 
 	private static final long serialVersionUID = 5696427569781451442L;
 
 	private static final Log log = LogFactory.getLog(TrackerUser.class);
 
-	@Transient
 	@JsonIgnore
+	@DatabaseField(persisted = false)
 	private Tracker tracker;
 
 	@JsonProperty(value = "tracker")
+	@DatabaseField(persisterClass = ClassPersister.class)
 	private Class<? extends Tracker> trackerClass;
 
+	@DatabaseField
 	private String username;
 
 	@JsonIgnore
+	@DatabaseField
 	private String password;
 
-	@OneToMany(orphanRemoval = true, mappedBy = "trackerUser", targetEntity = Cookie.class, fetch = FetchType.EAGER)
 	@JsonManagedReference
-	private Set<Cookie> cookies = new HashSet<Cookie>();
+	@ForeignCollectionField(eager = true, foreignFieldName = "trackerUser")
+	private Collection<Cookie> cookies = new HashSet<Cookie>();
 
 	public Tracker getTracker() {
 		if (trackerClass == null || tracker == null || !trackerClass.equals(tracker.getClass())) {
@@ -92,11 +94,11 @@ public class TrackerUser extends GenericEntity implements Serializable {
 		this.password = password;
 	}
 
-	public Set<Cookie> getCookies() {
+	public Collection<Cookie> getCookies() {
 		return cookies;
 	}
 
-	public void setCookies(Set<Cookie> cookies) {
+	public void setCookies(Collection<Cookie> cookies) {
 		this.cookies = cookies;
 	}
 
@@ -141,7 +143,7 @@ public class TrackerUser extends GenericEntity implements Serializable {
 
 	public void updateCookies(Map<String, String> cookies) {
 		getCookies().removeIf(cookie -> {
-			PersistenceManager.remove(cookie);
+			PersistenceManager.getDao(Cookie.class).remove(cookie);
 			return true;
 		});
 
@@ -151,7 +153,7 @@ public class TrackerUser extends GenericEntity implements Serializable {
 			cookie.setValue(cookies.get(cookieName));
 			cookie.setExpiration(new Date().getTime() + (72 * 60 * 60 * 1000));
 			cookie.setTrackerUser(this);
-			PersistenceManager.save(cookie);
+			PersistenceManager.getDao(Cookie.class).save(cookie);
 			getCookies().add(cookie);
 		}
 		log.debug("Updating Cookies of : " + this);

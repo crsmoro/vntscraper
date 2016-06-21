@@ -5,58 +5,54 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.Lob;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-
+import com.j256.ormlite.field.DataType;
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.table.DatabaseTable;
+import com.shuffle.vnt.core.db.PersistenceManager;
 import com.shuffle.vnt.core.db.model.GenericEntity;
 import com.shuffle.vnt.core.model.Seedbox;
 import com.shuffle.vnt.core.model.TrackerUser;
 import com.shuffle.vnt.core.parser.bean.QueryParameters;
 import com.shuffle.vnt.core.service.ServiceParser;
 import com.shuffle.vnt.core.service.ServiceParserData;
+import com.shuffle.vnt.util.ClassPersister;
 
-@Entity
+@DatabaseTable
 public class Job extends GenericEntity implements Serializable {
 
 	private static final long serialVersionUID = 4832823456379541769L;
 
+	@DatabaseField
 	private String name;
 
-	@ManyToOne(targetEntity = TrackerUser.class, optional = false)
-	@JoinColumn(name = "trackeruser_id")
+	@DatabaseField(foreign = true, foreignAutoRefresh = true)
 	private TrackerUser trackerUser;
 
-	@Column(length = Integer.MAX_VALUE)
-	@Lob
+	@DatabaseField(width = Integer.MAX_VALUE, dataType = DataType.SERIALIZABLE)
 	private QueryParameters queryParameters;
 
+	@DatabaseField(persisterClass = ClassPersister.class)
 	private Class<? extends ServiceParser> serviceParser;
 
-	@ManyToOne(targetEntity = ServiceParserData.class, cascade = CascadeType.ALL)
-	@JoinColumn(name = "serviceparserdata_id")
+	@DatabaseField(foreign = true, foreignAutoRefresh = true)
 	private ServiceParserData serviceParserData;
 
+	@DatabaseField
 	private String email;
 
+	@DatabaseField
 	private Date startDate;
 
+	@DatabaseField
 	private Date nextRun;
 
+	@DatabaseField
 	private long interval;
 
-	@Column(length = Integer.MAX_VALUE)
-	@Lob
+	@DatabaseField(width = Integer.MAX_VALUE, dataType = DataType.BYTE_ARRAY)
 	private byte[] template;
 
-	@ManyToMany(targetEntity = Seedbox.class, fetch = FetchType.EAGER)
-	@JoinTable(inverseJoinColumns = { @JoinColumn(name = "seedbox_id") }, joinColumns = { @JoinColumn(name = "job_id") }, name = "job_seedboxes")
+	@DatabaseField(persisted = false)
 	private Set<Seedbox> seedboxes = new HashSet<>();
 
 	public String getName() {
@@ -140,10 +136,21 @@ public class Job extends GenericEntity implements Serializable {
 	}
 
 	public Set<Seedbox> getSeedboxes() {
+		seedboxes.clear();
+		PersistenceManager.getDao(JobSeedbox.class).eq("job", this).findAll().stream().forEach(js -> seedboxes.add(js.getSeedbox()));
 		return seedboxes;
 	}
 
 	public void setSeedboxes(Set<Seedbox> seedboxes) {
+		seedboxes.forEach(seedbox -> {
+			JobSeedbox jobSeedbox = PersistenceManager.getDao(JobSeedbox.class).eq("job", this).eq("seedbox", seedboxes).and(2).findOne();
+			if (jobSeedbox == null) {
+				jobSeedbox = new JobSeedbox();
+			}
+			jobSeedbox.setJob(this);
+			jobSeedbox.setSeedbox(seedbox);
+			PersistenceManager.getDao(JobSeedbox.class).save(jobSeedbox);
+		});
 		this.seedboxes = seedboxes;
 	}
 

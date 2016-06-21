@@ -2,29 +2,25 @@ package com.shuffle.vnt.service.parser.fetchnew.model;
 
 import java.io.Serializable;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.Lob;
-import javax.persistence.ManyToOne;
-
+import com.j256.ormlite.field.DataType;
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.table.DatabaseTable;
 import com.shuffle.vnt.core.model.TrackerUser;
 import com.shuffle.vnt.core.parser.bean.QueryParameters;
 import com.shuffle.vnt.core.service.ServiceParserData;
 
-@Entity
+@DatabaseTable
 public class FetchNew extends ServiceParserData implements Serializable {
 
 	private static final long serialVersionUID = -6213577732237570031L;
 
+	@DatabaseField
 	private long last;
 
-	@ManyToOne(targetEntity = TrackerUser.class, optional = false)
-	@JoinColumn(name = "trackeruser_id")
+	@DatabaseField(foreign = true, foreignAutoRefresh = true)
 	private TrackerUser trackerUser;
 
-	@Column(length = Integer.MAX_VALUE)
-	@Lob
+	@DatabaseField(width = Integer.MAX_VALUE, dataType = DataType.SERIALIZABLE)
 	private QueryParameters queryParameters;
 
 	public long getLast() {

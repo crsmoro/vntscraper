@@ -2,33 +2,39 @@ package com.shuffle.vnt.core.configuration.model;
 
 import java.io.Serializable;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.table.DatabaseTable;
 import com.shuffle.vnt.core.db.model.GenericEntity;
 
-@Entity
+@DatabaseTable
 public class MailConfig extends GenericEntity implements Serializable {
 
 	private static final long serialVersionUID = -3284582415282668480L;
 
+	@DatabaseField
 	private String hostname;
 
+	@DatabaseField
 	private int port;
 
+	@DatabaseField
 	private boolean ssl;
 
+	@DatabaseField
 	private boolean tls;
 
+	@DatabaseField
 	private String username;
 
 	@JsonIgnore
+	@DatabaseField
 	private String password;
 
-	@Column(name = "frommail")
+	@DatabaseField(columnName = "frommail")
 	private String from;
 
+	@DatabaseField
 	private String fromName;
 
 	public String getHostname() {

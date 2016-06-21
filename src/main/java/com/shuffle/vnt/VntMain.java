@@ -23,7 +23,7 @@ public class VntMain {
 	private static final Log log = LogFactory.getLog(VntMain.class);
 
 	public static void main(String[] args) {
-		
+
 		Date start = new Date();
 
 		initLogger();
@@ -31,7 +31,7 @@ public class VntMain {
 		Logger.getRootLogger().setLevel(Level.toLevel(System.getProperty("level", "WARN")));
 
 		Logger.getLogger("com.shuffle").setLevel(Level.DEBUG);
-		
+
 		log.info("Starting...");
 
 		// FIXME check better solution
@@ -45,12 +45,12 @@ public class VntMain {
 			}
 		}
 
-		if (PersistenceManager.findAll(User.class).isEmpty()) {
+		if (PersistenceManager.getDao(User.class).findAll().isEmpty()) {
 			User user = new User();
 			user.setUsername("adm");
 			user.setPassword("adm");
 			user.setAdmin(true);
-			PersistenceManager.save(user);
+			PersistenceManager.getDao(User.class).save(user);
 		}
 
 		final WebServer webServer = new WebServer(Integer.getInteger("web.port", 7337));
@@ -78,11 +78,11 @@ public class VntMain {
 		webServerThread.start();
 
 		ScheduleManager.getInstance().updateSchedules();
-		
+
 		Date finish = new Date();
-		
+
 		log.info("Finished startup");
-		log.info("Took " +  (finish.getTime() - start.getTime()) + " ms");
+		log.info("Took " + (finish.getTime() - start.getTime()) + " ms");
 	}
 
 	private static void initLogger() {

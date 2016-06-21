@@ -54,7 +54,7 @@ public class ScheduleManager {
 
 	public void updateSchedules() {
 
-		List<Job> schedulerDatas = PersistenceManager.findAll(Job.class);
+		List<Job> schedulerDatas = PersistenceManager.getDao(Job.class).findAll();
 		for (final Job schedulerData : schedulerDatas) {
 
 			schedule(schedulerData);
@@ -219,7 +219,7 @@ public class ScheduleManager {
 
 				Date nextRun = new Date(job.getNextRun().getTime() + (job.getInterval() * 60 * 1000));
 				job.setNextRun(nextRun);
-				PersistenceManager.save(job);
+				PersistenceManager.getDao(Job.class).save(job);
 
 				log.info("Finished schedule");
 

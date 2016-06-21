@@ -8,7 +8,6 @@ import java.util.Map;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.hibernate.criterion.Restrictions;
 
 import com.shuffle.vnt.core.db.PersistenceManager;
 import com.shuffle.vnt.web.model.Session;
@@ -50,7 +49,10 @@ public class WebServer extends NanoHTTPD {
 			String servletBase = "com/shuffle/vnt/web/servlets";
 			String urlRequested = session.getUri();
 			String extension = "";
-			this.session = PersistenceManager.findOne(Session.class, Restrictions.eq("session", session.getCookies().read("session")));
+			//FIXME
+			//Map<String, Object> restrictions = new HashMap<>();
+			//restrictions.put("session", session.getCookies().read("session"));
+			this.session = PersistenceManager.getDao(Session.class).eq("session", session.getCookies().read("session")).findOne();
 			if (this.session != null) {
 				user = this.session.getUser();
 			}
@@ -72,7 +74,7 @@ public class WebServer extends NanoHTTPD {
 				if (this.session != null) {
 					this.session.setLastRequest(new Date());
 					this.session.setLastIP(session.getHeaders().get("remote-addr"));
-					PersistenceManager.save(this.session);
+					PersistenceManager.getDao(Session.class).save(this.session);
 				}
 				String servlet = urlRequested.replace("." + extension, "");
 				Class<?> clazz = Class.forName((servletBase + servlet).replaceAll("/", "."));

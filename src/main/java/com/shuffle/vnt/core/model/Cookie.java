@@ -2,27 +2,27 @@ package com.shuffle.vnt.core.model;
 
 import java.io.Serializable;
 
-import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.table.DatabaseTable;
 import com.shuffle.vnt.core.db.model.GenericEntity;
 
-@Entity
+@DatabaseTable
 public class Cookie extends GenericEntity implements Serializable {
-	
+
 	private static final long serialVersionUID = 3995909762051248616L;
 
+	@DatabaseField
 	private String name;
 
+	@DatabaseField
 	private String value;
 
+	@DatabaseField
 	private long expiration;
-	
-	@ManyToOne(targetEntity = TrackerUser.class, optional = false)
+
 	@JsonBackReference
-	@JoinColumn(name = "trackeruser_id")
+	@DatabaseField(foreign = true, foreignAutoRefresh = true)
 	private TrackerUser trackerUser;
 
 	public String getName() {

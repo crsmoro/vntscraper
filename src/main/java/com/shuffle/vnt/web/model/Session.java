@@ -2,29 +2,27 @@ package com.shuffle.vnt.web.model;
 
 import java.util.Date;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.table.DatabaseTable;
 import com.shuffle.vnt.core.db.model.GenericEntity;
 
-@Entity
+@DatabaseTable
 public class Session extends GenericEntity {
 
 	private static final long serialVersionUID = 4709977177346914929L;
 
-	@Column(unique = true)
+	@DatabaseField
 	private String session;
 
+	@DatabaseField
 	private Date lastRequest;
 
+	@DatabaseField
 	private String lastIP;
 
-	@ManyToOne(targetEntity = User.class, optional = false)
-	@JoinColumn(name = "user_id")
 	@JsonBackReference
+	@DatabaseField(foreign = true, foreignAutoRefresh = true)
 	private User user;
 
 	public String getSession() {

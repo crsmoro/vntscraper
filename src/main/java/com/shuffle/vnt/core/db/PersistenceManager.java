@@ -1,24 +1,209 @@
 package com.shuffle.vnt.core.db;
 
-import java.util.HashMap;
+import java.sql.SQLException;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.EntityTransaction;
-import javax.persistence.Persistence;
+import org.apache.commons.lang3.ClassUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
-import org.hibernate.Criteria;
-import org.hibernate.FetchMode;
-import org.hibernate.Session;
-import org.hibernate.criterion.Criterion;
-import org.hibernate.criterion.Restrictions;
-
+import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.dao.DaoManager;
+import com.j256.ormlite.jdbc.JdbcConnectionSource;
+import com.j256.ormlite.stmt.QueryBuilder;
+import com.j256.ormlite.stmt.Where;
+import com.j256.ormlite.support.ConnectionSource;
+import com.j256.ormlite.table.TableUtils;
+import com.shuffle.vnt.core.VntContext;
 import com.shuffle.vnt.core.db.model.GenericEntity;
 
-public class PersistenceManager {
+public class PersistenceManager<E extends GenericEntity> {
+	
+	private static final Log log = LogFactory.getLog(PersistenceManager.class);
+	
+	/*
+	private static final String JDBC_DRIVER = "org.h2.Driver";  
+	private static final String DB_URL = "jdbc:h2:./vnt";
+	private static final String USER = "sa";
+	private static final String PASS = "sa";
+	private static Connection connection = null;
+	static {
+		try {
+			log.debug("Loading driver");
+			Class.forName(JDBC_DRIVER);
+			log.debug("Driver loaded");
+		} catch (ClassNotFoundException e) {
+			log.error("Problem loading driver", e);
+		}
+		
+		try {
+			log.debug("Connecting to database");
+			connection = DriverManager.getConnection(DB_URL,USER,PASS);
+			log.debug("Connected to database");
+		} catch (SQLException e) {
+			log.error("Problem connecting to databse", e);
+		}
+	}
+	*/
+	private static final String databaseUrl = "jdbc:h2:./vnt";
+	private static final String USER = "sa";
+	private static final String PASS = "sa";
+	private static ConnectionSource connection = null;
+	
+	static {
+		try {
+			connection = new JdbcConnectionSource(databaseUrl, USER, PASS);
+			//TableUtils.createTableIfNotExists(connection, UserSeedbox.class);
+		} catch (SQLException e) {
+			log.error("Problem connecting to databse", e);
+		}
+		
+		VntContext.fetchClasses().getSubTypesOf(GenericEntity.class).forEach(genericEntity -> {
+			if (!genericEntity.getName().equals(GenericEntity.class.getName())) {
+				
+				try {
+					log.info("Creating entity " + genericEntity.getSimpleName());
+					TableUtils.createTableIfNotExists(connection, genericEntity);
+				}
+				catch (SQLException e) {
+					log.error("Problem creating table " + genericEntity.getSimpleName(), e);
+				}
+				
+			}
+		});
+	}
+	
+	private Dao<E,Long> dao;
+	
+	private QueryBuilder<E, Long> queryBuilder;
+	
+	private Where<E, Long> where;
+	
+	private PersistenceManager() {
+		
+	}
+	
+	public static <E extends GenericEntity> PersistenceManager<E> getDao(Class<E> entity) {
+		try {
+			PersistenceManager<E> instance = new PersistenceManager<E>();
+			instance.dao = DaoManager.createDao(connection, entity);
+			instance.queryBuilder = instance.dao.queryBuilder();
+			instance.where = instance.queryBuilder.where();
+			return instance;
+		} catch (SQLException e) {
+			log.error("Problem getting dao", e);
+		}
+		return null;
+	}
+	
+	public E findOne() {
+		/*
+		try {
+			return dao.queryForFirst(queryBuilder.prepare());
+		}
+		catch (SQLException e) {
+			log.error("Problem getting the result", e);
+		}
+		return null;
+		*/
+		List<E> results = findAll();
+		return (!results.isEmpty() ? results.get(0) : null);
+	}
+	
+	public E findOne(Long primaryKey) {
+		idEq(primaryKey);
+		return findOne();
+	}
+	
+	public QueryBuilder<E, Long> getQueryBuilder() {
+		return queryBuilder;
+	}
 
+	public Where<E, Long> getWhere() {
+		return where;
+	}
+
+	public PersistenceManager<E> where(Where<E, Long> where) {
+		queryBuilder.setWhere(where);
+		return this;
+	}
+	
+	public PersistenceManager<E> idEq(Long id) {
+		try {
+			where.idEq(id);
+		}
+		catch (SQLException e) {
+			log.error("Problem setting where", e);
+		}
+		return this;
+	}
+	
+	public PersistenceManager<E> eq(String columnName, Object value) {
+		try {
+			where.eq(columnName + (ClassUtils.isAssignable(value.getClass(), GenericEntity.class, true) ? "_id" : ""), value);
+		}
+		catch (SQLException e) {
+			log.error("Problem setting where", e);
+		}
+		return this;
+	}
+	
+	public PersistenceManager<E> and() {
+		and(1);
+		return this;
+	}
+	
+	public PersistenceManager<E> and(int numClauses) {
+		where.and(numClauses);
+		return this;
+	}
+	
+	public PersistenceManager<E> or() {
+		or(1);
+		return this;
+	}
+	
+	public PersistenceManager<E> or(int numClauses) {
+		where.or(numClauses);
+		return this;
+	}
+	
+	public E save(E object) {
+		try {
+			dao.createOrUpdate(object);
+		} catch (SQLException e) {
+			log.error("Error saving entity", e);
+		}
+		return object;
+	}
+
+	public void remove(E object) {
+		try {
+			dao.delete(object);
+		}
+		catch (SQLException e) {
+			log.error("Error removing entity", e);
+		}
+	}
+
+	public List<E> findAll() {
+		try {
+			if (where.toString().equals("empty where clause")) {
+				queryBuilder.setWhere(null);
+			}
+			else {
+				queryBuilder.setWhere(where);
+			}
+			return dao.query(queryBuilder.prepare());
+		}
+		catch (SQLException e) {
+			log.error("Error getting objects", e);
+		}
+		return Collections.emptyList();
+	}
+
+	/*
 	private static EntityManagerFactory entityManagerFactory;
 
 	static {
@@ -93,4 +278,5 @@ public class PersistenceManager {
 		List<E> results = findAll(entity, criterion, lazyFieldsToLoad);
 		return results != null && !results.isEmpty() ? results.get(0) : null;
 	}
+	*/
 }

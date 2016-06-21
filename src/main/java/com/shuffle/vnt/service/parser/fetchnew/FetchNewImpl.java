@@ -3,8 +3,6 @@ package com.shuffle.vnt.service.parser.fetchnew;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hibernate.criterion.Restrictions;
-
 import com.shuffle.vnt.core.db.PersistenceManager;
 import com.shuffle.vnt.core.model.TrackerUser;
 import com.shuffle.vnt.core.parser.TrackerManagerFactory;
@@ -49,7 +47,7 @@ public class FetchNewImpl implements com.shuffle.vnt.service.parser.fetchnew.Fet
 	}
 
 	public FetchNew getFetchNew(TrackerUser trackerUser, QueryParameters queryParameters) {
-		return PersistenceManager.findOne(FetchNew.class, Restrictions.and(Restrictions.eq("trackerUser", trackerUser), Restrictions.eq("queryParameters", queryParameters)));
+		return PersistenceManager.getDao(FetchNew.class).eq("trackerUser", trackerUser).eq("queryParameters", queryParameters).and(2).findOne();
 	}
 
 	@Override
@@ -114,10 +112,10 @@ public class FetchNewImpl implements com.shuffle.vnt.service.parser.fetchnew.Fet
 			if (fetchNew.getTrackerUser() == null) {
 				fetchNew.setTrackerUser(getTrackerUserData());
 				fetchNew.setQueryParameters(getQueryParameters());
-				PersistenceManager.save(fetchNew);
+				PersistenceManager.getDao(FetchNew.class).save(fetchNew);
 			}
 			fetchNew.setLast(torrents.get(0).getId());
-			PersistenceManager.save(fetchNew);
+			PersistenceManager.getDao(FetchNew.class).save(fetchNew);
 		}
 		return torrents;
 	}

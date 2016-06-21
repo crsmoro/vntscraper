@@ -1,7 +1,6 @@
 package com.shuffle.vnt.web.servlets;
 
 import org.apache.commons.lang3.StringUtils;
-import org.hibernate.criterion.Restrictions;
 
 import com.shuffle.vnt.core.db.PersistenceManager;
 import com.shuffle.vnt.core.schedule.model.Job;
@@ -9,7 +8,6 @@ import com.shuffle.vnt.util.VntUtil;
 import com.shuffle.vnt.web.HttpServlet;
 import com.shuffle.vnt.web.WebServer;
 import com.shuffle.vnt.web.bean.ReturnObject;
-import com.shuffle.vnt.web.model.User;
 
 import fi.iki.elonen.NanoHTTPD.IHTTPSession;
 import fi.iki.elonen.NanoHTTPD.Response;
@@ -31,16 +29,14 @@ public class LoadSchedulerDatas implements HttpServlet {
 		String id = session.getParms().get("id");
 		boolean count = Boolean.valueOf(session.getParms().get("count"));
 		if (count) {
-			User user = PersistenceManager.findOne(User.class, Restrictions.idEq(webServer.getUser().getId()), "jobs");
-			response.setData(VntUtil.getInputStream(VntUtil.toJson(new ReturnObject(true, user.getJobs().size()))));
+			response.setData(VntUtil.getInputStream(VntUtil.toJson(new ReturnObject(true, webServer.getUser().getJobs().size()))));
 		} else if (StringUtils.isNotBlank(id)) {
-			Job job = PersistenceManager.findOne(Job.class, Long.valueOf(id));
+			Job job = PersistenceManager.getDao(Job.class).findOne(Long.valueOf(id));
 			if (job != null) {
 				response.setData(VntUtil.getInputStream(VntUtil.toJson(job)));
 			}
 		} else {
-			User user = PersistenceManager.findOne(User.class, Restrictions.idEq(webServer.getUser().getId()), "jobs");
-			response.setData(VntUtil.getInputStream(VntUtil.toJson(user.getJobs())));
+			response.setData(VntUtil.getInputStream(VntUtil.toJson(webServer.getUser().getJobs())));
 		}
 	}
 

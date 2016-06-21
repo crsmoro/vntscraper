@@ -5,8 +5,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Comparator;
 
-import org.hibernate.criterion.Restrictions;
-
 import com.shuffle.vnt.core.configuration.PreferenceManager;
 import com.shuffle.vnt.core.db.PersistenceManager;
 import com.shuffle.vnt.web.HttpServlet;
@@ -34,7 +32,9 @@ public class Login implements HttpServlet {
 	public void doPost(IHTTPSession session, Response response) {
 		String username = session.getParms().get("username");
 		String password = session.getParms().get("password");
-		User user = PersistenceManager.findOne(User.class, Restrictions.and(Restrictions.eq("username", username), Restrictions.eq("password", password)), "sessions");
+		//FIXME
+		//Restrictions.and(Restrictions.eq("username", username), Restrictions.eq("password", password))
+		User user = PersistenceManager.getDao(User.class).eq("username", username).eq("password", password).and(2).findOne();
 		Session sessionUser = null;
 		if (user != null) {
 			String sessionhash = "";
@@ -53,7 +53,7 @@ public class Login implements HttpServlet {
 			}
 			sessionUser.setSession(sessionhash);
 			sessionUser.setUser(user);
-			PersistenceManager.save(sessionUser);
+			PersistenceManager.getDao(Session.class).save(sessionUser);
 			session.getCookies().set("session", sessionhash, 30);
 			response.setStatus(Status.REDIRECT);
 			response.addHeader("Location", "/");

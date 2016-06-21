@@ -2,31 +2,34 @@ package com.shuffle.vnt.core.configuration.model;
 
 import java.io.Serializable;
 
-import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.table.DatabaseTable;
 import com.shuffle.vnt.core.db.model.GenericEntity;
 
-@Entity
+@DatabaseTable
 public class Preferences extends GenericEntity implements Serializable {
 
 	private static final long serialVersionUID = 7482942706150638896L;
 
+	@DatabaseField
 	private String baseUrl;
 
+	@DatabaseField
 	private boolean imdbActive;
 
+	@DatabaseField
 	private boolean tmdbActive;
 
+	@DatabaseField
 	private String tmdbApiKey = "";
 
+	@DatabaseField
 	private String tmdbLanguage = "";
 
+	@DatabaseField
 	private Long maxSessionsPerUser = 5l;
 
-	@ManyToOne(targetEntity = MailConfig.class, optional = true)
-	@JoinColumn(name = "mailconfig_id")
+	@DatabaseField(foreign = true, foreignAutoRefresh = true)
 	private MailConfig mailConfig;
 
 	public String getBaseUrl() {

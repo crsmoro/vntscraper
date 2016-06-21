@@ -39,7 +39,7 @@ public class SaveTrackerUsers implements HttpServlet {
 			trackerUser = new TrackerUser();
 			trackerUserUser = new TrackerUserUser();
 		} else {
-			trackerUserUser = PersistenceManager.findOne(TrackerUserUser.class, Long.valueOf(session.getParms().get("id")));
+			trackerUserUser = PersistenceManager.getDao(TrackerUserUser.class).findOne(Long.valueOf(session.getParms().get("id")));
 			trackerUser = trackerUserUser.getTrackerUser();
 		}
 
@@ -54,12 +54,12 @@ public class SaveTrackerUsers implements HttpServlet {
 		if (session.getParms().get("password") != null && !"".equals(session.getParms().get("password"))) {
 			trackerUser.setPassword(session.getParms().get("password"));
 		}
-		PersistenceManager.save(trackerUser);
+		PersistenceManager.getDao(TrackerUser.class).save(trackerUser);
 
 		trackerUserUser.setTrackerUser(trackerUser);
 		trackerUserUser.setUser(webServer.getUser());
 		trackerUserUser.setShared(Boolean.valueOf(session.getParms().get("shared")));
-		PersistenceManager.save(trackerUserUser);
+		PersistenceManager.getDao(TrackerUserUser.class).save(trackerUserUser);
 
 		returnObject = new ReturnObject(true, null);
 		response.setData(VntUtil.getInputStream(VntUtil.toJson(returnObject)));
@@ -72,8 +72,8 @@ public class SaveTrackerUsers implements HttpServlet {
 
 	@Override
 	public void doDelete(IHTTPSession session, Response response) {
-		TrackerUserUser trackerUserUser = PersistenceManager.findOne(TrackerUserUser.class, Long.valueOf(session.getParms().get("id")));
-		PersistenceManager.remove(trackerUserUser);
+		TrackerUserUser trackerUserUser = PersistenceManager.getDao(TrackerUserUser.class).findOne(Long.valueOf(session.getParms().get("id")));
+		PersistenceManager.getDao(TrackerUserUser.class).remove(trackerUserUser);
 
 		response.setMimeType("application/json");
 		ReturnObject returnObject = new ReturnObject(true, null);

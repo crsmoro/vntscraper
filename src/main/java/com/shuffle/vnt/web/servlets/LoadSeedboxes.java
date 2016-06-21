@@ -1,7 +1,6 @@
 package com.shuffle.vnt.web.servlets;
 
 import org.apache.commons.lang3.StringUtils;
-import org.hibernate.criterion.Restrictions;
 
 import com.shuffle.vnt.core.db.PersistenceManager;
 import com.shuffle.vnt.core.model.Seedbox;
@@ -28,12 +27,14 @@ public class LoadSeedboxes implements HttpServlet {
 
 		String pkname = session.getParms().get("id");
 		if (StringUtils.isNotBlank(pkname)) {
-			Seedbox seedbox = PersistenceManager.findOne(Seedbox.class, Long.valueOf(pkname));
+			Seedbox seedbox = PersistenceManager.getDao(Seedbox.class).findOne(Long.valueOf(pkname));
 			if (seedbox != null) {
 				response.setData(VntUtil.getInputStream(VntUtil.toJson(seedbox)));
 			}
 		} else {
-			User user = PersistenceManager.findOne(User.class, Restrictions.idEq(webServer.getUser().getId()), "seedboxes");
+			//FIXME
+			//Restrictions.idEq(webServer.getUser().getId())
+			User user = PersistenceManager.getDao(User.class).findOne(webServer.getUser().getId());
 			response.setData(VntUtil.getInputStream(VntUtil.toJson(user.getSeedboxes())));
 		}
 	}

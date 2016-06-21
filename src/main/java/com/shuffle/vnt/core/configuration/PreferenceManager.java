@@ -1,7 +1,5 @@
 package com.shuffle.vnt.core.configuration;
 
-import org.hibernate.criterion.Restrictions;
-
 import com.shuffle.vnt.core.configuration.model.Preferences;
 import com.shuffle.vnt.core.db.PersistenceManager;
 
@@ -17,7 +15,7 @@ public abstract class PreferenceManager {
 	}
 
 	public static void reloadPreferences() {
-		instance = PersistenceManager.findOne(Preferences.class, Restrictions.and());
+		instance = PersistenceManager.getDao(Preferences.class).findOne();
 		if (instance == null) {
 			instance = new Preferences();
 		}
@@ -28,7 +26,7 @@ public abstract class PreferenceManager {
 	}
 
 	public static void savePreferences() {
-		PersistenceManager.save(instance);
+		PersistenceManager.getDao(Preferences.class).save(instance);
 		reloadPreferences();
 	}
 }

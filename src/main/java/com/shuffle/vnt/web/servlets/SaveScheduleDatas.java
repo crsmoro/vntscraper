@@ -12,7 +12,6 @@ import java.util.Map;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.hibernate.criterion.Restrictions;
 
 import com.shuffle.vnt.core.db.PersistenceManager;
 import com.shuffle.vnt.core.model.Seedbox;
@@ -24,12 +23,13 @@ import com.shuffle.vnt.core.parser.bean.TorrentFilter.FilterOperation;
 import com.shuffle.vnt.core.parser.bean.TrackerCategory;
 import com.shuffle.vnt.core.schedule.ScheduleManager;
 import com.shuffle.vnt.core.schedule.model.Job;
+import com.shuffle.vnt.core.schedule.model.JobSeedbox;
 import com.shuffle.vnt.core.service.ServiceParser;
 import com.shuffle.vnt.util.VntUtil;
 import com.shuffle.vnt.web.HttpServlet;
 import com.shuffle.vnt.web.WebServer;
 import com.shuffle.vnt.web.bean.ReturnObject;
-import com.shuffle.vnt.web.model.User;
+import com.shuffle.vnt.web.model.UserJob;
 
 import fi.iki.elonen.NanoHTTPD.IHTTPSession;
 import fi.iki.elonen.NanoHTTPD.Response;
@@ -64,7 +64,7 @@ public class SaveScheduleDatas implements HttpServlet {
 		if (isNew) {
 			job = new Job();
 		} else {
-			job = PersistenceManager.findOne(Job.class, Long.valueOf(session.getParms().get("id")));
+			job = PersistenceManager.getDao(Job.class).findOne(Long.valueOf(session.getParms().get("id")));
 		}
 
 		if (!isNew && job == null) {
@@ -75,7 +75,7 @@ public class SaveScheduleDatas implements HttpServlet {
 
 		job.setName(session.getParms().get("name"));
 		Tracker tracker = Tracker.getInstance(session.getParms().get("tracker"));
-		TrackerUser trackerUser = PersistenceManager.findOne(TrackerUser.class, Long.valueOf(session.getParms().get("trackerUser")));
+		TrackerUser trackerUser = PersistenceManager.getDao(TrackerUser.class).findOne(Long.valueOf(session.getParms().get("trackerUser")));
 		job.setTrackerUser(trackerUser);
 		job.setEmail(session.getParms().get("email"));
 		QueryParameters queryParameters = new QueryParameters();
@@ -122,20 +122,39 @@ public class SaveScheduleDatas implements HttpServlet {
 				log.error("Error saving schedule template", e2);
 			}
 		}
-		User user = PersistenceManager.findOne(User.class, Restrictions.idEq(webServer.getUser().getId()), "jobs");
+
+		PersistenceManager.getDao(Job.class).save(job);
+
 		if (parameters.get("seedboxes") != null) {
 			for (String seedbox : parameters.get("seedboxes")) {
-				job.getSeedboxes().add(PersistenceManager.findOne(Seedbox.class, Long.valueOf(seedbox)));
+				Seedbox seedboxObject = PersistenceManager.getDao(Seedbox.class).findOne(Long.valueOf(seedbox));
+				JobSeedbox jobSeedbox = PersistenceManager.getDao(JobSeedbox.class).eq("job", job).eq("seedbox", seedboxObject).and(2).findOne();
+				if (jobSeedbox == null) {
+					jobSeedbox = new JobSeedbox();
+				}
+				jobSeedbox.setJob(job);
+				jobSeedbox.setSeedbox(seedboxObject);
+				PersistenceManager.getDao(JobSeedbox.class).save(jobSeedbox);
 			}
 		} else {
-			job.getSeedboxes().addAll(user.getSeedboxes());
+			for (Seedbox seedbox : job.getSeedboxes()) {
+				JobSeedbox jobSeedbox = PersistenceManager.getDao(JobSeedbox.class).eq("job", job).eq("seedbox", seedbox).and(2).findOne();
+				if (jobSeedbox == null) {
+					jobSeedbox = new JobSeedbox();
+				}
+				jobSeedbox.setJob(job);
+				jobSeedbox.setSeedbox(seedbox);
+				PersistenceManager.getDao(JobSeedbox.class).save(jobSeedbox);
+			}
 		}
 
-		PersistenceManager.save(job);
-		if (!user.getJobs().contains(job)) {
-			user.getJobs().add(job);
-			PersistenceManager.save(user);
+		UserJob userJob = PersistenceManager.getDao(UserJob.class).eq("user", webServer.getUser()).eq("job", job).and(2).findOne();
+		if (userJob == null) {
+			userJob = new UserJob();
 		}
+		userJob.setUser(webServer.getUser());
+		userJob.setJob(job);
+		PersistenceManager.getDao(UserJob.class).save(userJob);
 
 		ScheduleManager.getInstance().clearSchedules();
 		ScheduleManager.getInstance().updateSchedules();
@@ -151,10 +170,9 @@ public class SaveScheduleDatas implements HttpServlet {
 
 	@Override
 	public void doDelete(IHTTPSession session, Response response) {
-		Job job = PersistenceManager.findOne(Job.class, Long.valueOf(session.getParms().get("id")));
-		User user = PersistenceManager.findOne(User.class, Restrictions.idEq(webServer.getUser().getId()), "jobs");
-		user.getJobs().remove(job);
-		PersistenceManager.save(user);
+		Job job = PersistenceManager.getDao(Job.class).findOne(Long.valueOf(session.getParms().get("id")));
+		UserJob userJob = PersistenceManager.getDao(UserJob.class).eq("user", webServer.getUser()).eq("job", job).and(2).findOne();
+		PersistenceManager.getDao(UserJob.class).remove(userJob);
 
 		ScheduleManager.getInstance().clearSchedules();
 		ScheduleManager.getInstance().updateSchedules();

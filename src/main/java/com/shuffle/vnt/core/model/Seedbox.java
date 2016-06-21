@@ -2,28 +2,35 @@ package com.shuffle.vnt.core.model;
 
 import java.io.Serializable;
 
-import javax.persistence.Entity;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.table.DatabaseTable;
 import com.shuffle.vnt.core.db.model.GenericEntity;
 import com.shuffle.vnt.core.service.WebClient;
+import com.shuffle.vnt.util.ClassPersister;
 
-@Entity
+@DatabaseTable
 public class Seedbox extends GenericEntity implements Serializable {
 
 	private static final long serialVersionUID = 778532101757538034L;
 
+	@DatabaseField
 	private String name;
 
+	@DatabaseField
 	private String url;
 
+	@DatabaseField
 	private String username;
 
 	@JsonIgnore
+	@DatabaseField
 	private String password;
 
+	@DatabaseField
 	private String label;
 
+	@DatabaseField(persisterClass = ClassPersister.class)
 	private Class<? extends WebClient> webClient;
 
 	public String getName() {
