@@ -32,6 +32,11 @@ public class FetchNewImpl implements com.shuffle.vnt.service.parser.fetchnew.Fet
 	}
 
 	@Override
+	public ServiceParserData getData(Long id) {
+		return PersistenceManager.getDao(FetchNew.class).findOne(id);
+	}
+
+	@Override
 	public void setData(ServiceParserData data) {
 		this.fetchNew = (FetchNew) data;
 	}

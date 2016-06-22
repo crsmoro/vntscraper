@@ -10,6 +10,13 @@ public interface ServiceParser extends Service {
 
 	ServiceParserData getData();
 
+	/**
+	 * Needs this because of ORMLite to load the data (since it doesnt support inheritance)
+	 * @param id
+	 * @return
+	 */
+	ServiceParserData getData(Long id);
+
 	void setData(ServiceParserData data);
 
 	TrackerUser getTrackerUserData();

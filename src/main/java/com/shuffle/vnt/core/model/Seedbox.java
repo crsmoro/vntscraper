@@ -6,8 +6,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 import com.shuffle.vnt.core.db.model.GenericEntity;
+import com.shuffle.vnt.core.db.persister.ClassPersister;
 import com.shuffle.vnt.core.service.WebClient;
-import com.shuffle.vnt.util.ClassPersister;
 
 @DatabaseTable
 public class Seedbox extends GenericEntity implements Serializable {

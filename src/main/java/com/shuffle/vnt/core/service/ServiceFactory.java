@@ -1,25 +1,17 @@
 package com.shuffle.vnt.core.service;
 
-import java.util.Set;
-
-import org.reflections.Reflections;
+import com.shuffle.vnt.core.VntContext;
 
 public abstract class ServiceFactory {
-	
-	private ServiceFactory()
-	{
-		
+
+	private ServiceFactory() {
+
 	}
-	
-	public static <S extends Service> S getInstance(Class<S> service)
-	{
-		Reflections reflections = new Reflections("com.shuffle");
-		Set<Class<? extends S>> services = reflections.getSubTypesOf(service);
+
+	public static <S extends Service> S getInstance(Class<S> service) {
 		Class<? extends S> serviceClass = null;
-		for (Class<? extends S> serviceItem : services)
-		{
-			if (!serviceItem.isInterface())
-			{
+		for (Class<? extends S> serviceItem : VntContext.fetchClasses().getSubTypesOf(service)) {
+			if (!serviceItem.isInterface()) {
 				serviceClass = serviceItem;
 				break;
 			}

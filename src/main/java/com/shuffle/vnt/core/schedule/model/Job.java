@@ -10,12 +10,13 @@ import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 import com.shuffle.vnt.core.db.PersistenceManager;
 import com.shuffle.vnt.core.db.model.GenericEntity;
+import com.shuffle.vnt.core.db.persister.ClassPersister;
+import com.shuffle.vnt.core.db.persister.ServiceParserDataPersister;
 import com.shuffle.vnt.core.model.Seedbox;
 import com.shuffle.vnt.core.model.TrackerUser;
 import com.shuffle.vnt.core.parser.bean.QueryParameters;
 import com.shuffle.vnt.core.service.ServiceParser;
 import com.shuffle.vnt.core.service.ServiceParserData;
-import com.shuffle.vnt.util.ClassPersister;
 
 @DatabaseTable
 public class Job extends GenericEntity implements Serializable {
@@ -34,7 +35,7 @@ public class Job extends GenericEntity implements Serializable {
 	@DatabaseField(persisterClass = ClassPersister.class)
 	private Class<? extends ServiceParser> serviceParser;
 
-	@DatabaseField(foreign = true, foreignAutoRefresh = true)
+	@DatabaseField(columnName = "serviceParserData_id", persisterClass = ServiceParserDataPersister.class)
 	private ServiceParserData serviceParserData;
 
 	@DatabaseField

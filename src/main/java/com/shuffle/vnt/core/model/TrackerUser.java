@@ -22,8 +22,8 @@ import com.j256.ormlite.field.ForeignCollectionField;
 import com.j256.ormlite.table.DatabaseTable;
 import com.shuffle.vnt.core.db.PersistenceManager;
 import com.shuffle.vnt.core.db.model.GenericEntity;
+import com.shuffle.vnt.core.db.persister.ClassPersister;
 import com.shuffle.vnt.core.parser.Tracker;
-import com.shuffle.vnt.util.ClassPersister;
 import com.shuffle.vnt.util.VntUtil;
 
 @JsonIgnoreProperties(ignoreUnknown = true)

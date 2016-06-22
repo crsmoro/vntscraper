@@ -1,4 +1,4 @@
-package com.shuffle.vnt.util;
+package com.shuffle.vnt.core.db.persister;
 
 import java.lang.reflect.Field;
 import java.sql.SQLException;
@@ -8,6 +8,7 @@ import com.j256.ormlite.field.FieldType;
 import com.j256.ormlite.field.SqlType;
 import com.j256.ormlite.support.DatabaseResults;
 
+//FIXME use extends StringType?
 public class ClassPersister implements DataPersister {
 
 	private static ClassPersister instance = new ClassPersister();

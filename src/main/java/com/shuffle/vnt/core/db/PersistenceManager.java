@@ -10,6 +10,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
+import com.j256.ormlite.field.DataPersisterManager;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.Where;
@@ -17,6 +18,7 @@ import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 import com.shuffle.vnt.core.VntContext;
 import com.shuffle.vnt.core.db.model.GenericEntity;
+import com.shuffle.vnt.core.db.persister.ServiceParserDataPersister;
 
 public class PersistenceManager<E extends GenericEntity> {
 	
@@ -54,7 +56,7 @@ public class PersistenceManager<E extends GenericEntity> {
 	static {
 		try {
 			connection = new JdbcConnectionSource(databaseUrl, USER, PASS);
-			//TableUtils.createTableIfNotExists(connection, UserSeedbox.class);
+			DataPersisterManager.registerDataPersisters(ServiceParserDataPersister.getSingleton());
 		} catch (SQLException e) {
 			log.error("Problem connecting to databse", e);
 		}
@@ -72,6 +74,8 @@ public class PersistenceManager<E extends GenericEntity> {
 				
 			}
 		});
+		
+		
 	}
 	
 	private Dao<E,Long> dao;
