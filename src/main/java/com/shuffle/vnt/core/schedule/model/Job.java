@@ -10,7 +10,6 @@ import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 import com.shuffle.vnt.core.db.PersistenceManager;
 import com.shuffle.vnt.core.db.model.GenericEntity;
-import com.shuffle.vnt.core.db.persister.ClassPersister;
 import com.shuffle.vnt.core.db.persister.ServiceParserDataPersister;
 import com.shuffle.vnt.core.model.Seedbox;
 import com.shuffle.vnt.core.model.TrackerUser;
@@ -32,7 +31,7 @@ public class Job extends GenericEntity implements Serializable {
 	@DatabaseField(width = Integer.MAX_VALUE, dataType = DataType.SERIALIZABLE)
 	private QueryParameters queryParameters;
 
-	@DatabaseField(persisterClass = ClassPersister.class)
+	@DatabaseField
 	private Class<? extends ServiceParser> serviceParser;
 
 	@DatabaseField(columnName = "serviceParserData_id", persisterClass = ServiceParserDataPersister.class)

@@ -31,8 +31,6 @@ public class LoadUsers implements HttpServlet {
 
 		String pkname = session.getParms().get("id");
 		if (StringUtils.isNotBlank(pkname)) {
-			//FIXME
-			//Restrictions.idEq(Long.valueOf(pkname))
 			User user = PersistenceManager.getDao(User.class).findOne(Long.valueOf(pkname));
 			if (user != null) {
 				response.setData(VntUtil.getInputStream(VntUtil.toJson(user)));

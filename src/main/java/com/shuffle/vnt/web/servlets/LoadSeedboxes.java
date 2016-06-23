@@ -32,8 +32,6 @@ public class LoadSeedboxes implements HttpServlet {
 				response.setData(VntUtil.getInputStream(VntUtil.toJson(seedbox)));
 			}
 		} else {
-			//FIXME
-			//Restrictions.idEq(webServer.getUser().getId())
 			User user = PersistenceManager.getDao(User.class).findOne(webServer.getUser().getId());
 			response.setData(VntUtil.getInputStream(VntUtil.toJson(user.getSeedboxes())));
 		}

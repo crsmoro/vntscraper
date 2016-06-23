@@ -126,10 +126,7 @@ public class User extends GenericEntity implements Serializable {
 
 	public Set<TrackerUser> getTrackerUsers() {
 		if (trackerUsers.isEmpty()) {
-			// FIXME
-			// Restrictions.or(Restrictions.eq("user", this),
-			// Restrictions.eq("shared", true))
-			List<TrackerUserUser> trackerUserUsers = PersistenceManager.getDao(TrackerUserUser.class).eq("user", this).eq("shared", true).and(2).findAll();
+			List<TrackerUserUser> trackerUserUsers = PersistenceManager.getDao(TrackerUserUser.class).eq("user", this).eq("shared", true).or(2).findAll();
 			for (TrackerUserUser trackerUserUser : trackerUserUsers) {
 				trackerUsers.add(trackerUserUser.getTrackerUser());
 			}

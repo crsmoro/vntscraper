@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.ClassUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -49,10 +50,7 @@ public class WebServer extends NanoHTTPD {
 			String servletBase = "com/shuffle/vnt/web/servlets";
 			String urlRequested = session.getUri();
 			String extension = "";
-			//FIXME
-			//Map<String, Object> restrictions = new HashMap<>();
-			//restrictions.put("session", session.getCookies().read("session"));
-			this.session = PersistenceManager.getDao(Session.class).eq("session", session.getCookies().read("session")).findOne();
+			this.session = StringUtils.isNotBlank(session.getCookies().read("session")) ? PersistenceManager.getDao(Session.class).eq("session", session.getCookies().read("session")).findOne() : null;
 			if (this.session != null) {
 				user = this.session.getUser();
 			}

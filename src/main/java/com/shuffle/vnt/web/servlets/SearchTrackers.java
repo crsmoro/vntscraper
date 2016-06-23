@@ -71,9 +71,7 @@ public class SearchTrackers implements HttpServlet {
 			}
 
 			trackerManager.setQueryParameters(queryParameters);
-			//FIXME
-			//Restrictions.and(Restrictions.or(Restrictions.eq("user", webServer.getUser()), Restrictions.eq("shared", true)), Restrictions.eq("trackerUser", webServer.getUser().getTrackerUser(trackerInstance)))
-			TrackerUserUser trackerUserUser = PersistenceManager.getDao(TrackerUserUser.class).eq("user", webServer.getUser()).eq("shared", true).eq("trackerUser", webServer.getUser().getTrackerUser(trackerInstance)).and(3).findOne();
+			TrackerUserUser trackerUserUser = PersistenceManager.getDao(TrackerUserUser.class).eq("user", webServer.getUser()).eq("shared", true).or(2).eq("trackerUser", webServer.getUser().getTrackerUser(trackerInstance)).and(2).findOne();
 			trackerManager.setTrackerUser(trackerUserUser.getTrackerUser());
 			if (StringUtils.isNotBlank(session.getParms().get("page"))) {
 				trackerManager.setPage(Long.valueOf(session.getParms().get("page")));

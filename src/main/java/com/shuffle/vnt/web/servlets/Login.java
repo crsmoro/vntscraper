@@ -32,8 +32,6 @@ public class Login implements HttpServlet {
 	public void doPost(IHTTPSession session, Response response) {
 		String username = session.getParms().get("username");
 		String password = session.getParms().get("password");
-		//FIXME
-		//Restrictions.and(Restrictions.eq("username", username), Restrictions.eq("password", password))
 		User user = PersistenceManager.getDao(User.class).eq("username", username).eq("password", password).and(2).findOne();
 		Session sessionUser = null;
 		if (user != null) {

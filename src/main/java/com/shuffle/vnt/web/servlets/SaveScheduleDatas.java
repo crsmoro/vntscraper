@@ -125,7 +125,6 @@ public class SaveScheduleDatas implements HttpServlet {
 
 		PersistenceManager.getDao(Job.class).save(job);
 
-		//FIXME Not getting the seedboxes
 		if (parameters.get("seedboxes") != null) {
 			for (String seedbox : parameters.get("seedboxes")) {
 				Seedbox seedboxObject = PersistenceManager.getDao(Seedbox.class).findOne(Long.valueOf(seedbox));
@@ -138,7 +137,7 @@ public class SaveScheduleDatas implements HttpServlet {
 				PersistenceManager.getDao(JobSeedbox.class).save(jobSeedbox);
 			}
 		} else {
-			for (Seedbox seedbox : job.getSeedboxes()) {
+			for (Seedbox seedbox : webServer.getUser().getSeedboxes()) {
 				JobSeedbox jobSeedbox = PersistenceManager.getDao(JobSeedbox.class).eq("job", job).eq("seedbox", seedbox).and(2).findOne();
 				if (jobSeedbox == null) {
 					jobSeedbox = new JobSeedbox();

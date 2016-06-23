@@ -38,14 +38,11 @@ public class LoadTrackerUsers implements HttpServlet {
 		if (StringUtils.isNotBlank(session.getParms().get("tracker"))) {
 			tracker = Tracker.getInstance(session.getParms().get("tracker"));
 		}
+		PersistenceManager<TrackerUserUser> persistenceManager = PersistenceManager.getDao(TrackerUserUser.class).eq("user", webServer.getUser()).eq("shared", true).or(2);
 		if (tracker != null) {
-			//FIXME
-			//Restrictions.and(Restrictions.or(Restrictions.eq("user", webServer.getUser()), Restrictions.eq("shared", true)), Restrictions.eq("trackerUser", webServer.getUser().getTrackerUser(tracker)))
-			trackerUserUsers.addAll(PersistenceManager.getDao(TrackerUserUser.class).eq("user", webServer.getUser()).eq("shared", true).eq("trackerUser", webServer.getUser().getTrackerUser(tracker)).and(3).findAll());
+			trackerUserUsers.addAll(persistenceManager.eq("trackerUser", webServer.getUser().getTrackerUser(tracker)).and(2).findAll());
 		} else {
-			//FIXME
-			//Restrictions.or(Restrictions.eq("user", webServer.getUser()), Restrictions.eq("shared", true))
-			trackerUserUsers.addAll(PersistenceManager.getDao(TrackerUserUser.class).eq("user", webServer.getUser()).eq("shared", true).and(2).findAll());
+			trackerUserUsers.addAll(persistenceManager.findAll());
 		}
 
 		response.setMimeType("application/json");
