@@ -242,6 +242,8 @@ public class VntTrackerManager implements TrackerManager {
 				getDetails(torrent);
 			}
 			log.trace(torrent);
+			int totalFilters = getQueryParameters().getTorrentFilters().size();
+			int totalPass = 0;
 			for (TorrentFilter torrentFilter : getQueryParameters().getTorrentFilters()) {
 				try {
 					Field field = Torrent.class.getDeclaredField(torrentFilter.getField());
@@ -251,75 +253,75 @@ public class VntTrackerManager implements TrackerManager {
 						Long longTorrentValue = Long.valueOf(torrentValue.toString());
 						Long longFilterValue = Long.valueOf(torrentFilter.getValue().toString());
 						if (torrentFilter.getOperation().equals(FilterOperation.EQ) && longTorrentValue.equals(longFilterValue)) {
-							add = true;
+							totalPass++;
 							continue;
 						} else if (torrentFilter.getOperation().equals(FilterOperation.NE) && !longTorrentValue.equals(longFilterValue)) {
-							add = true;
+							totalPass++;
 							continue;
 						} else if (torrentFilter.getOperation().equals(FilterOperation.GT) && longTorrentValue.compareTo(longFilterValue) > 0) {
-							add = true;
+							totalPass++;
 							continue;
 						} else if (torrentFilter.getOperation().equals(FilterOperation.LT) && longTorrentValue.compareTo(longFilterValue) < 0) {
-							add = true;
+							totalPass++;
 							continue;
 						} else if (torrentFilter.getOperation().equals(FilterOperation.GE) && longTorrentValue.compareTo(longFilterValue) >= 0) {
-							add = true;
+							totalPass++;
 							continue;
 						} else if (torrentFilter.getOperation().equals(FilterOperation.LE) && longTorrentValue.compareTo(longFilterValue) <= 0) {
-							add = true;
+							totalPass++;
 							continue;
 						}
 					} else if (torrentValue instanceof Double) {
 						Double doubleTorrentValue = Double.valueOf(torrentValue.toString());
 						Double doubleFilterValue = Double.valueOf(torrentFilter.getValue().toString());
 						if (torrentFilter.getOperation().equals(FilterOperation.EQ) && doubleTorrentValue.equals(doubleFilterValue)) {
-							add = true;
+							totalPass++;
 							continue;
 						} else if (torrentFilter.getOperation().equals(FilterOperation.NE) && !doubleTorrentValue.equals(doubleFilterValue)) {
-							add = true;
+							totalPass++;
 							continue;
 						} else if (torrentFilter.getOperation().equals(FilterOperation.GT) && doubleTorrentValue.compareTo(doubleFilterValue) > 0) {
-							add = true;
+							totalPass++;
 							continue;
 						} else if (torrentFilter.getOperation().equals(FilterOperation.LT) && doubleTorrentValue.compareTo(doubleFilterValue) < 0) {
-							add = true;
+							totalPass++;
 							continue;
 						} else if (torrentFilter.getOperation().equals(FilterOperation.GE) && doubleTorrentValue.compareTo(doubleFilterValue) >= 0) {
-							add = true;
+							totalPass++;
 							continue;
 						} else if (torrentFilter.getOperation().equals(FilterOperation.LE) && doubleTorrentValue.compareTo(doubleFilterValue) <= 0) {
-							add = true;
+							totalPass++;
 							continue;
 						}
 					} else if (torrentValue instanceof String) {
 						String stringTorrentValue = torrentValue.toString();
 						String stringFilterValue = torrentFilter.getValue().toString();
 						if (torrentFilter.getOperation().equals(FilterOperation.EQ) && stringTorrentValue.equals(stringFilterValue)) {
-							add = true;
+							totalPass++;
 							continue;
 						} else if (torrentFilter.getOperation().equals(FilterOperation.NE) && !stringTorrentValue.equals(stringFilterValue)) {
-							add = true;
+							totalPass++;
 							continue;
 						} else if (torrentFilter.getOperation().equals(FilterOperation.GT) && stringTorrentValue.compareTo(stringFilterValue) > 0) {
-							add = true;
+							totalPass++;
 							continue;
 						} else if (torrentFilter.getOperation().equals(FilterOperation.LT) && stringTorrentValue.compareTo(stringFilterValue) < 0) {
-							add = true;
+							totalPass++;
 							continue;
 						} else if (torrentFilter.getOperation().equals(FilterOperation.GE) && stringTorrentValue.compareTo(stringFilterValue) >= 0) {
-							add = true;
+							totalPass++;
 							continue;
 						} else if (torrentFilter.getOperation().equals(FilterOperation.LE) && stringTorrentValue.compareTo(stringFilterValue) <= 0) {
-							add = true;
+							totalPass++;
 							continue;
 						} else if (torrentFilter.getOperation().equals(FilterOperation.LIKE) && stringTorrentValue.contains(stringFilterValue)) {
-							add = true;
+							totalPass++;
 							continue;
 						} else if (torrentFilter.getOperation().equals(FilterOperation.NLIKE) && !stringTorrentValue.contains(stringFilterValue)) {
-							add = true;
+							totalPass++;
 							continue;
 						} else if (torrentFilter.getOperation().equals(FilterOperation.REGEX) && stringTorrentValue.matches(stringFilterValue)) {
-							add = true;
+							totalPass++;
 							continue;
 						}
 					}
@@ -328,6 +330,7 @@ public class VntTrackerManager implements TrackerManager {
 					e.printStackTrace();
 				}
 			}
+			add = totalFilters == totalPass;
 			if (add) {
 				log.trace("added on return list!");
 				torrents.add(torrent);
