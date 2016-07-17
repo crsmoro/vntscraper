@@ -142,10 +142,10 @@ public class TrackerUser extends GenericEntity implements Serializable {
 	}
 
 	public void updateCookies(Map<String, String> cookies) {
-		getCookies().removeIf(cookie -> {
+		getCookies().forEach(cookie -> {
 			PersistenceManager.getDao(Cookie.class).remove(cookie);
-			return true;
 		});
+		getCookies().clear();
 
 		for (String cookieName : cookies.keySet()) {
 			Cookie cookie = new Cookie();
