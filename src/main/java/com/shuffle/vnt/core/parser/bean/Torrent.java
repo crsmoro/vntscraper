@@ -4,7 +4,7 @@ import java.util.Date;
 
 import com.shuffle.vnt.core.model.TrackerUser;
 
-public class Torrent {
+public class Torrent implements Cloneable {
 
 	private TrackerUser trackerUser;
 
@@ -150,6 +150,11 @@ public class Torrent {
 	public String toString() {
 		return "Torrent [trackerUser=" + trackerUser + ", id=" + id + ", name=" + name + ", year=" + year + ", size=" + size + ", added=" + added + ", category=" + category + ", link=" + link + ", downloadLink=" + downloadLink + ", imdbLink="
 				+ imdbLink + ", youtubeLink=" + youtubeLink + ", content=" + content + ", detailed=" + detailed + ", movie=" + movie + "]";
+	}
+
+	@Override
+	public Torrent clone() throws CloneNotSupportedException {
+		return (Torrent) super.clone();
 	}
 
 }

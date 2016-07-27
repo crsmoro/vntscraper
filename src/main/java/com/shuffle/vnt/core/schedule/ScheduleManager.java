@@ -93,8 +93,17 @@ public class ScheduleManager {
 		for (Torrent torrent : torrents) {
 			torrent.setContent("");
 			Map<String, Object> torrentObject = clazzToObject(torrent);
+			Torrent torrentLink = null;
 			try {
-				torrentObject.put("stringify", URLEncoder.encode(VntUtil.toJson(torrent), "UTF-8"));
+				torrentLink = torrent.clone();
+				torrentLink.setMovie(null);
+			}
+			catch (CloneNotSupportedException e)
+			{
+				torrentLink = torrent;
+			}
+			try {
+				torrentObject.put("stringify", URLEncoder.encode(VntUtil.toJson(torrentLink), "UTF-8"));
 			} catch (UnsupportedEncodingException e) {
 				e.printStackTrace();
 			}
