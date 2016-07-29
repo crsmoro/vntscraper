@@ -170,6 +170,10 @@ public class PersistenceManager<E extends GenericEntity> {
 		}
 		return object;
 	}
+	
+	public void remove(Long id) {
+		remove(findOne(id));
+	}
 
 	public void remove(E object) {
 		try {
@@ -192,64 +196,4 @@ public class PersistenceManager<E extends GenericEntity> {
 		}
 		return Collections.emptyList();
 	}
-
-	/*
-	 * private static EntityManagerFactory entityManagerFactory;
-	 * 
-	 * static { Map<String, String> properties = new HashMap<String,
-	 * String>(); properties.put("hibernate.connection.url", "jdbc:h2:" +
-	 * System.getProperty("db.file", "./vnt")); entityManagerFactory =
-	 * Persistence.createEntityManagerFactory("pu", properties); }
-	 * 
-	 * public static <E extends GenericEntity> E findOne(Class<E> entity,
-	 * Object primaryKey) { return findOne(entity,
-	 * Restrictions.idEq(primaryKey)); }
-	 * 
-	 * public static <E extends GenericEntity> E save(E object) {
-	 * EntityManager entityManager =
-	 * entityManagerFactory.createEntityManager(); EntityTransaction
-	 * entityTransaction = entityManager.getTransaction();
-	 * entityTransaction.begin(); if (object.getId() != null) { object =
-	 * entityManager.merge(object); } else { entityManager.persist(object);
-	 * } entityTransaction.commit(); entityManager.clear();
-	 * entityManager.close(); return object; }
-	 * 
-	 * public static <E extends GenericEntity> void remove(E object) {
-	 * EntityManager entityManager =
-	 * entityManagerFactory.createEntityManager(); EntityTransaction
-	 * entityTransaction = entityManager.getTransaction();
-	 * entityTransaction.begin(); if (object.getId() != null) { Object
-	 * objectToRemove = entityManager.find(object.getClass(),
-	 * object.getId()); entityManager.remove(objectToRemove); }
-	 * entityTransaction.commit(); entityManager.clear();
-	 * entityManager.close(); }
-	 * 
-	 * public static <E extends GenericEntity> List<E> findAll(Class<E>
-	 * entity) { return findAll(entity, null); }
-	 * 
-	 * public static <E extends GenericEntity> List<E> findAll(Class<E>
-	 * entity, Criterion criterion) { return findAll(entity, criterion, new
-	 * String[0]); }
-	 * 
-	 * @SuppressWarnings("unchecked") public static <E extends
-	 * GenericEntity> List<E> findAll(Class<E> entity, Criterion criterion,
-	 * String... lazyFieldsToLoad) { EntityManager entityManager =
-	 * entityManagerFactory.createEntityManager(); Session session =
-	 * entityManager.unwrap(Session.class); Criteria criteria =
-	 * session.createCriteria(entity);
-	 * criteria.setResultTransformer(Criteria.DISTINCT_ROOT_ENTITY); if
-	 * (criterion != null) { criteria.add(criterion); } for (String field :
-	 * lazyFieldsToLoad) { criteria.setFetchMode(field, FetchMode.JOIN); }
-	 * List<E> results = criteria.list(); entityManager.clear();
-	 * entityManager.close(); return results; }
-	 * 
-	 * public static <E extends GenericEntity> E findOne(Class<E> entity,
-	 * Criterion criterion) { return findOne(entity, criterion, new
-	 * String[0]); }
-	 * 
-	 * public static <E extends GenericEntity> E findOne(Class<E> entity,
-	 * Criterion criterion, String... lazyFieldsToLoad) { List<E> results =
-	 * findAll(entity, criterion, lazyFieldsToLoad); return results != null
-	 * && !results.isEmpty() ? results.get(0) : null; }
-	 */
 }

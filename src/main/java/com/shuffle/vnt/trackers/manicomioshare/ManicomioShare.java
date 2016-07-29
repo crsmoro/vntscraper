@@ -236,7 +236,7 @@ public class ManicomioShare implements Tracker {
 
 	@Override
 	public boolean isAuthenticated(Body body) {
-		return Jsoup.parse(body.getContent()).select("a[href=\"http://www.manicomio-share.com/account-recover.php\"]").size() <= 0;
+		return Jsoup.parse(body.getContent()).select("a[href=\"https://www.manicomio-share.com/account-recover.php\"]").size() <= 0;
 	}
 
 	@Override

@@ -142,20 +142,33 @@ public class TrackerUser extends GenericEntity implements Serializable {
 	}
 
 	public void updateCookies(Map<String, String> cookies) {
-		getCookies().forEach(cookie -> {
-			PersistenceManager.getDao(Cookie.class).remove(cookie);
-		});
-		getCookies().clear();
+		List<Long> idsToRemove = new ArrayList<>();
+		for (Cookie cookie : getCookies())
+		{
+			idsToRemove.add(cookie.getId());
+		}
+		
+		log.info("cookies 1");
+		getCookies().forEach(log::info);
+		for (Long id : idsToRemove) {
+			PersistenceManager.getDao(Cookie.class).remove(id);
+		}
+		setCookies(new HashSet<>());
+		log.info("cookies 2");
+		getCookies().forEach(log::info);
+		
 
 		for (String cookieName : cookies.keySet()) {
 			Cookie cookie = new Cookie();
 			cookie.setName(cookieName);
 			cookie.setValue(cookies.get(cookieName));
-			cookie.setExpiration(new Date().getTime() + (72 * 60 * 60 * 1000));
+			cookie.setExpiration(new Date().getTime() + (5 * 24 * 60 * 60 * 1000));
 			cookie.setTrackerUser(this);
 			PersistenceManager.getDao(Cookie.class).save(cookie);
 			getCookies().add(cookie);
 		}
+		log.info("cookies 3");
+		getCookies().forEach(log::info);
 		log.debug("Updating Cookies of : " + this);
 	}
 
