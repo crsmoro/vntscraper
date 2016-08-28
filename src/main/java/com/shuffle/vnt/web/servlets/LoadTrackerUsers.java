@@ -1,9 +1,6 @@
 package com.shuffle.vnt.web.servlets;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,7 +8,6 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 
 import com.shuffle.vnt.core.db.PersistenceManager;
-import com.shuffle.vnt.core.model.Cookie;
 import com.shuffle.vnt.core.parser.Tracker;
 import com.shuffle.vnt.util.VntUtil;
 import com.shuffle.vnt.web.HttpServlet;
@@ -32,7 +28,6 @@ public class LoadTrackerUsers implements HttpServlet {
 
 	@Override
 	public void doGet(IHTTPSession session, Response response) {
-		DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm");
 		List<TrackerUserUser> trackerUserUsers = new ArrayList<>();
 		Tracker tracker = null;
 		if (StringUtils.isNotBlank(session.getParms().get("tracker"))) {
@@ -53,13 +48,6 @@ public class LoadTrackerUsers implements HttpServlet {
 			jsonObject.put("tracker", trackerUserUser.getTrackerUser().getTracker().getName());
 			jsonObject.put("trackerClass", trackerUserUser.getTrackerUser().getTracker().getClass().getName());
 			jsonObject.put("username", trackerUserUser.getTrackerUser().getUsername());
-			Date au = null;
-			for (Cookie cookie : trackerUserUser.getTrackerUser().getCookies()) {
-				if (au == null || au.before(new Date(cookie.getExpiration()))) {
-					au = new Date(cookie.getExpiration());
-				}
-			}
-			jsonObject.put("authenticatedUntil", au != null ? dateFormat.format(au) : null);
 			jsonObject.put("shared", trackerUserUser.isShared());
 			jsonObject.put("owner", trackerUserUser.getUser().getUsername());
 			jsonObject.put("owned", webServer.getUser().equals(trackerUserUser.getUser()));

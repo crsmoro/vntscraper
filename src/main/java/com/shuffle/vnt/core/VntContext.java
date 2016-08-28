@@ -15,8 +15,6 @@ public class VntContext {
 
 	private static Reflections reflections = null;
 
-	private static List<Tracker> trackers = new ArrayList<>();
-
 	private static List<Class<? extends ServiceParser>> serviceParsers = new ArrayList<>();
 
 	static {
@@ -36,11 +34,16 @@ public class VntContext {
 	}
 
 	public static void loadTrackers() {
-		trackers.clear();
+		Tracker.loadedTrackers.clear();
 		for (Class<? extends Tracker> trackerClass : fetchClasses().getSubTypesOf(Tracker.class)) {
 			if (!trackerClass.isInterface()) {
-				Tracker tracker = Tracker.getInstance(trackerClass);
-				trackers.add(tracker);
+				Tracker tracker;
+				try {
+					tracker = trackerClass.newInstance();
+					Tracker.loadedTrackers.add(tracker);
+				} catch (InstantiationException | IllegalAccessException notreallycare) {
+				
+				}
 			}
 
 		}
@@ -51,10 +54,10 @@ public class VntContext {
 	}
 
 	public static List<Tracker> getTrackers(boolean forceReload) {
-		if (trackers.isEmpty() || forceReload) {
+		if (Tracker.loadedTrackers.isEmpty() || forceReload) {
 			loadTrackers();
 		}
-		return trackers;
+		return Tracker.loadedTrackers;
 	}
 
 	public static void loadServiceParsers() {

@@ -2,13 +2,23 @@ package com.shuffle.vnt.core.parser.bean;
 
 import java.util.Date;
 
-import com.shuffle.vnt.core.model.TrackerUser;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.shuffle.vnt.core.parser.Tracker;
 
 public class Torrent implements Cloneable {
 
-	private TrackerUser trackerUser;
-
 	private long id;
+
+	private String username;
+
+	private String password;
+
+	@JsonIgnore
+	private Tracker tracker;
+	
+	@JsonProperty("tracker")
+	private String trackerName;
 
 	private String name;
 
@@ -34,20 +44,44 @@ public class Torrent implements Cloneable {
 
 	private Movie movie;
 
-	public TrackerUser getTrackerUser() {
-		return trackerUser;
-	}
-
-	public void setTrackerUser(TrackerUser trackerUser) {
-		this.trackerUser = trackerUser;
-	}
-
 	public long getId() {
 		return id;
 	}
 
 	public void setId(long id) {
 		this.id = id;
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	public Tracker getTracker() {
+		return tracker;
+	}
+
+	public void setTracker(Tracker tracker) {
+		this.tracker = tracker;
+	}
+
+	public String getTrackerName() {
+		return tracker.getClass().getName();
+	}
+
+	public void setTrackerName(String trackerName) {
+		this.tracker = Tracker.getInstance(trackerName);
 	}
 
 	public String getName() {
@@ -148,8 +182,8 @@ public class Torrent implements Cloneable {
 
 	@Override
 	public String toString() {
-		return "Torrent [trackerUser=" + trackerUser + ", id=" + id + ", name=" + name + ", year=" + year + ", size=" + size + ", added=" + added + ", category=" + category + ", link=" + link + ", downloadLink=" + downloadLink + ", imdbLink="
-				+ imdbLink + ", youtubeLink=" + youtubeLink + ", content=" + content + ", detailed=" + detailed + ", movie=" + movie + "]";
+		return "Torrent [id=" + id + ", username=" + username + ", password=[Protected], name=" + name + ", year=" + year + ", size=" + size + ", added=" + added + ", category=" + category + ", link=" + link + ", downloadLink="
+				+ downloadLink + ", imdbLink=" + imdbLink + ", youtubeLink=" + youtubeLink + ", content=" + content + ", detailed=" + detailed + ", movie=" + movie + "]";
 	}
 
 	@Override

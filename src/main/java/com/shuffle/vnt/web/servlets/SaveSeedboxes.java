@@ -86,6 +86,7 @@ public class SaveSeedboxes implements HttpServlet {
 		Seedbox seedbox = PersistenceManager.getDao(Seedbox.class).findOne(Long.valueOf(session.getParms().get("id")));
 		UserSeedbox userSeedbox = PersistenceManager.getDao(UserSeedbox.class).eq("user", webServer.getUser()).eq("seedbox", seedbox).and(2).findOne();
 		PersistenceManager.getDao(UserSeedbox.class).remove(userSeedbox);
+		PersistenceManager.getDao(Seedbox.class).remove(seedbox);
 
 		response.setMimeType("application/json");
 		ReturnObject returnObject = new ReturnObject(true, null);

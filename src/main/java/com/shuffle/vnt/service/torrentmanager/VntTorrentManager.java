@@ -8,26 +8,23 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpEntity;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CookieStore;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.cookie.Cookie;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.StringBody;
-import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
 import com.shuffle.vnt.core.model.Seedbox;
+import com.shuffle.vnt.core.parser.TrackerManagerFactory;
 import com.shuffle.vnt.core.parser.bean.Torrent;
 import com.shuffle.vnt.core.service.TorrentManager;
+import com.shuffle.vnt.core.service.TrackerManager;
 import com.shuffle.vnt.core.service.WebClient;
 import com.shuffle.vnt.core.service.WebClient.AuthenticationType;
 
@@ -40,24 +37,9 @@ public class VntTorrentManager implements TorrentManager {
 		if (torrent.getDownloadLink() == null || torrent.getDownloadLink().equals("")) {
 			throw new IllegalArgumentException("Download link not set");
 		}
-		try {
-			CookieStore cookieStore = new BasicCookieStore();
-
-			for (Cookie cookie : torrent.getTrackerUser().getRealCookies()) {
-				cookieStore.addCookie(cookie);
-			}
-
-			CloseableHttpClient httpClient = HttpClientBuilder.create().setDefaultCookieStore(cookieStore).build();
-			HttpGet httpGet = new HttpGet(torrent.getDownloadLink());
-			CloseableHttpResponse response = httpClient.execute(httpGet);
-
-			HttpEntity httpEntity = response.getEntity();
-			return httpEntity.getContent();
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
-		}
-
+		TrackerManager trackerManager = TrackerManagerFactory.getInstance(torrent.getTracker());
+		trackerManager.setUser(torrent.getUsername(), torrent.getPassword());
+		return trackerManager.download(torrent);
 	}
 
 	@Override

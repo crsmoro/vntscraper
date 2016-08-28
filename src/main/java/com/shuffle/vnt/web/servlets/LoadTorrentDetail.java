@@ -1,5 +1,6 @@
 package com.shuffle.vnt.web.servlets;
 
+import com.shuffle.vnt.core.exception.VntException;
 import com.shuffle.vnt.core.parser.TrackerManagerFactory;
 import com.shuffle.vnt.core.parser.bean.Torrent;
 import com.shuffle.vnt.core.service.TrackerManager;
@@ -22,18 +23,16 @@ public class LoadTorrentDetail implements HttpServlet {
 	public void doGet(IHTTPSession session, Response response) {
 		ReturnObject returnObject = null;
 		Torrent torrent = VntUtil.fromJson(session.getParms().get("torrent"), Torrent.class);
-		Torrent ret = null;
 		if (torrent != null) {
 			if (!torrent.isDetailed()) {
-				TrackerManager trackerManager = TrackerManagerFactory.getInstance(torrent.getTrackerUser().getTracker());
-				trackerManager.setTrackerUser(torrent.getTrackerUser());
-				ret = trackerManager.getDetails(torrent);
-			}
-
-			if (ret == null) {
-				returnObject = new ReturnObject(false, "Error when trying to get details", null);
-			} else {
-				returnObject = new ReturnObject(true, torrent);
+				TrackerManager trackerManager = TrackerManagerFactory.getInstance(torrent.getTracker());
+				trackerManager.setUser(torrent.getUsername(), torrent.getPassword());
+				try {
+					trackerManager.getDetails(torrent);
+					returnObject = new ReturnObject(true, torrent);
+				} catch (VntException e) {
+					returnObject = new ReturnObject(false, "Error when trying to get details", e.getStackTrace());
+				}
 			}
 
 			response.setMimeType("application/json");

@@ -1,42 +1,30 @@
 package com.shuffle.vnt.parser;
 
-import java.io.IOException;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+import javax.annotation.concurrent.ThreadSafe;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.http.HttpEntity;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.CookieStore;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.utils.URLEncodedUtils;
-import org.apache.http.impl.client.BasicCookieStore;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.LaxRedirectStrategy;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.util.EntityUtils;
-import org.jsoup.Connection;
-import org.jsoup.Connection.Method;
-import org.jsoup.Connection.Response;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
+import org.apache.http.StatusLine;
 
 import com.omertron.themoviedbapi.MovieDbException;
 import com.omertron.themoviedbapi.model.movie.MovieInfo;
 import com.shuffle.vnt.api.omdb.OmdbAPI;
 import com.shuffle.vnt.api.themoviedb.TheMovieDbApi;
 import com.shuffle.vnt.core.configuration.PreferenceManager;
-import com.shuffle.vnt.core.model.TrackerUser;
+import com.shuffle.vnt.core.exception.AuthenticationException;
+import com.shuffle.vnt.core.exception.TimeoutException;
+import com.shuffle.vnt.core.exception.VntException;
 import com.shuffle.vnt.core.parser.Tracker;
 import com.shuffle.vnt.core.parser.Tracker.ParameterType;
 import com.shuffle.vnt.core.parser.bean.Body;
@@ -47,8 +35,10 @@ import com.shuffle.vnt.core.parser.bean.TorrentFilter;
 import com.shuffle.vnt.core.parser.bean.TorrentFilter.FilterOperation;
 import com.shuffle.vnt.core.parser.bean.TrackerCategory;
 import com.shuffle.vnt.core.service.TrackerManager;
+import com.shuffle.vnt.httprequest.HttpRequestBuilder;
 import com.shuffle.vnt.util.VntUtil;
 
+@ThreadSafe
 public class VntTrackerManager implements TrackerManager {
 
 	private static final Log log = LogFactory.getLog(VntTrackerManager.class);
@@ -57,17 +47,19 @@ public class VntTrackerManager implements TrackerManager {
 
 	private Tracker trackerConfig;
 
-	private TrackerUser trackerUser;
+	private String username;
+
+	private String password;
 
 	private QueryParameters queryParameters;
 
 	private long page;
 
-	private Map<String, String> cookies = new HashMap<String, String>();
-
-	private int attempt = 0;
-
 	private int maxAttempts = 2;
+
+	private HttpRequestBuilder httpRequest = new HttpRequestBuilder();
+
+	private Lock lock = new ReentrantLock();
 
 	private Map<ParameterType, Map<String, String>> urlPatterns = new HashMap<>();
 
@@ -86,23 +78,47 @@ public class VntTrackerManager implements TrackerManager {
 	}
 
 	@Override
-	public Tracker getTrackerConfig() {
+	public Tracker getTracker() {
 		return trackerConfig;
 	}
 
 	@Override
-	public void setTrackerConfig(Tracker trackerConfig) {
+	public void setTracker(Tracker trackerConfig) {
+		lock.lock();
 		this.trackerConfig = trackerConfig;
+		lock.unlock();
 	}
 
 	@Override
-	public TrackerUser getTrackerUser() {
-		return trackerUser;
+	public String getUsername() {
+		return this.username;
 	}
 
 	@Override
-	public void setTrackerUser(TrackerUser trackerUserData) {
-		this.trackerUser = trackerUserData;
+	public void setUsername(String username) {
+		lock.lock();
+		this.username = username;
+		lock.unlock();
+	}
+
+	@Override
+	public String getPassword() {
+		return this.password;
+	}
+
+	@Override
+	public void setPassword(String password) {
+		lock.lock();
+		this.password = password;
+		lock.unlock();
+	}
+
+	@Override
+	public void setUser(String username, String password) {
+		lock.lock();
+		this.username = username;
+		this.password = password;
+		lock.unlock();
 	}
 
 	@Override
@@ -112,12 +128,16 @@ public class VntTrackerManager implements TrackerManager {
 
 	@Override
 	public void setQueryParameters(QueryParameters queryParameters) {
+		lock.lock();
 		this.queryParameters = queryParameters;
+		lock.unlock();
 	}
 
 	@Override
 	public void setPage(long page) {
+		lock.lock();
 		this.page = page;
+		lock.unlock();
 	}
 
 	@Override
@@ -125,117 +145,23 @@ public class VntTrackerManager implements TrackerManager {
 		return page;
 	}
 
-	private Body executeSearch() {
-		Document document = null;
-		Body body = new Body();
-		try {
-			cookies = cookies.isEmpty() ? getTrackerUser().getMapCookies() : cookies;
-			StringBuilder url = new StringBuilder();
-			url.append(getTrackerConfig().getUrl() + (getTrackerConfig().getUrl().contains(urlPatterns.get(getTrackerConfig().getParameterType()).get("initial-separator"))
-					? (getTrackerConfig().getParameterType().equals(ParameterType.DEFAULT) ? urlPatterns.get(getTrackerConfig().getParameterType()).get("separator") : "")
-					: urlPatterns.get(getTrackerConfig().getParameterType()).get("initial-separator")));
-
-			StringBuilder urlCategory = new StringBuilder();
-			for (TrackerCategory trackerCategory : getQueryParameters().getTrackerCategories()) {
-				if (getTrackerConfig().getCategories().contains(trackerCategory)) {
-					if (getTrackerConfig().getParameterType().equals(ParameterType.DEFAULT)) {
-						if (urlCategory.length() > 0) {
-							urlCategory.append(urlPatterns.get(getTrackerConfig().getParameterType()).get("separator"));
-						}
-						if (StringUtils.isNotBlank(trackerCategory.getProperty())) {
-							urlCategory.append(trackerCategory.getProperty());
-						} else if (StringUtils.isNotBlank(getTrackerConfig().getCategoryField())) {
-							urlCategory.append(getTrackerConfig().getCategoryField());
-						}
-						if (StringUtils.isNotBlank(trackerCategory.getCode())) {
-							urlCategory.append(urlPatterns.get(getTrackerConfig().getParameterType()).get("assigner") + trackerCategory.getCode());
-						}
-					} else if (getTrackerConfig().getParameterType().equals(ParameterType.PATH)) {
-						if (urlCategory.length() > 0) {
-							urlCategory.append(",");
-						}
-						if (StringUtils.isNotBlank(trackerCategory.getCode())) {
-							urlCategory.append(trackerCategory.getCode());
-						}
-					}
-				}
-			}
-			if (getTrackerConfig().getParameterType().equals(ParameterType.PATH) && StringUtils.isNotBlank(getTrackerConfig().getCategoryField()) && !getQueryParameters().getTrackerCategories().isEmpty()) {
-				url.append(getTrackerConfig().getCategoryField() + urlPatterns.get(getTrackerConfig().getParameterType()).get("separator"));
-			}
-			if (urlCategory.length() > 0) {
-				url.append(urlCategory.toString());
-			}
-			if (!url.substring(url.length() - 1, url.length()).equals(urlPatterns.get(getTrackerConfig().getParameterType()).get("separator"))) {
-				url.append(urlPatterns.get(getTrackerConfig().getParameterType()).get("separator"));
-			}
-			url.append(getTrackerConfig().getSearchField() + urlPatterns.get(getTrackerConfig().getParameterType()).get("assigner") + getQueryParameters().getSearch());
-			url.append(urlPatterns.get(getTrackerConfig().getParameterType()).get("separator") + getTrackerConfig().getPageField() + urlPatterns.get(getTrackerConfig().getParameterType()).get("assigner")
-					+ getTrackerConfig().getPageValue(getPage()));
-			log.info("URL : " + url.toString());
-			Connection connection = Jsoup.connect(url.toString()).timeout(30000).userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:43.0) Gecko/20100101 Firefox/43.0.3").cookies(cookies).method(Method.GET);
-			Response response = connection.execute();
-			log.debug("Status Code : " + response.statusCode());
-			log.debug("Status Message : " + response.statusMessage());
-			document = response.parse();
-			if (response.statusCode() != 200 || StringUtils.isBlank(document.body().html())) {
-				return null;
-			}
-			body.setContent(document.body().html());
-			log.trace("Body Content : " + body.getContent());
-			return body;
-		} catch (IOException e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
-
-	@Override
-	public List<Torrent> fetchTorrents() {
-		if (getTrackerConfig().getTorrentParser() == null) {
-			throw new IllegalArgumentException("Torrent Parser not set");
-		}
-		attempt = 0;
-		if (!isAuthenticated() && getTrackerUser().cookieExpired() && !authenticate()) {
-			return Collections.emptyList();
-		}
-		Body body = executeSearch();
-		if (body == null) {
-			return Collections.emptyList();
-		}
-		boolean auth = getTrackerConfig().isAuthenticated(body);
-		while (attempt < maxAttempts && !auth) {
-			if (attempt > 0) {
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-
-				}
-			}
-			attempt++;
-			auth = authenticate();
-			log.debug("attempt : " + attempt);
-		}
-		if (auth && attempt > 0) {
-			body = executeSearch();
-		}
-		return buildResults(body);
-	}
-
 	private List<Torrent> buildResults(Body body) {
 		log.debug("QueryParameters : " + getQueryParameters());
 		List<Torrent> torrents = new ArrayList<Torrent>();
-		for (Row row : getTrackerConfig().getTorrentParser().getRows(body)) {
+		for (Row row : getTracker().getTorrentParser().getRows(body)) {
 			Torrent torrent = new Torrent();
-			torrent.setTrackerUser(getTrackerUser());
-			torrent.setId(getTrackerConfig().getTorrentParser().getId(row));
-			torrent.setName(getTrackerConfig().getTorrentParser().getNome(row));
-			torrent.setCategory(getTrackerConfig().getTorrentParser().getCategory(row));
-			torrent.setAdded(getTrackerConfig().getTorrentParser().getAdded(row));
-			torrent.setSize(getTrackerConfig().getTorrentParser().getSize(row));
-			torrent.setLink(getTrackerConfig().getTorrentParser().getLink(row));
-			torrent.setDownloadLink(getTrackerConfig().getTorrentParser().getDownlodLink(row));
+			torrent.setTracker(getTracker());
+			torrent.setUsername(getUsername());
+			torrent.setPassword(getPassword());
+			torrent.setId(getTracker().getTorrentParser().getId(row));
+			torrent.setName(getTracker().getTorrentParser().getNome(row));
+			torrent.setCategory(getTracker().getTorrentParser().getCategory(row));
+			torrent.setAdded(getTracker().getTorrentParser().getAdded(row));
+			torrent.setSize(getTracker().getTorrentParser().getSize(row));
+			torrent.setLink(getTracker().getTorrentParser().getLink(row));
+			torrent.setDownloadLink(getTracker().getTorrentParser().getDownlodLink(row));
 
+			//TODO make as parameter
 			boolean add = getQueryParameters().getTorrentFilters().isEmpty();
 			if (!add) {
 				log.debug("getting torrent details");
@@ -339,142 +265,266 @@ public class VntTrackerManager implements TrackerManager {
 		return torrents;
 	}
 
-	private Body getDetailsPage(Torrent torrent) {
-		Document document = null;
-		Body body = new Body();
+	@Override
+	public List<Torrent> fetchTorrents() {
+		lock.lock();
 		try {
-			log.info("URL : " + torrent.getLink());
-			cookies = cookies.isEmpty() ? getTrackerUser().getMapCookies() : cookies;
-			Connection connection = Jsoup.connect(torrent.getLink()).userAgent("Mozilla").cookies(cookies);
-			Response response = connection.execute();
-			log.debug("Status Code : " + response.statusCode());
-			log.debug("Status Message : " + response.statusMessage());
-			document = response.parse();
-			if (response.statusCode() != 200 || StringUtils.isBlank(document.body().html())) {
-				return null;
+			StringBuilder url = new StringBuilder();
+			url.append(getTracker().getUrl() + (getTracker().getUrl().contains(urlPatterns.get(getTracker().getParameterType()).get("initial-separator"))
+					? (getTracker().getParameterType().equals(ParameterType.DEFAULT) ? urlPatterns.get(getTracker().getParameterType()).get("separator") : "")
+					: urlPatterns.get(getTracker().getParameterType()).get("initial-separator")));
+
+			StringBuilder urlCategory = new StringBuilder();
+			for (TrackerCategory trackerCategory : getQueryParameters().getTrackerCategories()) {
+				if (getTracker().getCategories().contains(trackerCategory)) {
+					if (getTracker().getParameterType().equals(ParameterType.DEFAULT)) {
+						if (urlCategory.length() > 0) {
+							urlCategory.append(urlPatterns.get(getTracker().getParameterType()).get("separator"));
+						}
+						if (StringUtils.isNotBlank(trackerCategory.getProperty())) {
+							urlCategory.append(trackerCategory.getProperty());
+						} else if (StringUtils.isNotBlank(getTracker().getCategoryField())) {
+							urlCategory.append(getTracker().getCategoryField());
+						}
+						if (StringUtils.isNotBlank(trackerCategory.getCode())) {
+							urlCategory.append(urlPatterns.get(getTracker().getParameterType()).get("assigner") + trackerCategory.getCode());
+						}
+					} else if (getTracker().getParameterType().equals(ParameterType.PATH)) {
+						if (urlCategory.length() > 0) {
+							urlCategory.append(",");
+						}
+						if (StringUtils.isNotBlank(trackerCategory.getCode())) {
+							urlCategory.append(trackerCategory.getCode());
+						}
+					}
+				}
 			}
-			body.setContent(document.body().html());
-		} catch (IOException e) {
-			log.warn("Error when trying to get details", e);
-			return null;
+			if (getTracker().getParameterType().equals(ParameterType.PATH) && StringUtils.isNotBlank(getTracker().getCategoryField()) && !getQueryParameters().getTrackerCategories().isEmpty()) {
+				url.append(getTracker().getCategoryField() + urlPatterns.get(getTracker().getParameterType()).get("separator"));
+			}
+			if (urlCategory.length() > 0) {
+				url.append(urlCategory.toString());
+			}
+			if (!url.substring(url.length() - 1, url.length()).equals(urlPatterns.get(getTracker().getParameterType()).get("separator"))) {
+				url.append(urlPatterns.get(getTracker().getParameterType()).get("separator"));
+			}
+			url.append(getTracker().getSearchField() + urlPatterns.get(getTracker().getParameterType()).get("assigner") + getQueryParameters().getSearch());
+			url.append(urlPatterns.get(getTracker().getParameterType()).get("separator") + getTracker().getPageField() + urlPatterns.get(getTracker().getParameterType()).get("assigner") + getTracker().getPageValue(getPage()));
+			log.info("URL : " + url.toString());
+
+			List<Torrent> torrents = new ArrayList<>();
+			if (authenticate()) {
+				httpRequest.getParameters().clear();
+				httpRequest.setHttpMethod("GET");
+				httpRequest.setUrl(url.toString());
+				getLoggedContent(httpRequest, new VntAttemptListener() {
+
+					@Override
+					public void loadFailed(StatusLine statusLine, String content) {
+						throw new TimeoutException("Timeout trying to fetch torrents");
+					}
+
+					@Override
+					public void contentLoaded(String content) {
+						torrents.addAll(buildResults(new Body(content)));
+					}
+				});
+			} else {
+				throw new AuthenticationException(getTracker().getName() +  " Invalid Username and/or password");
+			}
+			return torrents;
+		} finally {
+			lock.unlock();
 		}
-		return body;
 	}
 
 	@Override
 	public Torrent getDetails(Torrent torrent) {
-		if (getTrackerConfig().getTorrentDetailedParser() == null) {
-			throw new IllegalArgumentException("Torrent Detailed Parser not set");
-		}
-		attempt = 0;
-		Body body = getDetailsPage(torrent);
+		lock.lock();
+		try {
 
-		boolean auth = body != null ? getTrackerConfig().isAuthenticated(body) : false;
-		if (!isAuthenticated() && getTrackerUser().cookieExpired() && !authenticate()) {
-			auth = false;
-		}
-		while (attempt < maxAttempts && !auth) {
-			if (attempt > 0) {
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-
-				}
+			if (getTracker().getTorrentDetailedParser() == null) {
+				throw new IllegalArgumentException("Torrent Detailed Parser not set");
 			}
-			attempt++;
-			auth = authenticate();
-			log.debug("attempt : " + attempt);
-		}
+			if (authenticate()) {
+				httpRequest.getParameters().clear();
+				httpRequest.setHttpMethod("GET");
+				httpRequest.setUrl(torrent.getLink());
 
-		if (auth && attempt > 0) {
-			body = getDetailsPage(torrent);
-		}
-		if (body == null) {
-			return null;
-		}
+				getLoggedContent(httpRequest, new VntAttemptListener() {
 
-		torrent.setDetailed(true);
-		torrent.setYear(getTrackerConfig().getTorrentDetailedParser().getAno(body));
-		torrent.setYoutubeLink(getTrackerConfig().getTorrentDetailedParser().getYoutubeLink(body));
-		torrent.setImdbLink(getTrackerConfig().getTorrentDetailedParser().getImdbLink(body));
-		torrent.setContent(getTrackerConfig().getTorrentDetailedParser().getContent(body));
-		if (StringUtils.isNotBlank(torrent.getImdbLink())) {
-			if (PreferenceManager.getPreferences().isImdbActive()) {
-				OmdbAPI.getMovie(OmdbAPI.getById(VntUtil.getImdbId(torrent.getImdbLink())), torrent);
+					@Override
+					public void loadFailed(StatusLine statusLine, String content) {
+						throw new TimeoutException("Timeout trying to fetch torrents");
+					}
+
+					@Override
+					public void contentLoaded(String content) {
+						Body body = new Body(content);
+						torrent.setDetailed(true);
+						torrent.setYear(getTracker().getTorrentDetailedParser().getAno(body));
+						torrent.setYoutubeLink(getTracker().getTorrentDetailedParser().getYoutubeLink(body));
+						torrent.setImdbLink(getTracker().getTorrentDetailedParser().getImdbLink(body));
+						torrent.setContent(getTracker().getTorrentDetailedParser().getContent(body));
+						if (StringUtils.isNotBlank(torrent.getImdbLink())) {
+							if (PreferenceManager.getPreferences().isImdbActive()) {
+								OmdbAPI.getMovie(OmdbAPI.getById(VntUtil.getImdbId(torrent.getImdbLink())), torrent);
+							}
+							if (PreferenceManager.getPreferences().isTmdbActive()) {
+								try {
+									MovieInfo movieInfo = TheMovieDbApi.getInstance().getMovieInfoImdb("tt" + StringUtils.leftPad(VntUtil.getImdbId(torrent.getImdbLink()).replace("tt", ""), 7, "0"),
+											PreferenceManager.getPreferences().getTmdbLanguage());
+									TheMovieDbApi.getMovie(movieInfo, torrent);
+								} catch (MovieDbException e) {
+									e.printStackTrace();
+								}
+							}
+						}
+					}
+				});
+			} else {
+				throw new AuthenticationException(getTracker().getName() + " Invalid Username and/or password");
 			}
-			if (PreferenceManager.getPreferences().isTmdbActive()) {
-				try {
-					MovieInfo movieInfo = TheMovieDbApi.getInstance().getMovieInfoImdb("tt" + StringUtils.leftPad(VntUtil.getImdbId(torrent.getImdbLink()).replace("tt", ""), 7, "0"), PreferenceManager.getPreferences().getTmdbLanguage());
-					TheMovieDbApi.getMovie(movieInfo, torrent);
-				} catch (MovieDbException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-		return torrent;
 
+			return torrent;
+		} finally {
+			lock.unlock();
+		}
 	}
 
 	@Override
 	public boolean authenticate() {
-		if (!getTrackerUser().getTracker().getClass().getName().equals(getTrackerConfig().getClass().getName())) {
-			throw new IllegalArgumentException("TrackerUserData does not match TrackerConfig");
-		}
-		return authenticate(getTrackerUser().getUsername(), getTrackerUser().getPassword());
-	}
-
-	private boolean authenticate(String username, String password) {
-		log.info("Authenticate");
+		lock.lock();
 		try {
-			CookieStore cookieStore = new BasicCookieStore();
-
-			CloseableHttpClient httpClient = HttpClientBuilder.create().setDefaultCookieStore(cookieStore).setRedirectStrategy(new LaxRedirectStrategy()).build();
-
-			List<NameValuePair> nameValuePairs = new ArrayList<>();
-			nameValuePairs.add(new BasicNameValuePair(getTrackerConfig().getUsernameField(), getTrackerUser().getUsername()));
-			nameValuePairs.add(new BasicNameValuePair(getTrackerConfig().getPasswordField(), getTrackerUser().getPassword()));
-			for (final String additionalParametersKey : getTrackerConfig().getAuthenticationAdditionalParameters().keySet()) {
-				nameValuePairs.add(new BasicNameValuePair(additionalParametersKey, getTrackerConfig().getAuthenticationAdditionalParameters().get(additionalParametersKey)));
+			int attemptLogin = 0;
+			HttpRequestBuilder httpRequestBuilder = new HttpRequestBuilder();
+			httpRequestBuilder.setUrl(getTracker().getAuthenticationUrl()).setHttpMethod(getTracker().getAuthenticationMethod());
+			httpRequestBuilder.addParameter(getTracker().getUsernameField(), getUsername());
+			httpRequestBuilder.addParameter(getTracker().getPasswordField(), getPassword());
+			for (String name : getTracker().getAuthenticationAdditionalParameters().keySet()) {
+				httpRequestBuilder.addParameter(name, getTracker().getAuthenticationAdditionalParameters().get(name));
 			}
-			CloseableHttpResponse response = null;
+			while (!authenticated && attemptLogin < maxAttempts) {
+				log.debug("Login Attempt " + attemptLogin);
+				attempt(httpRequestBuilder, new VntAttemptListener() {
 
-			if (getTrackerConfig().getAuthenticationMethod().equals("POST")) {
-				HttpPost httpPost = new HttpPost(getTrackerConfig().getAuthenticationUrl());
-				httpPost.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:43.0) Gecko/20100101 Firefox/43.0.3");
-				httpPost.addHeader("Accept-Encoding", "gzip");
-				httpPost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
-				response = httpClient.execute(httpPost);
-			} else if (getTrackerConfig().getAuthenticationMethod().equals("GET")) {
-				HttpGet httpGet = new HttpGet(getTrackerConfig().getAuthenticationUrl() + URLEncodedUtils.format(nameValuePairs, "UTF-8"));
-				httpGet.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:43.0) Gecko/20100101 Firefox/43.0.3");
-				httpGet.addHeader("Accept-Encoding", "gzip");
-				response = httpClient.execute(httpGet);
+					@Override
+					public void loadFailed(StatusLine statusLine, String content) {
+						if (statusLine.getStatusCode() != 200 || StringUtils.isBlank(content)) {
+							throw new TimeoutException("Timeout trying to login");
+						}
+					}
+
+					@Override
+					public void contentLoaded(String content) {
+						authenticated = getTracker().isAuthenticated(new Body(content));
+						if (authenticated) {
+							httpRequest.getCookieStore().clear();
+							httpRequest.addCookies(httpRequestBuilder.getCookies());
+						}
+					}
+				});
+				attemptLogin++;
+				if (!authenticated) {
+					try {
+						Thread.sleep(TrackerManager.DELAY_BETWEEN_REQUESTS);
+					} catch (InterruptedException dontcare) {
+
+					}
+				}
 			}
-
-			if (response.getStatusLine().getStatusCode() != 200) {
-				return false;
-			}
-
-			HttpEntity httpEntity = response.getEntity();
-
-			String content = EntityUtils.toString(httpEntity);
-
-			log.debug("Status Code : " + response.getStatusLine().getStatusCode());
-			log.debug("Status Message : " + response.getStatusLine().getReasonPhrase());
-			Body body = new Body();
-			body.setContent(content);
-			authenticated = getTrackerConfig().isAuthenticated(body);
-			if (isAuthenticated()) {
-				getTrackerUser().updateCookies(cookieStore.getCookies());
-			}
-		} catch (IOException e) {
-			log.error("Error when trying to authenticate", e);
+			return authenticated;
+		} finally {
+			lock.unlock();
 		}
-		return isAuthenticated();
 	}
 
-	private boolean isAuthenticated() {
-		return authenticated;
+	private void getLoggedContent(HttpRequestBuilder httpRequest, VntAttemptListener listener) {
+		int loggedAttempt = 0;
+		boolean reqOk = false;
+		HttpRequestBuilder httpRequestBuilder = null;
+		try {
+			httpRequestBuilder = httpRequest.clone();
+		} catch (CloneNotSupportedException e1) {
+			VntException vntException = new VntException("Generic Error");
+			vntException.addSuppressed(e1);
+			throw vntException;
+		}
+
+		while (!reqOk && loggedAttempt < maxAttempts) {
+			log.debug("Logged attempt " + loggedAttempt);
+			try {
+				httpRequestBuilder.request();
+			} catch (TimeoutException e) {
+				log.info("Logged attempt " + loggedAttempt + " timeout, trying again", e);
+			}
+			String response = httpRequestBuilder.getStringResponse();
+			if (httpRequestBuilder.getStatusLine().getStatusCode() == 200 && StringUtils.isNotBlank(response) && getTracker().isAuthenticated(new Body(response))) {
+				log.debug("content ok, auth ok");
+				log.trace(response);
+				listener.contentLoaded(response);
+				reqOk = true;
+			} else if (httpRequestBuilder.getStatusLine().getStatusCode() == 200 && StringUtils.isBlank(response)
+					&& !getTracker().isAuthenticated(new Body(httpRequestBuilder.setUrl(VntUtil.getDomain(getTracker().getAuthenticationUrl())).setHttpMethod("GET").request().getStringResponse()))) {
+				log.debug("content nok, auth nok");
+				httpRequestBuilder = httpRequest;
+				authenticated = false;
+				authenticate();
+			}
+			loggedAttempt++;
+			if (!reqOk) {
+				try {
+					Thread.sleep(TrackerManager.DELAY_BETWEEN_REQUESTS);
+				} catch (InterruptedException dontcare) {
+
+				}
+			}
+		}
+		if (!reqOk) {
+			authenticated = false;
+			listener.loadFailed(httpRequest.getStatusLine(), httpRequestBuilder.getStringResponse());
+		}
 	}
 
+	private void attempt(HttpRequestBuilder httpRequest, VntAttemptListener listener) {
+		boolean reqOk = false;
+		int attempt = 0;
+		while (!reqOk && attempt < maxAttempts) {
+			log.debug("Attempt " + attempt);
+			try {
+				httpRequest.request();
+			} catch (TimeoutException e) {
+				log.info("Attempt " + attempt + " timeout, trying again", e);
+			}
+			String response = httpRequest.getStringResponse();
+			if (httpRequest.getStatusLine().getStatusCode() == 200 && StringUtils.isNotBlank(response)) {
+				listener.contentLoaded(response);
+				reqOk = true;
+			}
+			attempt++;
+			if (!reqOk) {
+				try {
+					Thread.sleep(TrackerManager.DELAY_BETWEEN_REQUESTS);
+				} catch (InterruptedException dontcare) {
+
+				}
+			}
+		}
+		if (!reqOk) {
+			listener.loadFailed(httpRequest.getStatusLine(), httpRequest.getStringResponse());
+		}
+	}
+
+	@Override
+	public InputStream download(Torrent torrent) {
+		lock.lock();
+		try {
+			httpRequest.getParameters().clear();
+			httpRequest.setHttpMethod("GET");
+			httpRequest.setUrl(torrent.getDownloadLink());
+			return new ByteArrayInputStream(httpRequest.request().getByteResponse());
+		} finally {
+			lock.unlock();
+		}
+	}
 }

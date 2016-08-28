@@ -173,6 +173,7 @@ public class SaveScheduleDatas implements HttpServlet {
 		Job job = PersistenceManager.getDao(Job.class).findOne(Long.valueOf(session.getParms().get("id")));
 		UserJob userJob = PersistenceManager.getDao(UserJob.class).eq("user", webServer.getUser()).eq("job", job).and(2).findOne();
 		PersistenceManager.getDao(UserJob.class).remove(userJob);
+		PersistenceManager.getDao(Job.class).remove(job);
 
 		ScheduleManager.getInstance().clearSchedules();
 		ScheduleManager.getInstance().updateSchedules();

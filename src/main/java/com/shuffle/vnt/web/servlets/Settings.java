@@ -112,7 +112,8 @@ public class Settings implements HttpServlet {
 			generalConfig.put("imdbActive", PreferenceManager.getPreferences().isImdbActive());
 			generalConfig.put("tmdbActive", PreferenceManager.getPreferences().isTmdbActive());
 			generalConfig.put("tmdbapikey", PreferenceManager.getPreferences().getTmdbApiKey());
-			generalConfig.put("tmdbLanguage", Arrays.asList(PreferenceManager.getPreferences().getTmdbLanguage().split(",")));
+			tmdbLanguage = PreferenceManager.getPreferences().getTmdbLanguage();
+			generalConfig.put("tmdbLanguage", Arrays.asList(StringUtils.isNotBlank(tmdbLanguage) ? tmdbLanguage.split(",") : ""));
 			ReturnObject returnObject = new ReturnObject(true, generalConfig);
 			response.setData(VntUtil.getInputStream(VntUtil.toJson(returnObject)));
 		}

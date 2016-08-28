@@ -41,7 +41,7 @@ public class SearchTrackers implements HttpServlet {
 		List<Torrent> torrents = new ArrayList<>();
 		String tracker = session.getParms().get("tracker");
 		Tracker trackerInstance = null;
-		if (tracker != null && !"".equals(tracker)) {
+		if (StringUtils.isNoneBlank(tracker)) {
 			trackerInstance = Tracker.getInstance(tracker);
 			TrackerManager trackerManager = TrackerManagerFactory.getInstance(trackerInstance);
 			QueryParameters queryParameters = new QueryParameters();
@@ -72,7 +72,7 @@ public class SearchTrackers implements HttpServlet {
 
 			trackerManager.setQueryParameters(queryParameters);
 			TrackerUserUser trackerUserUser = PersistenceManager.getDao(TrackerUserUser.class).eq("user", webServer.getUser()).eq("shared", true).or(2).eq("trackerUser", webServer.getUser().getTrackerUser(trackerInstance)).and(2).findOne();
-			trackerManager.setTrackerUser(trackerUserUser.getTrackerUser());
+			trackerManager.setUser(trackerUserUser.getTrackerUser().getUsername(), trackerUserUser.getTrackerUser().getPassword());
 			if (StringUtils.isNotBlank(session.getParms().get("page"))) {
 				trackerManager.setPage(Long.valueOf(session.getParms().get("page")));
 			}

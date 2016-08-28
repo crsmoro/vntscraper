@@ -73,7 +73,9 @@ public class SaveTrackerUsers implements HttpServlet {
 	@Override
 	public void doDelete(IHTTPSession session, Response response) {
 		TrackerUserUser trackerUserUser = PersistenceManager.getDao(TrackerUserUser.class).findOne(Long.valueOf(session.getParms().get("id")));
+		TrackerUser trackerUser = PersistenceManager.getDao(TrackerUser.class).eq("id", trackerUserUser.getTrackerUser().getId()).findOne();
 		PersistenceManager.getDao(TrackerUserUser.class).remove(trackerUserUser);
+		PersistenceManager.getDao(TrackerUser.class).remove(trackerUser);
 
 		response.setMimeType("application/json");
 		ReturnObject returnObject = new ReturnObject(true, null);

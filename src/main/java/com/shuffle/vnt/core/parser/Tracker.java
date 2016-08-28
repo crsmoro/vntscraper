@@ -48,18 +48,11 @@ public interface Tracker {
 
 	@JsonIgnore
 	TorrentDetailedParser getTorrentDetailedParser();
-	
+
 	static List<Tracker> loadedTrackers = new ArrayList<>();
 
-	@SuppressWarnings("unchecked")
 	static Class<? extends Tracker> getClass(String className) {
-		Class<? extends Tracker> trackerClass = null;
-		try {
-			trackerClass = (Class<? extends Tracker>) Class.forName(className);
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		}
-		return trackerClass;
+		return Tracker.loadedTrackers.stream().filter(t -> t.getClass().getName().equalsIgnoreCase(className)).findFirst().orElse(null).getClass();
 	}
 
 	static Tracker getInstance(String className) {
@@ -67,15 +60,9 @@ public interface Tracker {
 	}
 
 	static Tracker getInstance(Class<? extends Tracker> clazz) {
-		Tracker tracker = null;
-		try {
-			tracker = clazz.newInstance();
-		} catch (InstantiationException | IllegalAccessException e) {
-			e.printStackTrace();
-		}
-		return tracker;
+		return loadedTrackers.stream().filter(t -> t.getClass().equals(clazz)).findFirst().orElse(null);
 	}
-	
+
 	default TrackerCategory getCategory(String code) {
 		return getCategories().stream().filter(c -> c.getCode().equals(code)).findFirst().orElse(null);
 	}

@@ -173,6 +173,9 @@ public class OmdbAPI {
 	}
 
 	public static Movie getMovie(OmdbResponse omdbResponse, Torrent torrent) {
+		if (omdbResponse == null || !omdbResponse.isResponse()) {
+			return null;
+		}
 		Movie movie = torrent != null ? torrent.getMovie() : null;
 		if (movie == null) {
 			movie = new Movie();

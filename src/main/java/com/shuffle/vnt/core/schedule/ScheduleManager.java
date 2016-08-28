@@ -185,7 +185,7 @@ public class ScheduleManager {
 					List<Torrent> torrents = new ArrayList<>();
 					TrackerManager trackerManager = TrackerManagerFactory.getInstance(job.getTrackerUser().getTracker());
 					trackerManager.setQueryParameters(job.getQueryParameters());
-					trackerManager.setTrackerUser(job.getTrackerUser());
+					trackerManager.setUser(job.getTrackerUser().getUsername(), job.getTrackerUser().getPassword());
 					if (job.getServiceParser() != null) {
 						ServiceParser serviceParser = ServiceFactory.getInstance(job.getServiceParser());
 						serviceParser.setQueryParameters(job.getQueryParameters());

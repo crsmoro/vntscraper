@@ -10,7 +10,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import com.shuffle.vnt.core.db.PersistenceManager;
+import com.shuffle.vnt.core.exception.VntException;
 import com.shuffle.vnt.web.model.Session;
 import com.shuffle.vnt.web.model.User;
 
@@ -101,10 +104,24 @@ public class WebServer extends NanoHTTPD {
 			return new Response(Response.Status.OK, (extensionsMimes.get(extension) != null ? extensionsMimes.get(extension) : MIME_DEFAULT_BINARY),
 					getClass().getProtectionDomain().getClassLoader().getResourceAsStream(docBase + urlRequested));
 
-		} catch (Exception e) {
+		} catch (VntException e) {
+			log.error("Vnt error", e);
+			return new Response(Response.Status.OK, "application/json", buildVntError(e));
+		}
+		catch (Exception e) {
 			log.error("Not found error", e);
 			return new Response(Response.Status.NOT_FOUND, MIME_PLAINTEXT, "Not Found");
 		}
+	}
+	
+	private String buildVntError(VntException e) {
+		JsonObject jsonObject = new JsonObject();
+		jsonObject.addProperty("success", false);
+		JsonObject jsonObjectError = new JsonObject();
+		jsonObjectError.addProperty("message", e.getMessage());
+		jsonObjectError.addProperty("stack", e.getSuppressed().toString());
+		jsonObject.add("error", jsonObjectError);
+		return new GsonBuilder().create().toJson(jsonObject);
 	}
 
 	@Override

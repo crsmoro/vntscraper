@@ -1,21 +1,29 @@
 package com.shuffle.vnt.core.service;
 
+import java.io.InputStream;
 import java.util.List;
 
-import com.shuffle.vnt.core.model.TrackerUser;
 import com.shuffle.vnt.core.parser.Tracker;
 import com.shuffle.vnt.core.parser.bean.QueryParameters;
 import com.shuffle.vnt.core.parser.bean.Torrent;
 
 public interface TrackerManager extends Service {
 
-	Tracker getTrackerConfig();
+	static long DELAY_BETWEEN_REQUESTS = 2000;
 
-	void setTrackerConfig(Tracker trackerConfig);
+	Tracker getTracker();
 
-	TrackerUser getTrackerUser();
+	void setTracker(Tracker tracker);
 
-	void setTrackerUser(TrackerUser trackerUser);
+	String getUsername();
+
+	void setUsername(String username);
+
+	String getPassword();
+
+	void setPassword(String password);
+
+	void setUser(String username, String password);
 
 	QueryParameters getQueryParameters();
 
@@ -30,4 +38,6 @@ public interface TrackerManager extends Service {
 	List<Torrent> fetchTorrents();
 
 	Torrent getDetails(Torrent torrent);
+
+	InputStream download(Torrent torrent);
 }

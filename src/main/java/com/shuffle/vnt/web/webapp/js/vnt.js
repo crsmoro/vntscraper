@@ -91,6 +91,9 @@ $('#divtrackerresults').on('click', '.modalpickseedbox', function(e) {
 	if ($('#modalpickseedbox form [name="seedbox"] option').length > 1) {
 		$('#modalpickseedbox').modal('show');
 	}
+	else if ($('#modalpickseedbox form [name="seedbox"] option').length <= 0) {
+		alert('No seedboxes avaliables');
+	}
 	else {
 		$('#modalpickseedbox form [name="seedbox"]').val($('#modalpickseedbox form [name="seedbox"] option').val());
 		if (confirm('Are you sure?')) {
@@ -198,9 +201,6 @@ function loadTrackerUsers() {
 							html += '<td>' + trackerUser.tracker + '</td>';
 							html += '<td>' + trackerUser.username + '</td>';
 							html += '<td>' + (trackerUser.owned ? (trackerUser.shared?'Yes':'No') : 'Owner: ' + trackerUser.owner) + '</td>';
-							html += '<td>'
-									+ (trackerUser.authenticatedUntil ? trackerUser.authenticatedUntil
-											: 'Never Authenticated') + '</td>';
 							html += '<td>' + (trackerUser.owned ? '<i class="glyphicon glyphicon-remove" style="color:red;"></i>' : '') + '</td>';
 							html += '</tr>';
 							tbody.append(html);
@@ -669,7 +669,7 @@ function filter(tracker, formData) {
 			buildTrackerTorrentsResultHtml(data.data);
 		}
 		else {
-			alert('Problem when saving data\n' + data.error.message);
+			alert('Problem when loading data\n' + data.error.message);
 			console.error(data.error.stack);
 		}
 	}).fail(function() {

@@ -1,16 +1,26 @@
 package com.shuffle.vnt.core.parser;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.shuffle.vnt.core.service.TrackerManager;
 import com.shuffle.vnt.parser.VntTrackerManager;
 
 public abstract class TrackerManagerFactory {
+	
+	private static Map<Tracker, TrackerManager> trackerInstance = new HashMap<>();
 
 	private TrackerManagerFactory() {
 
 	}
 
 	public static TrackerManager getInstance(Tracker tracker) {
-		return getInstance(new VntTrackerManager(), tracker);
+		TrackerManager trackerManager = trackerInstance.get(tracker);
+		if (trackerManager == null) {
+			trackerManager = new VntTrackerManager();
+			trackerInstance.put(tracker, trackerManager);
+		}
+		return getInstance(trackerManager, tracker);
 	}
 
 	public static TrackerManager getInstance(Class<? extends Tracker> tracker) {
@@ -18,7 +28,7 @@ public abstract class TrackerManagerFactory {
 	}
 
 	public static TrackerManager getInstance(TrackerManager trackerManager, Tracker tracker) {
-		trackerManager.setTrackerConfig(tracker);
+		trackerManager.setTracker(tracker);
 		return trackerManager;
 	}
 
@@ -26,8 +36,13 @@ public abstract class TrackerManagerFactory {
 		TrackerManager trackerManagerInstance = null;
 		Tracker trackerInstance = null;
 		try {
-			trackerManagerInstance = trackerManager.newInstance();
+			
 			trackerInstance = tracker.newInstance();
+			trackerManagerInstance = TrackerManagerFactory.trackerInstance.get(trackerInstance);
+			if (trackerManagerInstance == null) {
+				trackerManagerInstance = trackerManager.newInstance();
+				TrackerManagerFactory.trackerInstance.put(trackerInstance, trackerManagerInstance);
+			}
 		} catch (InstantiationException | IllegalAccessException e) {
 			e.printStackTrace();
 		}

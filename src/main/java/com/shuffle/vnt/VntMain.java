@@ -28,9 +28,7 @@ public class VntMain {
 
 		initLogger();
 
-		Logger.getRootLogger().setLevel(Level.toLevel(System.getProperty("level", "WARN")));
-
-		Logger.getLogger("com.shuffle").setLevel(Level.DEBUG);
+		Logger.getRootLogger().setLevel(Level.toLevel(System.getProperty("log", "WARN")));
 
 		log.info("Starting...");
 
