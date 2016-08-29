@@ -82,6 +82,7 @@ public class FetchNewImpl implements com.shuffle.vnt.service.parser.fetchnew.Fet
 			throw new IllegalArgumentException("Could not instantiate trackerParser");
 		}
 		trackerManager.setUser(getTrackerUserData().getUsername(), getTrackerUserData().getPassword());
+		trackerManager.setPage(0);
 		trackerManager.setQueryParameters(getQueryParameters());
 		if (fetchNew == null) {
 			fetchNew = new FetchNew();
