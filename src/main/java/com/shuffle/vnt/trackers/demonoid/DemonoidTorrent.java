@@ -15,7 +15,7 @@ import com.shuffle.vnt.util.VntUtil;
 
 public class DemonoidTorrent implements TorrentParser {
 
-    private final String baseUrl = "http://www.demonoid.ooo";
+    private final String baseUrl = Demonoid.BASE_URL;
 
     @Override
     public List<Row> getRows(Body body) {

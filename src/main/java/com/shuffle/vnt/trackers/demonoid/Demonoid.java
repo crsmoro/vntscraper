@@ -16,10 +16,12 @@ import com.shuffle.vnt.core.parser.bean.TrackerCategory;
 public class Demonoid implements Tracker {
 
 	private final String name = "Demonoid";
+	
+	public final static String BASE_URL = "http://www.demonoid.pw";
 
-	private final String url = "http://www.demonoid.ooo/files/";
+	private final String url = BASE_URL + "/files/";
 
-	private final String authenticationUrl = "http://www.demonoid.ooo/account_handler.php";
+	private final String authenticationUrl = BASE_URL + "/account_handler.php";
 
 	private final ParameterType parameterType = ParameterType.DEFAULT;
 
