@@ -7,10 +7,14 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,6 +23,9 @@ import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
 
 public abstract class VntUtil {
+
+	private transient static Log log = LogFactory.getLog(VntUtil.class);
+
 	private VntUtil() {
 
 	}
@@ -30,6 +37,28 @@ public abstract class VntUtil {
 			e.printStackTrace();
 			return "";
 		}
+	}
+
+	public static String getHomeUrl(String url) {
+		try {
+			URI uri = new URI(url);
+			String homeUrl = uri.getScheme() + "://" + uri.getHost() + (uri.getPort() >= 0 ? ":" + uri.getPort() : "");
+			return homeUrl;
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+			return "";
+		}
+	}
+	
+	public static String getCleanEncodedUrlValue(String value) {
+		String encodedValue = "";
+		try {
+			encodedValue = URLEncoder.encode(value, "UTF-8");
+		}
+		catch (Exception e) {
+			log.error("Problem enconding value to url");
+		}
+		return encodedValue;
 	}
 
 	private static ObjectMapper objectMapper;
@@ -54,9 +83,10 @@ public abstract class VntUtil {
 
 	public static <E> E fromJson(String json, Class<E> clazz) {
 		try {
+			log.debug(json);
 			return getObjectMapper().readValue(json, clazz);
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.error("Error decoding json string", e);
 		}
 		return null;
 	}

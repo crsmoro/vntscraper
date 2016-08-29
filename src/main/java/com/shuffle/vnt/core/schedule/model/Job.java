@@ -156,7 +156,7 @@ public class Job extends GenericEntity implements Serializable {
 
 	@Override
 	public String toString() {
-		return "SchedulerData [name=" + name + ", trackerUser=" + trackerUser + ", queryParameters=" + queryParameters + ", serviceParser=" + serviceParser + ", email=" + email + ", startDate=" + startDate + ", nextRun=" + nextRun
+		return "Job [name=" + name + ", trackerUser=" + trackerUser + ", queryParameters=" + queryParameters + ", serviceParser=" + serviceParser + ", email=" + email + ", startDate=" + startDate + ", nextRun=" + nextRun
 				+ ", interval=" + interval + ", template=" + (template != null ? new String(template) : null) + ", seedboxes=" + seedboxes;
 	}
 

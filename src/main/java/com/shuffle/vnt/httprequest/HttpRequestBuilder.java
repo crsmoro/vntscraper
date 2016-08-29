@@ -117,7 +117,7 @@ public class HttpRequestBuilder implements Cloneable {
 			if (contentType.getCharset() != null) {
 				httpEntityString = new String(httpEntityFile, contentType.getCharset());
 			}
-			else if (contentType.getMimeType().equals(ContentType.TEXT_HTML.getMimeType())) {
+			else {
 				httpEntityString = new String(httpEntityFile);
 			}
 		} catch (IOException e) {

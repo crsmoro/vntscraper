@@ -161,7 +161,7 @@ public class VntTrackerManager implements TrackerManager {
 			torrent.setLink(getTracker().getTorrentParser().getLink(row));
 			torrent.setDownloadLink(getTracker().getTorrentParser().getDownlodLink(row));
 
-			//TODO make as parameter
+			// TODO make as parameter
 			boolean add = getQueryParameters().getTorrentFilters().isEmpty();
 			if (!add) {
 				log.debug("getting torrent details");
@@ -308,7 +308,7 @@ public class VntTrackerManager implements TrackerManager {
 			if (!url.substring(url.length() - 1, url.length()).equals(urlPatterns.get(getTracker().getParameterType()).get("separator"))) {
 				url.append(urlPatterns.get(getTracker().getParameterType()).get("separator"));
 			}
-			url.append(getTracker().getSearchField() + urlPatterns.get(getTracker().getParameterType()).get("assigner") + getQueryParameters().getSearch());
+			url.append(getTracker().getSearchField() + urlPatterns.get(getTracker().getParameterType()).get("assigner") + VntUtil.getCleanEncodedUrlValue(getQueryParameters().getSearch()));
 			url.append(urlPatterns.get(getTracker().getParameterType()).get("separator") + getTracker().getPageField() + urlPatterns.get(getTracker().getParameterType()).get("assigner") + getTracker().getPageValue(getPage()));
 			log.info("URL : " + url.toString());
 
@@ -325,12 +325,12 @@ public class VntTrackerManager implements TrackerManager {
 					}
 
 					@Override
-					public void contentLoaded(String content) {
+					public void contentLoaded(String content, byte[] byteContent) {
 						torrents.addAll(buildResults(new Body(content)));
 					}
 				});
 			} else {
-				throw new AuthenticationException(getTracker().getName() +  " Invalid Username and/or password");
+				throw new AuthenticationException(getTracker().getName() + " Invalid Username and/or password");
 			}
 			return torrents;
 		} finally {
@@ -359,7 +359,7 @@ public class VntTrackerManager implements TrackerManager {
 					}
 
 					@Override
-					public void contentLoaded(String content) {
+					public void contentLoaded(String content, byte[] byteContent) {
 						Body body = new Body(content);
 						torrent.setDetailed(true);
 						torrent.setYear(getTracker().getTorrentDetailedParser().getAno(body));
@@ -416,7 +416,7 @@ public class VntTrackerManager implements TrackerManager {
 					}
 
 					@Override
-					public void contentLoaded(String content) {
+					public void contentLoaded(String content, byte[] byteContent) {
 						authenticated = getTracker().isAuthenticated(new Body(content));
 						if (authenticated) {
 							httpRequest.getCookieStore().clear();
@@ -462,10 +462,10 @@ public class VntTrackerManager implements TrackerManager {
 			if (httpRequestBuilder.getStatusLine().getStatusCode() == 200 && StringUtils.isNotBlank(response) && getTracker().isAuthenticated(new Body(response))) {
 				log.debug("content ok, auth ok");
 				log.trace(response);
-				listener.contentLoaded(response);
+				listener.contentLoaded(response, httpRequestBuilder.getByteResponse());
 				reqOk = true;
 			} else if (httpRequestBuilder.getStatusLine().getStatusCode() == 200 && StringUtils.isBlank(response)
-					&& !getTracker().isAuthenticated(new Body(httpRequestBuilder.setUrl(VntUtil.getDomain(getTracker().getAuthenticationUrl())).setHttpMethod("GET").request().getStringResponse()))) {
+					&& !getTracker().isAuthenticated(new Body(httpRequestBuilder.setUrl(VntUtil.getHomeUrl(getTracker().getAuthenticationUrl())).setHttpMethod("GET").request().getStringResponse()))) {
 				log.debug("content nok, auth nok");
 				httpRequestBuilder = httpRequest;
 				authenticated = false;
@@ -497,8 +497,9 @@ public class VntTrackerManager implements TrackerManager {
 				log.info("Attempt " + attempt + " timeout, trying again", e);
 			}
 			String response = httpRequest.getStringResponse();
-			if (httpRequest.getStatusLine().getStatusCode() == 200 && StringUtils.isNotBlank(response)) {
-				listener.contentLoaded(response);
+			byte[] byteResponse = httpRequest.getByteResponse();
+			if (httpRequest.getStatusLine().getStatusCode() == 200 && (StringUtils.isNotBlank(response) || byteResponse.length > 0)) {
+				listener.contentLoaded(response, byteResponse);
 				reqOk = true;
 			}
 			attempt++;
@@ -515,6 +516,8 @@ public class VntTrackerManager implements TrackerManager {
 		}
 	}
 
+	private InputStream inputStreamDownload;
+
 	@Override
 	public InputStream download(Torrent torrent) {
 		lock.lock();
@@ -522,7 +525,19 @@ public class VntTrackerManager implements TrackerManager {
 			httpRequest.getParameters().clear();
 			httpRequest.setHttpMethod("GET");
 			httpRequest.setUrl(torrent.getDownloadLink());
-			return new ByteArrayInputStream(httpRequest.request().getByteResponse());
+			getLoggedContent(httpRequest, new VntAttemptListener() {
+
+				@Override
+				public void loadFailed(StatusLine statusLine, String content) {
+
+				}
+
+				@Override
+				public void contentLoaded(String content, byte[] byteContent) {
+					inputStreamDownload = new ByteArrayInputStream(byteContent);
+				}
+			});
+			return inputStreamDownload;
 		} finally {
 			lock.unlock();
 		}

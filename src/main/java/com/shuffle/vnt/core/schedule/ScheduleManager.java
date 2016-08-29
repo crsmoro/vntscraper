@@ -97,16 +97,17 @@ public class ScheduleManager {
 			try {
 				torrentLink = torrent.clone();
 				torrentLink.setMovie(null);
-			}
-			catch (CloneNotSupportedException e)
-			{
+			} catch (CloneNotSupportedException e) {
 				torrentLink = torrent;
 			}
+			String stringify = null;
 			try {
-				torrentObject.put("stringify", URLEncoder.encode(VntUtil.toJson(torrentLink), "UTF-8"));
-			} catch (UnsupportedEncodingException e) {
-				e.printStackTrace();
+				stringify = URLEncoder.encode(VntUtil.toJson(torrentLink), "UTF-8");
 			}
+			catch (UnsupportedEncodingException e) {
+				log.error("Error enconding torrent's stringify", e);
+			}
+			torrentObject.put("stringify", stringify);
 			torrentTpls.add(torrentObject);
 		}
 
@@ -181,26 +182,28 @@ public class ScheduleManager {
 
 				log.info("Starting schedule");
 
-				try {
-					List<Torrent> torrents = new ArrayList<>();
-					TrackerManager trackerManager = TrackerManagerFactory.getInstance(job.getTrackerUser().getTracker());
-					trackerManager.setQueryParameters(job.getQueryParameters());
-					trackerManager.setUser(job.getTrackerUser().getUsername(), job.getTrackerUser().getPassword());
-					if (job.getServiceParser() != null) {
-						ServiceParser serviceParser = ServiceFactory.getInstance(job.getServiceParser());
-						serviceParser.setQueryParameters(job.getQueryParameters());
-						serviceParser.setTrackerUserData(job.getTrackerUser());
-						serviceParser.setData(job.getServiceParserData());
-						torrents.addAll(serviceParser.fetch());
-						job.setServiceParserData(serviceParser.getData());
-					} else {
-						torrents.addAll(trackerManager.fetchTorrents());
-					}
-
+				MailConfig mailConfig = PreferenceManager.getPreferences().getMailConfig();
+				if (mailConfig == null) {
+					log.error("MailConfig not set");
+				} else {
 					try {
-						if (!torrents.isEmpty()) {
-							MailConfig mailConfig = PreferenceManager.getPreferences().getMailConfig();
-							if (mailConfig != null) {
+						List<Torrent> torrents = new ArrayList<>();
+						TrackerManager trackerManager = TrackerManagerFactory.getInstance(job.getTrackerUser().getTracker());
+						trackerManager.setQueryParameters(job.getQueryParameters());
+						trackerManager.setUser(job.getTrackerUser().getUsername(), job.getTrackerUser().getPassword());
+						if (job.getServiceParser() != null) {
+							ServiceParser serviceParser = ServiceFactory.getInstance(job.getServiceParser());
+							serviceParser.setQueryParameters(job.getQueryParameters());
+							serviceParser.setTrackerUserData(job.getTrackerUser());
+							serviceParser.setData(job.getServiceParserData());
+							torrents.addAll(serviceParser.fetch());
+							job.setServiceParserData(serviceParser.getData());
+						} else {
+							torrents.addAll(trackerManager.fetchTorrents());
+						}
+
+						try {
+							if (!torrents.isEmpty()) {
 								HtmlEmail email = new HtmlEmail();
 								email.setHostName(mailConfig.getHostname());
 								email.setSmtpPort(mailConfig.getPort());
@@ -215,15 +218,14 @@ public class ScheduleManager {
 								email.setHtmlMsg(mountHtmlMail(job, torrents));
 								email.addTo(job.getEmail().split(";"));
 								email.send();
-							} else {
-								log.error("MailConfig not set");
+
 							}
+						} catch (EmailException e) {
+							log.error("Problema ao enviar o email do serviço " + job, e);
 						}
-					} catch (EmailException e) {
-						log.error("Problema ao enviar o email do serviço " + job, e);
+					} catch (Exception e) {
+						log.error("Problem during schedule", e);
 					}
-				} catch (Exception e) {
-					log.error("Problem during schedule", e);
 				}
 
 				Date nextRun = new Date(job.getNextRun().getTime() + (job.getInterval() * 60 * 1000));

@@ -4,7 +4,7 @@ import org.apache.http.StatusLine;
 
 public interface VntAttemptListener {
 
-	void contentLoaded(String content);
+	void contentLoaded(String content, byte[] byteContent);
 
 	void loadFailed(StatusLine statusLine, String content);
 }
