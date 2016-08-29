@@ -229,6 +229,11 @@ public class ScheduleManager {
 				}
 
 				Date nextRun = new Date(job.getNextRun().getTime() + (job.getInterval() * 60 * 1000));
+				int attempt = 1;
+				while (nextRun.before(new Date())) {
+					attempt++;
+					nextRun = new Date(job.getNextRun().getTime() + (attempt * job.getInterval() * 60 * 1000));
+				}
 				job.setNextRun(nextRun);
 				PersistenceManager.getDao(Job.class).save(job);
 
