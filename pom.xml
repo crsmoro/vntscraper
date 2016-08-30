@@ -90,6 +90,11 @@
 			<artifactId>commons-email</artifactId>
 			<version>1.4</version>
 		</dependency>
+		<dependency>
+			<groupId>com.shuffle</groupId>
+		<artifactId>sfhttprequest</artifactId>
+		<version>0.1.0</version>
+		</dependency>
 
 	</dependencies>
 

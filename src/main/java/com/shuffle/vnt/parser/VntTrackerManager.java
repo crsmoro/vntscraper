@@ -19,6 +19,7 @@ import org.apache.http.StatusLine;
 
 import com.omertron.themoviedbapi.MovieDbException;
 import com.omertron.themoviedbapi.model.movie.MovieInfo;
+import com.shuffle.sfhttprequest.SfHttpRequest;
 import com.shuffle.vnt.api.omdb.OmdbAPI;
 import com.shuffle.vnt.api.themoviedb.TheMovieDbApi;
 import com.shuffle.vnt.core.configuration.PreferenceManager;
@@ -35,7 +36,6 @@ import com.shuffle.vnt.core.parser.bean.TorrentFilter;
 import com.shuffle.vnt.core.parser.bean.TorrentFilter.FilterOperation;
 import com.shuffle.vnt.core.parser.bean.TrackerCategory;
 import com.shuffle.vnt.core.service.TrackerManager;
-import com.shuffle.vnt.httprequest.HttpRequestBuilder;
 import com.shuffle.vnt.util.VntUtil;
 
 @ThreadSafe
@@ -57,7 +57,7 @@ public class VntTrackerManager implements TrackerManager {
 
 	private int maxAttempts = 2;
 
-	private HttpRequestBuilder httpRequest = new HttpRequestBuilder();
+	private SfHttpRequest httpRequest = new SfHttpRequest();
 
 	private Lock lock = new ReentrantLock();
 
@@ -397,16 +397,16 @@ public class VntTrackerManager implements TrackerManager {
 		lock.lock();
 		try {
 			int attemptLogin = 0;
-			HttpRequestBuilder httpRequestBuilder = new HttpRequestBuilder();
-			httpRequestBuilder.setUrl(getTracker().getAuthenticationUrl()).setHttpMethod(getTracker().getAuthenticationMethod());
-			httpRequestBuilder.addParameter(getTracker().getUsernameField(), getUsername());
-			httpRequestBuilder.addParameter(getTracker().getPasswordField(), getPassword());
+			SfHttpRequest sfHttpRequest = new SfHttpRequest();
+			sfHttpRequest.setUrl(getTracker().getAuthenticationUrl()).setHttpMethod(getTracker().getAuthenticationMethod());
+			sfHttpRequest.addParameter(getTracker().getUsernameField(), getUsername());
+			sfHttpRequest.addParameter(getTracker().getPasswordField(), getPassword());
 			for (String name : getTracker().getAuthenticationAdditionalParameters().keySet()) {
-				httpRequestBuilder.addParameter(name, getTracker().getAuthenticationAdditionalParameters().get(name));
+				sfHttpRequest.addParameter(name, getTracker().getAuthenticationAdditionalParameters().get(name));
 			}
 			while (!authenticated && attemptLogin < maxAttempts) {
 				log.debug("Login Attempt " + attemptLogin);
-				attempt(httpRequestBuilder, new VntAttemptListener() {
+				attempt(sfHttpRequest, new VntAttemptListener() {
 
 					@Override
 					public void loadFailed(StatusLine statusLine, String content) {
@@ -420,7 +420,7 @@ public class VntTrackerManager implements TrackerManager {
 						authenticated = getTracker().isAuthenticated(new Body(content));
 						if (authenticated) {
 							httpRequest.getCookieStore().clear();
-							httpRequest.addCookies(httpRequestBuilder.getCookies());
+							httpRequest.addCookies(sfHttpRequest.getCookies());
 						}
 					}
 				});
@@ -439,12 +439,12 @@ public class VntTrackerManager implements TrackerManager {
 		}
 	}
 
-	private void getLoggedContent(HttpRequestBuilder httpRequest, VntAttemptListener listener) {
+	private void getLoggedContent(SfHttpRequest httpRequest, VntAttemptListener listener) {
 		int loggedAttempt = 0;
 		boolean reqOk = false;
-		HttpRequestBuilder httpRequestBuilder = null;
+		SfHttpRequest sfHttpRequest = null;
 		try {
-			httpRequestBuilder = httpRequest.clone();
+			sfHttpRequest = httpRequest.clone();
 		} catch (CloneNotSupportedException e1) {
 			VntException vntException = new VntException("Generic Error");
 			vntException.addSuppressed(e1);
@@ -454,20 +454,20 @@ public class VntTrackerManager implements TrackerManager {
 		while (!reqOk && loggedAttempt < maxAttempts) {
 			log.debug("Logged attempt " + loggedAttempt);
 			try {
-				httpRequestBuilder.request();
+				sfHttpRequest.request();
 			} catch (TimeoutException e) {
 				log.info("Logged attempt " + loggedAttempt + " timeout, trying again", e);
 			}
-			String response = httpRequestBuilder.getStringResponse();
-			if (httpRequestBuilder.getStatusLine().getStatusCode() == 200 && StringUtils.isNotBlank(response) && getTracker().isAuthenticated(new Body(response))) {
+			String response = sfHttpRequest.getStringResponse();
+			if (sfHttpRequest.getStatusLine().getStatusCode() == 200 && StringUtils.isNotBlank(response) && getTracker().isAuthenticated(new Body(response))) {
 				log.debug("content ok, auth ok");
 				log.trace(response);
-				listener.contentLoaded(response, httpRequestBuilder.getByteResponse());
+				listener.contentLoaded(response, sfHttpRequest.getByteResponse());
 				reqOk = true;
-			} else if (httpRequestBuilder.getStatusLine().getStatusCode() == 200 && StringUtils.isBlank(response)
-					&& !getTracker().isAuthenticated(new Body(httpRequestBuilder.setUrl(VntUtil.getHomeUrl(getTracker().getAuthenticationUrl())).setHttpMethod("GET").request().getStringResponse()))) {
+			} else if (sfHttpRequest.getStatusLine().getStatusCode() == 200 && StringUtils.isBlank(response)
+					&& !getTracker().isAuthenticated(new Body(sfHttpRequest.setUrl(VntUtil.getHomeUrl(getTracker().getAuthenticationUrl())).setHttpMethod("GET").request().getStringResponse()))) {
 				log.debug("content nok, auth nok");
-				httpRequestBuilder = httpRequest;
+				sfHttpRequest = httpRequest;
 				authenticated = false;
 				authenticate();
 			}
@@ -482,11 +482,11 @@ public class VntTrackerManager implements TrackerManager {
 		}
 		if (!reqOk) {
 			authenticated = false;
-			listener.loadFailed(httpRequest.getStatusLine(), httpRequestBuilder.getStringResponse());
+			listener.loadFailed(httpRequest.getStatusLine(), sfHttpRequest.getStringResponse());
 		}
 	}
 
-	private void attempt(HttpRequestBuilder httpRequest, VntAttemptListener listener) {
+	private void attempt(SfHttpRequest httpRequest, VntAttemptListener listener) {
 		boolean reqOk = false;
 		int attempt = 0;
 		while (!reqOk && attempt < maxAttempts) {
