@@ -314,7 +314,7 @@ public class VntTrackerManager implements TrackerManager {
 
 			List<Torrent> torrents = new ArrayList<>();
 			if (authenticate()) {
-				httpRequest.getParameters().clear();
+				httpRequest.clearParameters();
 				httpRequest.setHttpMethod("GET");
 				httpRequest.setUrl(url.toString());
 				getLoggedContent(httpRequest, new VntAttemptListener() {
@@ -347,7 +347,7 @@ public class VntTrackerManager implements TrackerManager {
 				throw new IllegalArgumentException("Torrent Detailed Parser not set");
 			}
 			if (authenticate()) {
-				httpRequest.getParameters().clear();
+				httpRequest.clearParameters();
 				httpRequest.setHttpMethod("GET");
 				httpRequest.setUrl(torrent.getLink());
 
@@ -462,7 +462,7 @@ public class VntTrackerManager implements TrackerManager {
 			if (sfHttpRequest.getStatusLine().getStatusCode() == 200 && StringUtils.isNotBlank(response) && getTracker().isAuthenticated(new Body(response))) {
 				log.debug("content ok, auth ok");
 				log.trace(response);
-				listener.contentLoaded(response, sfHttpRequest.getByteResponse());
+				listener.contentLoaded(response, sfHttpRequest.getByteArrayResponse());
 				reqOk = true;
 			} else if (sfHttpRequest.getStatusLine().getStatusCode() == 200 && StringUtils.isBlank(response)
 					&& !getTracker().isAuthenticated(new Body(sfHttpRequest.setUrl(VntUtil.getHomeUrl(getTracker().getAuthenticationUrl())).setHttpMethod("GET").request().getStringResponse()))) {
@@ -497,7 +497,7 @@ public class VntTrackerManager implements TrackerManager {
 				log.info("Attempt " + attempt + " timeout, trying again", e);
 			}
 			String response = httpRequest.getStringResponse();
-			byte[] byteResponse = httpRequest.getByteResponse();
+			byte[] byteResponse = httpRequest.getByteArrayResponse();
 			if (httpRequest.getStatusLine().getStatusCode() == 200 && (StringUtils.isNotBlank(response) || byteResponse.length > 0)) {
 				listener.contentLoaded(response, byteResponse);
 				reqOk = true;
@@ -522,7 +522,7 @@ public class VntTrackerManager implements TrackerManager {
 	public InputStream download(Torrent torrent) {
 		lock.lock();
 		try {
-			httpRequest.getParameters().clear();
+			httpRequest.clearParameters();
 			httpRequest.setHttpMethod("GET");
 			httpRequest.setUrl(torrent.getDownloadLink());
 			getLoggedContent(httpRequest, new VntAttemptListener() {

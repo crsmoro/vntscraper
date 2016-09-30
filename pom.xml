@@ -92,8 +92,13 @@
 		</dependency>
 		<dependency>
 			<groupId>com.shuffle</groupId>
-		<artifactId>sfhttprequest</artifactId>
-		<version>0.1.0</version>
+			<artifactId>sfhttprequest</artifactId>
+			<version>0.1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.shuffle</groupId>
+			<artifactId>wicker</artifactId>
+			<version>0.1.0</version>
 		</dependency>
 
 	</dependencies>
