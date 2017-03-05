@@ -57,9 +57,10 @@ $('#divtrackerresults').on('click', '.modalschedule', openModalSchedule);
 $('.modaltrackeruser').on('click', function(e) {
 	var form = $('#modaltrackeruser form');
 	form.find('input[name="new"]').val('true');
-	form.find('[name="tracker"]').val('');
+	form.find('[name="tracker"]').val('').trigger('change');
 	form.find('[name="username"]').val('');
 	form.find('[name="password"]').val('');
+	form.find('[name="captcha"]').val('');
 	form.find('[name="shared"]').prop('checked', false);
 	$('#modaltrackeruser').modal('show');
 });
@@ -210,7 +211,18 @@ function loadTrackerUsers() {
 
 $('a[href="#trackerusers"]').on('show.bs.tab', function(e) {
 	loadTrackerUsers();
-})
+});
+
+$('#modaltrackeruser form [name="tracker"]').on('change', function(e) {
+	if ($('#modaltrackeruser form [name="tracker"] option:selected').data('hascaptcha')) {
+		$('#modaltrackeruser form [name="captcha"]').parent().show();
+		$('#btnLogin').show();
+	}
+	else {
+		$('#modaltrackeruser form [name="captcha"]').parent().hide();
+		$('#btnLogin').hide();
+	}
+});
 
 $('#modaltrackeruser form').on('submit', function(e) {
 	e.preventDefault();
@@ -225,6 +237,26 @@ $('#modaltrackeruser form').on('submit', function(e) {
 			alert('Problem when saving data');
 			console.log(data.error);
 		}
+	});
+	return false;
+});
+
+$('#btnLogin').on('click', function(e) {
+	var form = $('#modaltrackeruser form');
+	var btn = $(this);
+	
+	btn.button('loading');
+	$.post('LoginTrackerUser.vnt', form.serialize()).done(function(data) {
+		if (data.success) {
+			alert('Success');
+			$('#modaltrackeruser form button[type="submit"]').trigger('click');
+		}
+		else {
+			alert('Problem with login');
+			console.log(data.error);
+		}
+	}).always(function() {
+		btn.button('reset');
 	});
 	return false;
 });
@@ -258,7 +290,7 @@ $('#trackeruserstable').on('click', 'tr td:not(:last-child)', function(e) {
 		form.find('input[name="id"]').val(id);
 		form.find('input[name="pktracker"]').val(pktracker);
 		form.find('input[name="pkusername"]').val(pkusername);
-		form.find('[name="tracker"]').val(trackerclass);
+		form.find('[name="tracker"]').val(trackerclass).change();
 		form.find('[name="username"]').val(pkusername);
 		form.find('[name="shared"]').prop('checked', shared);
 		$('#modaltrackeruser').modal('show');
@@ -564,7 +596,7 @@ function loadTrackers() {
 		selecttrackeruser.html('');
 		for (var i=0; i<data.length; i++) {
 			var tracker = data[i];
-			selecttrackeruser.append('<option value="' + tracker.clazz + '">' + tracker.name + '</option>');
+			selecttrackeruser.append('<option value="' + tracker.clazz + '" data-hascaptcha="' + tracker.hasCaptcha + '">' + tracker.name + '</option>');
 			if (tracker.avaliable) {
 				selectschedule.append('<option value="' + tracker.clazz + '">' + tracker.name + '</option>');
 				dropdowns.append('<li data-tracker="' + tracker.name + '" data-clazz="' + tracker.clazz + '"><a href="#">' + tracker.name + '</a></li>');

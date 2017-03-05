@@ -29,6 +29,7 @@ public abstract class TrackerManagerFactory {
 
 	public static TrackerManager getInstance(TrackerManager trackerManager, Tracker tracker) {
 		trackerManager.setTracker(tracker);
+		trackerManager.setCaptcha(null);
 		return trackerManager;
 	}
 

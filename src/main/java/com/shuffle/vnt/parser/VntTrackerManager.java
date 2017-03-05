@@ -24,6 +24,7 @@ import com.shuffle.vnt.api.omdb.OmdbAPI;
 import com.shuffle.vnt.api.themoviedb.TheMovieDbApi;
 import com.shuffle.vnt.core.configuration.PreferenceManager;
 import com.shuffle.vnt.core.exception.AuthenticationException;
+import com.shuffle.vnt.core.exception.CaptchaException;
 import com.shuffle.vnt.core.exception.TimeoutException;
 import com.shuffle.vnt.core.exception.VntException;
 import com.shuffle.vnt.core.parser.Tracker;
@@ -50,6 +51,8 @@ public class VntTrackerManager implements TrackerManager {
 	private String username;
 
 	private String password;
+	
+	private String captcha;
 
 	private QueryParameters queryParameters;
 
@@ -114,11 +117,26 @@ public class VntTrackerManager implements TrackerManager {
 	}
 
 	@Override
+	public void setCaptcha(String captcha) {
+		this.captcha = captcha;
+	}
+
+	@Override
 	public void setUser(String username, String password) {
 		lock.lock();
 		this.username = username;
 		this.password = password;
 		lock.unlock();
+	}
+
+	@Override
+	public void setUser(String username, String password, String captcha) {
+		lock.lock();
+		this.username = username;
+		this.password = password;
+		this.captcha = captcha;
+		lock.unlock();
+		
 	}
 
 	@Override
@@ -404,7 +422,23 @@ public class VntTrackerManager implements TrackerManager {
 			for (String name : getTracker().getAuthenticationAdditionalParameters().keySet()) {
 				sfHttpRequest.addParameter(name, getTracker().getAuthenticationAdditionalParameters().get(name));
 			}
+			if (getTracker().hasCaptcha()) {
+				if (StringUtils.isBlank(getTracker().captchaField()))
+				{
+					throw new VntException("Need to set a captcha field name");
+				}
+				else if (StringUtils.isNotBlank(captcha))
+				{
+					sfHttpRequest.addParameter(getTracker().captchaField(), captcha);
+				}
+			}
 			while (!authenticated && attemptLogin < maxAttempts) {
+				if (getTracker().hasCaptcha()) {
+					if (StringUtils.isBlank(captcha))
+					{
+						throw new CaptchaException("Tracker " + getTracker().getName() + " has captcha, " + getUsername() + " needs to login manually");
+					}
+				}
 				log.debug("Login Attempt " + attemptLogin);
 				attempt(sfHttpRequest, new VntAttemptListener() {
 

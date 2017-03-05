@@ -81,7 +81,7 @@ public class TorrentLeechTorrent implements TorrentParser {
 
     @Override
     public String getCategory(Row row) {
-	return Jsoup.parse(getFullContentToParse(row)).select("tr > td.name > b").first().text();
+	return Jsoup.parse(getFullContentToParse(row)).select("tr > td.name b").first().text();
     }
 
 }

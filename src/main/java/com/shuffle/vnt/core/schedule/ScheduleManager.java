@@ -29,6 +29,7 @@ import org.apache.commons.mail.HtmlEmail;
 import com.shuffle.vnt.core.configuration.PreferenceManager;
 import com.shuffle.vnt.core.configuration.model.MailConfig;
 import com.shuffle.vnt.core.db.PersistenceManager;
+import com.shuffle.vnt.core.exception.CaptchaException;
 import com.shuffle.vnt.core.parser.TrackerManagerFactory;
 import com.shuffle.vnt.core.parser.bean.Torrent;
 import com.shuffle.vnt.core.schedule.model.Job;
@@ -223,7 +224,29 @@ public class ScheduleManager {
 						} catch (EmailException e) {
 							log.error("Problema ao enviar o email do serviço " + job, e);
 						}
-					} catch (Exception e) {
+					}
+					catch (CaptchaException e) {
+						log.error("Captcha problem", e);
+						try {
+							HtmlEmail email = new HtmlEmail();
+							email.setHostName(mailConfig.getHostname());
+							email.setSmtpPort(mailConfig.getPort());
+							email.setAuthenticator(new DefaultAuthenticator(mailConfig.getUsername(), mailConfig.getPassword()));
+							email.setSSLOnConnect(mailConfig.isSsl());
+							if (mailConfig.isSsl()) {
+								email.setSslSmtpPort(String.valueOf(mailConfig.getPort()));
+							}
+							email.setStartTLSEnabled(mailConfig.isTls());
+							email.setFrom(mailConfig.getFrom(), mailConfig.getFromName());
+							email.setSubject("VNT Schedule - Captcha Problem");
+							email.setHtmlMsg(e.getMessage());
+							email.addTo(job.getEmail().split(";"));
+							email.send();
+						} catch (EmailException em) {
+							log.error("Problema ao enviar o email do serviço " + job, em);
+						}
+					}
+					catch (Exception e) {
 						log.error("Problem during schedule", e);
 					}
 				}

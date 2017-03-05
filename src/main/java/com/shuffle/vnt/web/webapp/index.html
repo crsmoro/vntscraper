@@ -466,6 +466,9 @@
 						<div class="form-group">
 							<label for="search">Password</label> <input type="password" class="form-control" name="password" placeholder="Password">
 						</div>
+						<div class="form-group">
+							<label for="captcha">Captcha</label> <input type="text" class="form-control" name="captcha" placeholder="Captcha">
+						</div>
 						<div class="checkbox">
 							<label> <input type="checkbox" name="shared" value="true"> Share account?
 							</label>
@@ -474,6 +477,7 @@
 					</div>
 					<div class="modal-footer">
 						<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+						<button type="button" class="btn btn-info" id="btnLogin" data-loading-text="Logging...">Login and Save</button>
 						<button type="submit" class="btn btn-primary">Submit</button>
 					</div>
 				</div>

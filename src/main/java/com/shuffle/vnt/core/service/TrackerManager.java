@@ -22,8 +22,12 @@ public interface TrackerManager extends Service {
 	String getPassword();
 
 	void setPassword(String password);
+	
+	void setCaptcha(String captcha);
 
 	void setUser(String username, String password);
+	
+	void setUser(String username, String password, String captcha);
 
 	QueryParameters getQueryParameters();
 

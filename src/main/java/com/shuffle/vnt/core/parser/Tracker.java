@@ -27,6 +27,10 @@ public interface Tracker {
 	String getUsernameField();
 
 	String getPasswordField();
+	
+	boolean hasCaptcha();
+	
+	String captchaField();
 
 	String getAuthenticationMethod();
 

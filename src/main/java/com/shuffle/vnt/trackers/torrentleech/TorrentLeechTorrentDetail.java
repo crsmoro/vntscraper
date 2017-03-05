@@ -31,7 +31,7 @@ public class TorrentLeechTorrentDetail implements TorrentDetailedParser {
 
     @Override
     public String getContent(Body body) {
-	return Jsoup.parse(body.getContent()).select("#torrentDetails").html();
+	return Jsoup.parse(body.getContent()).select(".torrent_info_details").html();
     }
 
 }

@@ -5,8 +5,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.shuffle.vnt.core.VntContext;
+import com.shuffle.vnt.core.exception.VntException;
 import com.shuffle.vnt.core.model.TrackerUser;
+import com.shuffle.vnt.core.parser.TrackerManagerFactory;
 import com.shuffle.vnt.util.VntUtil;
 import com.shuffle.vnt.web.HttpServlet;
 import com.shuffle.vnt.web.WebServer;
@@ -17,6 +22,8 @@ import fi.iki.elonen.NanoHTTPD.Response;
 public class LoadTrackers implements HttpServlet {
 
 	private WebServer webServer;
+	
+	private final static transient Log log = LogFactory.getLog(LoadTrackers.class);
 
 	@Override
 	public void setWebServer(WebServer webServer) {
@@ -30,11 +37,20 @@ public class LoadTrackers implements HttpServlet {
 			Map<String, Object> jsonObject = new HashMap<>();
 			jsonObject.put("name", tracker.getName());
 			jsonObject.put("clazz", tracker.getClass().getName());
+			jsonObject.put("hasCaptcha", tracker.hasCaptcha());
 			boolean avaliable = false;
 			for (TrackerUser trackerUser : webServer.getUser().getTrackerUsers()) {
 				if (trackerUser.getTracker().getName().equals(tracker.getName())) {
-					avaliable = true;
-					break;
+					try {
+						if (!trackerUser.getTracker().hasCaptcha() || (trackerUser.getTracker().hasCaptcha() && TrackerManagerFactory.getInstance(tracker).authenticate()))
+						{
+							avaliable = true;
+							break;						
+						}
+					}
+					catch (VntException e) {
+						log.warn("Error verifying login", e);
+					}
 				}
 			}
 			jsonObject.put("avaliable", avaliable);

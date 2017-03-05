@@ -26,6 +26,10 @@ public class TorrentLeech implements Tracker {
 	private final String usernameField = "username";
 
 	private final String passwordField = "password";
+	
+	private final boolean hasCaptcha = false;
+	
+	private final String captchaField = null;
 
 	private final String authenticationMethod = "POST";
 
@@ -110,6 +114,16 @@ public class TorrentLeech implements Tracker {
 	@Override
 	public String getPasswordField() {
 		return passwordField;
+	}
+
+	@Override
+	public boolean hasCaptcha() {
+		return hasCaptcha;
+	}
+
+	@Override
+	public String captchaField() {
+		return captchaField;
 	}
 
 	@Override
