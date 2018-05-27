@@ -1,0 +1,46 @@
+<div class="p-3">
+	<form #seedboxForm="ngForm" (ngSubmit)="onSubmit(seedboxForm)" *ngIf="seedbox">
+
+		<div class="form-group" [class.has-danger]="!name.valid && !name.pristine">
+			<label for="name">Name</label> <input type="text" class="form-control" name="name" placeholder="Name" #name="ngModel" [(ngModel)]="seedbox.name" required [class.form-control-danger]="!name.valid && !name.pristine">
+			<div class="alert alert-danger" [hidden]="name.valid || name.pristine">Name is required</div>
+		</div>
+		<div class="form-group" [class.has-danger]="!url.valid && !url.pristine">
+			<label for="url">URL</label> <input type="text" class="form-control" name="url" placeholder="URL" #url="ngModel" [(ngModel)]="seedbox.url" required [class.form-control-danger]="!url.valid && !url.pristine">
+			<div class="alert alert-danger" [hidden]="url.valid || url.pristine">URL is required</div>
+		</div>
+		<div class="form-group" [class.has-danger]="!username.valid && !username.pristine">
+			<label for="username">Username</label> <input type="text" class="form-control" placeholder="Username" #username="ngModel" name="username" placeholder="Username" [(ngModel)]="seedbox.username" required [class.form-control-danger]="!username.valid && !username.pristine">
+			<div class="alert alert-danger" [hidden]="username.valid || username.pristine">Username is required</div>
+		</div>
+		<div class="form-group" [class.has-danger]="!password.valid && !password.pristine">
+			<label for="password">Password</label>
+			<div class="row">
+				<div class="col-10" [class.col-10]="seedbox.id" [class.col-12]="!seedbox.id">
+					<input type="password" class="form-control" name="password" placeholder="Password" #password="ngModel" [(ngModel)]="seedbox.password" [disabled]="seedbox.id && !changePassword" required
+						[class.form-control-danger]="!password.valid && !password.pristine">
+					<div class="alert alert-danger" [hidden]="password.valid || password.pristine">Password is required</div>
+				</div>
+				<div class="col-2" [hidden]="!seedbox.id">
+					<button type="button" class="btn btn-danger" (click)="changePassword=!changePassword">Change Password</button>
+				</div>
+			</div>
+		</div>
+		<div class="form-group">
+			<label for="label">Label</label> <input type="text" class="form-control" name="label" placeholder="Label" [(ngModel)]="seedbox.label">
+			<p class="form-text text-muted">Label applied when send a torrent to this seedbox.</p>
+		</div>
+		<div class="form-group" [class.has-danger]="!webClient.valid && !webClient.pristine">
+			<label for="webclient">Web Client</label> <select class="form-control" name="webClient" #webClient="ngModel" [(ngModel)]="seedbox.webClient" required [class.form-control-danger]="!webClient.valid && !webClient.pristine">
+				<option value="RuTorrent">RuTorrent</option>
+			</select>
+			<div class="alert alert-danger" [hidden]="webClient.valid || webClient.pristine">Web Client is required</div>
+		</div>
+		<br>
+		<button type="submit" class="btn btn-primary">Submit</button>
+		<button type="button" class="btn btn-default" routerLink="/seedboxes">Close</button>
+	</form>
+	<div *ngIf="!seedbox" class="d-flex justify-content-center">
+		<i class="fa fa-spinner fa-spin fa-5x"></i> <span class="sr-only">Loading...</span>
+	</div>
+</div>

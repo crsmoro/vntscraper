@@ -1,0 +1,39 @@
+<div class="p-3">
+	<form #trackerUserForm="ngForm" (ngSubmit)="onSubmit(trackerUserForm)" *ngIf="trackerUser">
+
+		<div class="form-group" [class.has-danger]="!tracker.valid && !tracker.pristine">
+			<label for="name">Tracker</label>
+			<select class="form-control" name="tracker" placeholder="Tracker" #tracker="ngModel" [(ngModel)]="trackerUser.tracker" required [class.form-control-danger]="!tracker.valid && !tracker.pristine">
+				<option *ngFor="let tracker of trackers | async" value="{{tracker.name}}">{{tracker.name}}</option>
+			</select>
+			<div class="alert alert-danger" [hidden]="tracker.valid || tracker.pristine">Tracker is required</div>
+		</div>
+		<div class="form-group" [class.has-danger]="!username.valid && !username.pristine">
+			<label for="username">Username</label> <input type="text" class="form-control" placeholder="Username" #username="ngModel" name="username" placeholder="Username" [(ngModel)]="trackerUser.username" required [class.form-control-danger]="!username.valid && !username.pristine">
+			<div class="alert alert-danger" [hidden]="username.valid || username.pristine">Username is required</div>
+		</div>
+		<div class="form-group" [class.has-danger]="!password.valid && !password.pristine">
+			<label for="password">Password</label>
+			<div class="row">
+				<div class="col-10" [class.col-10]="trackerUser.id" [class.col-12]="!trackerUser.id">
+					<input type="password" class="form-control" name="password" placeholder="Password" #password="ngModel" [(ngModel)]="trackerUser.password" [disabled]="trackerUser.id && !changePassword" required
+						[class.form-control-danger]="!password.valid && !password.pristine">
+					<div class="alert alert-danger" [hidden]="password.valid || password.pristine">Password is required</div>
+				</div>
+				<div class="col-2" [hidden]="!trackerUser.id">
+					<button type="button" class="btn btn-danger" (click)="changePassword=!changePassword">Change Password</button>
+				</div>
+			</div>
+		</div>
+		<div class="checkbox">
+			<label> <input type="checkbox" name="admin" value="true" [(ngModel)]="trackerUser.shared"> Shared?
+			</label>
+		</div>
+		<br>
+		<button type="submit" class="btn btn-primary">Submit</button>
+		<button type="button" class="btn btn-default" routerLink="/trackerusers">Close</button>
+	</form>
+	<div *ngIf="!trackerUser" class="d-flex justify-content-center">
+		<i class="fa fa-spinner fa-spin fa-5x"></i> <span class="sr-only">Loading...</span>
+	</div>
+</div>

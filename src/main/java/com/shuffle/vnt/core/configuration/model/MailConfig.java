@@ -2,7 +2,8 @@ package com.shuffle.vnt.core.configuration.model;
 
 import java.io.Serializable;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.apache.commons.lang3.StringUtils;
+
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 import com.shuffle.vnt.core.db.model.GenericEntity;
@@ -27,7 +28,6 @@ public class MailConfig extends GenericEntity implements Serializable {
 	@DatabaseField
 	private String username;
 
-	@JsonIgnore
 	@DatabaseField
 	private String password;
 
@@ -82,7 +82,9 @@ public class MailConfig extends GenericEntity implements Serializable {
 	}
 
 	public void setPassword(String password) {
-		this.password = password;
+		if (StringUtils.isNotBlank(password)) {
+			this.password = password;
+		}
 	}
 
 	public String getFrom() {

@@ -2,14 +2,17 @@ package com.shuffle.vnt.core.model;
 
 import java.io.Serializable;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty.Access;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
+import com.shuffle.vnt.core.db.PersistenceManager.PrePersist;
 import com.shuffle.vnt.core.db.model.GenericEntity;
-import com.shuffle.vnt.core.db.persister.ClassPersister;
-import com.shuffle.vnt.core.parser.Tracker;
+import com.shuffle.vnt.core.security.SecurityContext;
+import com.shuffle.vnt.core.security.TwoWayPasswordJsonDeserializer;
+import com.shuffle.vnt.web.model.User;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @DatabaseTable
@@ -17,44 +20,42 @@ public class TrackerUser extends GenericEntity implements Serializable {
 
 	private static final long serialVersionUID = 5696427569781451442L;
 
-	@JsonIgnore
-	@DatabaseField(persisted = false)
-	private Tracker tracker;
+	@DatabaseField(foreign = true, foreignAutoRefresh = true)
+	private User user;
 
-	@JsonProperty(value = "tracker")
-	@DatabaseField(persisterClass = ClassPersister.class)
-	private Class<? extends Tracker> trackerClass;
+	@DatabaseField
+	private String tracker;
 
 	@DatabaseField
 	private String username;
 
-	@JsonIgnore
+	@JsonProperty(access = Access.WRITE_ONLY)
+	@JsonDeserialize(using = TwoWayPasswordJsonDeserializer.class)
 	@DatabaseField
 	private String password;
 
-	public Tracker getTracker() {
-		if (trackerClass == null || tracker == null || !trackerClass.equals(tracker.getClass())) {
-			tracker = Tracker.getInstance(getTrackerClass());
-		}
+	@DatabaseField
+	private boolean shared;
+
+	@PrePersist
+	public void beforePersist() {
+		setUser(SecurityContext.getUser());
+	}
+
+	public User getUser() {
+		return user;
+	}
+
+	public void setUser(User user) {
+		this.user = user;
+	}
+
+	public String getTracker() {
 		return tracker;
 	}
 
-	public void setTracker(Tracker tracker) {
+	public void setTracker(String tracker) {
 		this.tracker = tracker;
-		setTrackerClass(tracker.getClass());
-	}
-
-	private Class<? extends Tracker> getTrackerClass() {
-		return trackerClass;
-	}
-
-	private void setTrackerClass(Class<? extends Tracker> trackerClass) {
-		this.trackerClass = trackerClass;
-	}
-
-	@JsonProperty(value = "trackerName")
-	private String getTrackerName() {
-		return getTracker().getName();
 	}
 
 	public String getUsername() {
@@ -73,8 +74,17 @@ public class TrackerUser extends GenericEntity implements Serializable {
 		this.password = password;
 	}
 
+	public boolean isShared() {
+		return shared;
+	}
+
+	public void setShared(boolean shared) {
+		this.shared = shared;
+	}
+
 	@Override
 	public String toString() {
-		return "TrackerUser [tracker=" + tracker + ", trackerClass=" + trackerClass + ", username=" + username + ", password=[Protected], id=" + id + "]";
+		return "TrackerUser [user=" + user + ", tracker=" + tracker + ", username=" + username + ", password=[Protected], shared=" + shared + ", id=" + id + "]";
 	}
+
 }

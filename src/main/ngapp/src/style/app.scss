@@ -1,0 +1,67 @@
+// styles in src/style directory are applied to the whole page
+.clickable {
+	cursor: pointer;
+}
+
+.table-torrent-filter > tbody > tr > td {
+	vertical-align: middle;
+}
+
+
+.ng-valid[required]:not(ng-select), .ng-valid.required:not(ng-select), ng-select.ng-valid > div.ng-select-container {
+  border-left: 5px solid #42A948; /* green */
+}
+
+.ng-invalid:not(form):not(ng-select), ng-select.ng-invalid > div.ng-select-container {
+  border-left: 5px solid #a94442; /* red */
+}
+
+.search-advanced-box {
+	margin-top: 5px;
+	border: 1px solid #ddd;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+}
+
+@media only screen and (min-width : 1500px) {
+	.table-torrents th.name {
+		width : 52%;
+	}
+	.table-torrents th.size {
+		width : 8%;
+	}
+	.table-torrents th.category {
+		width : 15%;
+	}
+	.table-torrents th.added {
+		width : 10%;
+	}
+	.table-torrents th.upload {
+		width : 6%;
+	}
+	.table-torrents th.download {
+		width : 4%;
+	}
+}
+
+@media only screen and (max-width : 1500px) {
+	.table-torrents th.name {
+		width : 36%;
+	}
+	.table-torrents th.size {
+		width : 10%;
+	}
+	.table-torrents th.category {
+		width : 15%;
+	}
+	.table-torrents th.added {
+		width : 16%;
+	}
+	.table-torrents th.upload {
+		width : 10%;
+	}
+	.table-torrents th.download {
+		width : 4%;
+	}
+}

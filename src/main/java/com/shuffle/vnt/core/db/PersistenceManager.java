@@ -1,7 +1,13 @@
 package com.shuffle.vnt.core.db;
 
 import java.io.File;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -164,20 +170,74 @@ public class PersistenceManager<E extends GenericEntity> {
 
 	public E save(E object) {
 		try {
+			if (object.getId() == null) {
+				Arrays.stream(object.getClass().getDeclaredMethods()).filter(m -> m.isAnnotationPresent(PrePersist.class)).peek(m -> m.setAccessible(true)).forEach(m -> {
+					try {
+						m.invoke(object);
+					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+						e.printStackTrace();
+					}
+				});
+			}
+			if (object.getId() != null) {
+				Arrays.stream(object.getClass().getDeclaredMethods()).filter(m -> m.isAnnotationPresent(PreUpdate.class)).peek(m -> m.setAccessible(true)).forEach(m -> {
+					try {
+						m.invoke(object);
+					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+						e.printStackTrace();
+					}
+				});
+			}
 			dao.createOrUpdate(object);
+			if (object.getId() == null) {
+				Arrays.stream(object.getClass().getDeclaredMethods()).filter(m -> m.isAnnotationPresent(PostPersist.class)).peek(m -> m.setAccessible(true)).forEach(m -> {
+					try {
+						m.invoke(object);
+					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+						e.printStackTrace();
+					}
+				});
+			}
+			if (object.getId() != null) {
+				Arrays.stream(object.getClass().getDeclaredMethods()).filter(m -> m.isAnnotationPresent(PostUpdate.class)).peek(m -> m.setAccessible(true)).forEach(m -> {
+					try {
+						m.invoke(object);
+					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+						e.printStackTrace();
+					}
+				});
+			}
 		} catch (SQLException e) {
 			log.error("Error saving entity", e);
 		}
 		return object;
 	}
-	
+
 	public void remove(Long id) {
 		remove(findOne(id));
 	}
 
 	public void remove(E object) {
 		try {
+			if (object != null) {
+				Arrays.stream(object.getClass().getDeclaredMethods()).filter(m -> m.isAnnotationPresent(PreRemove.class)).peek(m -> m.setAccessible(true)).forEach(m -> {
+					try {
+						m.invoke(object);
+					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+						e.printStackTrace();
+					}
+				});
+			}
 			dao.delete(object);
+			if (object != null) {
+				Arrays.stream(object.getClass().getDeclaredMethods()).filter(m -> m.isAnnotationPresent(PostRemove.class)).peek(m -> m.setAccessible(true)).forEach(m -> {
+					try {
+						m.invoke(object);
+					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+						e.printStackTrace();
+					}
+				});
+			}
 		} catch (SQLException e) {
 			log.error("Error removing entity", e);
 		}
@@ -195,5 +255,35 @@ public class PersistenceManager<E extends GenericEntity> {
 			log.error("Error getting objects", e);
 		}
 		return Collections.emptyList();
+	}
+
+	@Target(value = ElementType.METHOD)
+	@Retention(value = RetentionPolicy.RUNTIME)
+	public @interface PrePersist {
+	}
+
+	@Target(value = ElementType.METHOD)
+	@Retention(value = RetentionPolicy.RUNTIME)
+	public @interface PreUpdate {
+	}
+
+	@Target(value = ElementType.METHOD)
+	@Retention(value = RetentionPolicy.RUNTIME)
+	public @interface PreRemove {
+	}
+
+	@Target(value = ElementType.METHOD)
+	@Retention(value = RetentionPolicy.RUNTIME)
+	public @interface PostPersist {
+	}
+
+	@Target(value = ElementType.METHOD)
+	@Retention(value = RetentionPolicy.RUNTIME)
+	public @interface PostUpdate {
+	}
+
+	@Target(value = ElementType.METHOD)
+	@Retention(value = RetentionPolicy.RUNTIME)
+	public @interface PostRemove {
 	}
 }

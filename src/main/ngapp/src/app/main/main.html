@@ -1,0 +1,22 @@
+<div class="container-fluid">
+	<ul class="nav nav-tabs justify-content-center">
+		<li class="nav-item"><a class="nav-link" routerLink="/home" routerLinkActive="active">Home</a></li>
+		<li class="nav-item"><a class="nav-link" routerLink="/jobs" routerLinkActive="active">Jobs <span class="badge badge-pill badge-primary">{{jobCount}}</span></a></li>
+		<li class="nav-item"><a class="nav-link" routerLink="/trackerusers" routerLinkActive="active">Tracker Users</a></li>
+		<li class="nav-item"><a class="nav-link" routerLink="/seedboxes" routerLinkActive="active">Seedboxes</a></li>
+		<li class="nav-item" *ngIf="isAdmin"><a class="nav-link" routerLink="/users" routerLinkActive="active">Users</a></li>
+		<li class="nav-item" *ngIf="isAdmin"><a class="nav-link" routerLink="/settings" routerLinkActive="active">Settings</a></li>
+		<li class="nav-item dropdown" ngbDropdown><a class="nav-link dropdown-toggle" ngbDropdownToggle href="javascript:void(0);">User</a>
+			<div class="dropdown-menu" ngbDropdownMenu>
+				<a class="dropdown-item disabled" tabindex="-1">Perfil</a>
+				<div class="dropdown-divider"></div>
+				<a class="dropdown-item" (click)="logout()" href="javascript:void(0);">Logout</a>
+			</div>
+		</li>
+	</ul>
+	<div class="tab-content">
+		<div class="tab-pane active" role="tabpanel">
+			<router-outlet></router-outlet>
+		</div>
+	</div>
+</div>

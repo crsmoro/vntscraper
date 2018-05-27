@@ -1,20 +1,21 @@
 package com.shuffle.vnt.web.servlets;
 
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Comparator;
+import java.time.LocalDateTime;
+import java.util.Collections;
 
-import com.shuffle.vnt.core.configuration.PreferenceManager;
+import org.mindrot.jbcrypt.BCrypt;
+
 import com.shuffle.vnt.core.db.PersistenceManager;
+import com.shuffle.vnt.core.security.VntSecurity;
+import com.shuffle.vnt.util.VntUtil;
 import com.shuffle.vnt.web.HttpServlet;
 import com.shuffle.vnt.web.WebServer;
-import com.shuffle.vnt.web.model.Session;
+import com.shuffle.vnt.web.bean.ReturnObject;
+import com.shuffle.vnt.web.bean.Token;
 import com.shuffle.vnt.web.model.User;
 
 import fi.iki.elonen.NanoHTTPD.IHTTPSession;
 import fi.iki.elonen.NanoHTTPD.Response;
-import fi.iki.elonen.NanoHTTPD.Response.Status;
 
 public class Login implements HttpServlet {
 
@@ -30,34 +31,16 @@ public class Login implements HttpServlet {
 
 	@Override
 	public void doPost(IHTTPSession session, Response response) {
-		String username = session.getParms().get("username");
-		String password = session.getParms().get("password");
-		User user = PersistenceManager.getDao(User.class).eq("username", username).eq("password", password).and(2).findOne();
-		Session sessionUser = null;
-		if (user != null) {
-			String sessionhash = "";
-			try {
-				MessageDigest messageDigest = MessageDigest.getInstance("MD5");
-				sessionhash = new BigInteger(1, messageDigest.digest((username + password + String.valueOf(System.currentTimeMillis())).getBytes())).toString(16);
-				long maxSessionsPerUser = (PreferenceManager.getPreferences().getMaxSessionsPerUser() != null ? PreferenceManager.getPreferences().getMaxSessionsPerUser() : 5l);
-				if (Long.compare(user.getSessions().size(), maxSessionsPerUser) < 0) {
-					sessionUser = new Session();
-				}
-				else {
-					sessionUser = user.getSessions().stream().sorted(Comparator.comparing(Session::getLastRequest)).findFirst().get();
-				}
-			} catch (NoSuchAlgorithmException e) {
-				e.printStackTrace();
-			}
-			sessionUser.setSession(sessionhash);
-			sessionUser.setUser(user);
-			PersistenceManager.getDao(Session.class).save(sessionUser);
-			session.getCookies().set("session", sessionhash, 30);
-			response.setStatus(Status.REDIRECT);
-			response.addHeader("Location", "/");
+		String username = session.getParameters().getOrDefault("username", Collections.emptyList()).stream().findFirst().orElse(null);
+		String password = session.getParameters().getOrDefault("password", Collections.emptyList()).stream().findFirst().orElse(null);
+		User user = PersistenceManager.getDao(User.class).eq("username", username).findOne();
+		if (user != null && BCrypt.checkpw(password, user.getPassword())) {
+			Token token = new Token(user, LocalDateTime.now().plusDays(30));
+			session.getCookies().set("token", VntSecurity.encrypt(VntUtil.toJson(token), VntSecurity.getTokenKey()), 30);
+			ReturnObject returnObject = new ReturnObject(true, token);
+			response.setData(VntUtil.getInputStream(VntUtil.toJson(returnObject)));
 		} else {
-			response.setStatus(Status.REDIRECT);
-			response.addHeader("Location", "login.html");
+			response.setData(VntUtil.getInputStream(VntUtil.toJson(new ReturnObject(false, null))));
 		}
 	}
 

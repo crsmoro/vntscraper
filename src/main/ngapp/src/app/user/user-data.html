@@ -1,0 +1,30 @@
+<div class="p-3">
+	<form #userForm="ngForm" (ngSubmit)="onSubmit(userForm)" *ngIf="user">
+		<div class="form-group" [class.has-danger]="!username.valid && !username.pristine">
+			<label for="username">Username</label> <input type="text" class="form-control" #username="ngModel" name="username" placeholder="Username" [(ngModel)]="user.username" required [class.form-control-danger]="!username.valid && !username.pristine">
+			<div class="alert alert-danger" [hidden]="username.valid || username.pristine">Username is required</div>
+		</div>
+		<div class="form-group" [class.has-danger]="!password.valid && !password.pristine">
+			<label for="password">Password</label>
+			<div class="row">
+	  			<div class="col-10" [class.col-10]="user.id" [class.col-12]="!user.id">
+					<input type="password" class="form-control" name="password" placeholder="Password" #password="ngModel"  [(ngModel)]="user.password" [disabled]="user.id && !changePassword"  required [class.form-control-danger]="!password.valid && !password.pristine">
+					<div class="alert alert-danger" [hidden]="password.valid || password.pristine">Password is required</div>
+				</div>
+				<div class="col-2" [hidden]="!user.id">
+					<button type="button" class="btn btn-danger" (click)="changePassword=!changePassword">Change Password</button>
+				</div>
+			</div>
+		</div>
+		<div class="checkbox">
+			<label> <input type="checkbox" name="admin" value="true" [(ngModel)]="user.admin"> Admin?
+			</label>
+		</div>
+		<br>
+		<button type="submit" class="btn btn-primary">Submit</button>
+		<button type="button" class="btn btn-default" routerLink="/users">Close</button>
+	</form>
+	<div *ngIf="!user" class="d-flex justify-content-center">
+		<i class="fa fa-spinner fa-spin fa-5x"></i> <span class="sr-only">Loading...</span>
+	</div>
+</div>

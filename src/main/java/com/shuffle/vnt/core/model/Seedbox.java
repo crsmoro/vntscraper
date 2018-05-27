@@ -2,17 +2,24 @@ package com.shuffle.vnt.core.model;
 
 import java.io.Serializable;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty.Access;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
+import com.shuffle.vnt.core.db.PersistenceManager.PrePersist;
 import com.shuffle.vnt.core.db.model.GenericEntity;
-import com.shuffle.vnt.core.db.persister.ClassPersister;
-import com.shuffle.vnt.core.service.WebClient;
+import com.shuffle.vnt.core.security.SecurityContext;
+import com.shuffle.vnt.core.security.TwoWayPasswordJsonDeserializer;
+import com.shuffle.vnt.web.model.User;
 
 @DatabaseTable
 public class Seedbox extends GenericEntity implements Serializable {
 
 	private static final long serialVersionUID = 778532101757538034L;
+
+	@DatabaseField(foreign = true, foreignAutoRefresh = true)
+	private User user;
 
 	@DatabaseField
 	private String name;
@@ -23,15 +30,29 @@ public class Seedbox extends GenericEntity implements Serializable {
 	@DatabaseField
 	private String username;
 
-	@JsonIgnore
+	@JsonProperty(access = Access.WRITE_ONLY)
+	@JsonDeserialize(using = TwoWayPasswordJsonDeserializer.class)
 	@DatabaseField
 	private String password;
 
 	@DatabaseField
 	private String label;
 
-	@DatabaseField(persisterClass = ClassPersister.class)
-	private Class<? extends WebClient> webClient;
+	@DatabaseField
+	private String webClient;
+
+	@PrePersist
+	public void beforePersist() {
+		setUser(SecurityContext.getUser());
+	}
+
+	public User getUser() {
+		return user;
+	}
+
+	public void setUser(User user) {
+		this.user = user;
+	}
 
 	public String getName() {
 		return name;
@@ -73,16 +94,16 @@ public class Seedbox extends GenericEntity implements Serializable {
 		this.label = label;
 	}
 
-	public Class<? extends WebClient> getWebClient() {
+	public String getWebClient() {
 		return webClient;
 	}
 
-	public void setWebClient(Class<? extends WebClient> webClient) {
+	public void setWebClient(String webClient) {
 		this.webClient = webClient;
 	}
 
 	@Override
 	public String toString() {
-		return "Seedbox [name=" + name + ", url=" + url + ", username=" + username + ", password=[Protected], label=" + label + ", webClient=" + webClient + ", id=" + id + "]";
+		return "Seedbox [user=" + user + ", name=" + name + ", url=" + url + ", username=" + username + ", password=" + password + ", label=" + label + ", webClient=" + webClient + ", id=" + id + "]";
 	}
 }

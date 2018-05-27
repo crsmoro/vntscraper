@@ -1,26 +1,56 @@
 package com.shuffle.vnt.util;
 
+import java.beans.BeanInfo;
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.Version;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
+import com.omertron.themoviedbapi.MovieDbException;
+import com.omertron.themoviedbapi.enumeration.ExternalSource;
+import com.omertron.themoviedbapi.model.movie.MovieBasic;
+import com.shuffle.sieve.core.parser.Tracker;
+import com.shuffle.sieve.core.parser.bean.Torrent;
+import com.shuffle.vnt.api.bean.Movie;
+import com.shuffle.vnt.api.omdb.OmdbAPI;
+import com.shuffle.vnt.api.themoviedb.TheMovieDbApi;
+import com.shuffle.vnt.core.configuration.PreferenceManager;
+import com.shuffle.vnt.core.configuration.model.TmdbLanguage;
 
 public abstract class VntUtil {
 
@@ -49,13 +79,12 @@ public abstract class VntUtil {
 			return "";
 		}
 	}
-	
+
 	public static String getCleanEncodedUrlValue(String value) {
 		String encodedValue = "";
 		try {
 			encodedValue = URLEncoder.encode(value, "UTF-8");
-		}
-		catch (Exception e) {
+		} catch (Exception e) {
 			log.error("Problem enconding value to url");
 		}
 		return encodedValue;
@@ -66,7 +95,30 @@ public abstract class VntUtil {
 	public static ObjectMapper getObjectMapper() {
 		if (objectMapper == null) {
 			objectMapper = new ObjectMapper();
+			objectMapper.findAndRegisterModules();
+			objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 			objectMapper.setDateFormat(new SimpleDateFormat("dd/MM/yyyy HH:mm"));
+			SimpleModule module = new SimpleModule("module", new Version(1, 0, 0, null, "com.shuffle", "vnt"));
+			module.addDeserializer(Tracker.class, new JsonDeserializer<Tracker>() {
+
+				@Override
+				public Tracker deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+					JsonNode jsonNode = p.getCodec().readTree(p);
+					return Tracker.getInstance(jsonNode.get("name").asText());
+				}
+
+			});
+			module.addSerializer(Tracker.class, new JsonSerializer<Tracker>() {
+
+				@Override
+				public void serialize(Tracker value, JsonGenerator gen, SerializerProvider serializers) throws IOException, JsonProcessingException {
+					gen.writeStartObject();
+					gen.writeStringField("name", value.getName());
+					gen.writeEndObject();
+				}
+
+			});
+			objectMapper.registerModule(module);
 		}
 		return objectMapper;
 	}
@@ -83,7 +135,6 @@ public abstract class VntUtil {
 
 	public static <E> E fromJson(String json, Class<E> clazz) {
 		try {
-			log.debug(json);
 			return getObjectMapper().readValue(json, clazz);
 		} catch (IOException e) {
 			log.error("Error decoding json string", e);
@@ -92,7 +143,7 @@ public abstract class VntUtil {
 	}
 
 	public static InputStream getInputStream(String content) {
-		return new ByteArrayInputStream(content.getBytes());
+		return new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
 	}
 
 	private final static long KB_FACTOR = 1024;
@@ -132,5 +183,54 @@ public abstract class VntUtil {
 			return matcher.group(1);
 		}
 		return "";
+	}
+
+	public static Map<String, Object> clazzToObject(Object object) {
+		Map<String, Object> objectAsMap = new HashMap<String, Object>();
+		try {
+			BeanInfo info = Introspector.getBeanInfo(object.getClass());
+			for (PropertyDescriptor pd : info.getPropertyDescriptors()) {
+				if (!pd.getName().equals("class")) {
+					Method reader = pd.getReadMethod();
+					if (reader != null)
+						objectAsMap.put(pd.getName(), reader.invoke(object));
+				}
+			}
+		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | IntrospectionException e) {
+			log.error("Error converting Object to Map", e);
+		}
+
+		return objectAsMap;
+	}
+
+	public static Movie getMovie(Torrent torrent) {
+		if (StringUtils.isNotBlank(torrent.getImdbLink())) {
+			return getMovie(torrent.getImdbLink());
+		}
+		return null;
+	}
+
+	public static Movie getMovie(String imdbLink) {
+		if (StringUtils.isNotBlank(imdbLink)) {
+			Movie movie = OmdbAPI.getMovie(OmdbAPI.getById(VntUtil.getImdbId(imdbLink)));
+			log.debug("movie " + movie);
+
+			MovieBasic movieBasic = null;
+			Iterator<TmdbLanguage> languagesIterator = PreferenceManager.getPreferences().getTmdbLanguages().stream().sorted((t1, t2) -> t1.getOrder().compareTo(t2.getOrder())).iterator();
+			while (movieBasic == null && languagesIterator.hasNext()) {
+				try {
+					movieBasic = TheMovieDbApi.getInstance().find(VntUtil.getImdbId(imdbLink), ExternalSource.IMDB_ID, languagesIterator.next().getLanguage()).getMovieResults().stream().findFirst().orElse(null);
+				} catch (MovieDbException e) {
+
+				}
+			}
+			log.debug("movieBasic " + movieBasic);
+			if (movieBasic != null) {
+				movie = TheMovieDbApi.getMovie(movieBasic, movie);
+			}
+			log.debug("put movie " + movie);
+			return movie;
+		}
+		return null;
 	}
 }

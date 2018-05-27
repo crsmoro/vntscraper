@@ -1,41 +1,41 @@
 package com.shuffle.vnt.core.schedule;
 
-import java.beans.BeanInfo;
-import java.beans.IntrospectionException;
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
-import java.io.IOException;
+import java.io.BufferedReader;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
-import org.apache.commons.io.IOUtils;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.mail.DefaultAuthenticator;
 import org.apache.commons.mail.EmailException;
 import org.apache.commons.mail.HtmlEmail;
 
+import com.shuffle.sieve.core.exception.CaptchaException;
+import com.shuffle.sieve.core.parser.bean.Torrent;
+import com.shuffle.sieve.core.service.TrackerManager;
 import com.shuffle.vnt.core.configuration.PreferenceManager;
 import com.shuffle.vnt.core.configuration.model.MailConfig;
 import com.shuffle.vnt.core.db.PersistenceManager;
-import com.shuffle.vnt.core.exception.CaptchaException;
-import com.shuffle.vnt.core.parser.TrackerManagerFactory;
-import com.shuffle.vnt.core.parser.bean.Torrent;
 import com.shuffle.vnt.core.schedule.model.Job;
+import com.shuffle.vnt.core.schedule.model.JobSeedbox;
+import com.shuffle.vnt.core.security.VntSecurity;
+import com.shuffle.vnt.core.service.Service;
 import com.shuffle.vnt.core.service.ServiceFactory;
-import com.shuffle.vnt.core.service.ServiceParser;
-import com.shuffle.vnt.core.service.TrackerManager;
 import com.shuffle.vnt.util.VntUtil;
 
 public class ScheduleManager {
@@ -73,53 +73,52 @@ public class ScheduleManager {
 		log.debug("finish clearSchedules");
 	}
 
-	private Map<String, Object> clazzToObject(Object object) {
-		Map<String, Object> objectAsMap = new HashMap<String, Object>();
-		try {
-			BeanInfo info = Introspector.getBeanInfo(object.getClass());
-			for (PropertyDescriptor pd : info.getPropertyDescriptors()) {
-				Method reader = pd.getReadMethod();
-				if (reader != null)
-					objectAsMap.put(pd.getName(), reader.invoke(object));
-			}
-		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | IntrospectionException e) {
-			log.error("Error converting Object to Map", e);
-		}
-
-		return objectAsMap;
-	}
-
 	private String mountHtmlMail(Job job, List<Torrent> torrents) {
 		List<Object> torrentTpls = new ArrayList<>();
+		ExecutorService executorService = Executors.newFixedThreadPool(10);
 		for (Torrent torrent : torrents) {
-			torrent.setContent("");
-			Map<String, Object> torrentObject = clazzToObject(torrent);
-			Torrent torrentLink = null;
-			try {
-				torrentLink = torrent.clone();
-				torrentLink.setMovie(null);
-			} catch (CloneNotSupportedException e) {
-				torrentLink = torrent;
-			}
-			String stringify = null;
-			try {
-				stringify = URLEncoder.encode(VntUtil.toJson(torrentLink), "UTF-8");
-			}
-			catch (UnsupportedEncodingException e) {
-				log.error("Error enconding torrent's stringify", e);
-			}
-			torrentObject.put("stringify", stringify);
-			torrentTpls.add(torrentObject);
+
+			executorService.submit(() -> {
+				log.debug("Mounting HTML of " + torrent);
+				try {
+					Torrent torrentClone = torrent.clone();
+					TrackerManager.getInstance(torrentClone.getTracker(), torrentClone.getUsername(), torrentClone.getPassword()).getDetails(torrentClone);
+
+					torrentClone.setContent("");
+					Map<String, Object> torrentObject = VntUtil.clazzToObject(torrentClone);
+					String stringify = null;
+					try {
+						stringify = URLEncoder.encode(VntUtil.toJson(torrentClone), "UTF-8");
+					} catch (UnsupportedEncodingException e) {
+						log.error("Error enconding torrent's stringify", e);
+					}
+					torrentObject.put("chave", Hex.encodeHexString(VntSecurity.encrypt(stringify, VntSecurity.getTokenKey()).getBytes(StandardCharsets.UTF_8)));
+					torrentObject.put("movie", VntUtil.getMovie(torrentClone));
+					torrentTpls.add(torrentObject);
+				} catch (CloneNotSupportedException e) {
+
+				}
+				log.debug("Finished mounting HTML of " + torrent);
+			});
+
+		}
+		executorService.shutdown();
+		try {
+			executorService.awaitTermination(30, TimeUnit.MINUTES);
+
+		} catch (InterruptedException e) {
+
 		}
 
 		String template = "";
 
 		InputStream defaultTemplateStream = getClass().getProtectionDomain().getClassLoader().getResourceAsStream("com/shuffle/vnt/web/webapp/template/defaultTemplate.html");
 		StringBuilder defaultTemplate = new StringBuilder();
-		try {
-			defaultTemplate.append(IOUtils.toString(defaultTemplateStream));
-		} catch (IOException e1) {
-			log.error("Error getting default template file, using the hardcoded", e1);
+		String templateContent = String.join(System.lineSeparator(), new BufferedReader(new InputStreamReader(defaultTemplateStream)).lines().collect(Collectors.toList()));
+		if (templateContent != null && !Optional.ofNullable(templateContent).map(String::trim).map(String::isEmpty).orElse(false)) {
+			defaultTemplate.append(templateContent);
+		} else {
+			log.error("Error getting default template file, using the hardcoded");
 			defaultTemplate.append("<br/>");
 			defaultTemplate.append("<table>");
 			defaultTemplate.append("<thead>");
@@ -136,7 +135,7 @@ public class ScheduleManager {
 			defaultTemplate.append("</td>");
 			defaultTemplate.append("<td>");
 			defaultTemplate.append("{{#seedboxes}}");
-			defaultTemplate.append("| <a target='_blank' href='{{& baseUrl}}/UploadTorrentToSeedbox.vnt?seedbox={{name}}&torrent={{stringify}}&username={{schedulerData.trackerUser.username}}&c=true'>{{name}}</a>");
+			defaultTemplate.append("| <a target='_blank' href='{{& baseUrl}}/UploadTorrentToSeedbox.vnt?seedbox={{name}}&chave={{chave}}&username={{schedulerData.trackerUser.username}}&c=true'>{{name}}</a>");
 			defaultTemplate.append("{{/seedboxes}}");
 			defaultTemplate.append("</td>");
 			defaultTemplate.append("</tr>");
@@ -149,7 +148,7 @@ public class ScheduleManager {
 		scopes.put("baseUrl", PreferenceManager.getPreferences().getBaseUrl());
 		scopes.put("job", job);
 		scopes.put("torrents", torrentTpls);
-		scopes.put("seedboxes", job.getSeedboxes());
+		scopes.put("seedboxes", PersistenceManager.getDao(JobSeedbox.class).eq("job", job).findAll().stream().map(js -> js.getSeedbox()).collect(Collectors.toList()));
 		log.debug("scopes");
 		log.debug(scopes);
 
@@ -169,7 +168,7 @@ public class ScheduleManager {
 	private void schedule(final Job job) {
 		Date now = new Date();
 		long initialDelay = 1;
-		long diff = job.getNextRun().getTime() - now.getTime();
+		long diff = Optional.ofNullable(job.getNextRun()).orElse(new Date()).getTime() - now.getTime();
 		log.info("Difference between now and next run " + diff);
 		if (diff >= 0) {
 			initialDelay = (long) Math.ceil((diff / 1000) / 60);
@@ -189,11 +188,11 @@ public class ScheduleManager {
 				} else {
 					try {
 						List<Torrent> torrents = new ArrayList<>();
-						TrackerManager trackerManager = TrackerManagerFactory.getInstance(job.getTrackerUser().getTracker());
+						TrackerManager trackerManager = TrackerManager.getInstance(job.getTrackerUser().getTracker(), job.getTrackerUser().getUsername(),
+								VntSecurity.decrypt(job.getTrackerUser().getPassword(), VntSecurity.getPasswordKey()));
 						trackerManager.setQueryParameters(job.getQueryParameters());
-						trackerManager.setUser(job.getTrackerUser().getUsername(), job.getTrackerUser().getPassword());
 						if (job.getServiceParser() != null) {
-							ServiceParser serviceParser = ServiceFactory.getInstance(job.getServiceParser());
+							Service serviceParser = ServiceFactory.getInstance(job.getServiceParser());
 							serviceParser.setQueryParameters(job.getQueryParameters());
 							serviceParser.setTrackerUserData(job.getTrackerUser());
 							serviceParser.setData(job.getServiceParserData());
@@ -224,8 +223,7 @@ public class ScheduleManager {
 						} catch (EmailException e) {
 							log.error("Problema ao enviar o email do serviço " + job, e);
 						}
-					}
-					catch (CaptchaException e) {
+					} catch (CaptchaException e) {
 						log.error("Captcha problem", e);
 						try {
 							HtmlEmail email = new HtmlEmail();
@@ -245,17 +243,16 @@ public class ScheduleManager {
 						} catch (EmailException em) {
 							log.error("Problema ao enviar o email do serviço " + job, em);
 						}
-					}
-					catch (Exception e) {
+					} catch (Exception e) {
 						log.error("Problem during schedule", e);
 					}
 				}
 
-				Date nextRun = new Date(job.getNextRun().getTime() + (job.getInterval() * 60 * 1000));
+				Date nextRun = new Date(Optional.ofNullable(job.getNextRun()).orElse(job.getStartDate()).getTime() + (job.getInterval() * 60 * 1000));
 				int attempt = 1;
 				while (nextRun.before(new Date())) {
 					attempt++;
-					nextRun = new Date(job.getNextRun().getTime() + (attempt * job.getInterval() * 60 * 1000));
+					nextRun = new Date(Optional.ofNullable(job.getNextRun()).orElse(job.getStartDate()).getTime() + (attempt * job.getInterval() * 60 * 1000));
 				}
 				job.setNextRun(nextRun);
 				PersistenceManager.getDao(Job.class).save(job);

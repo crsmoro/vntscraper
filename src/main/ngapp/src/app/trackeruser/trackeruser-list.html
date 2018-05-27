@@ -1,0 +1,30 @@
+<div class="d-flex flex-column p-3">
+	<div class="d-flex pb-2">
+		<div>
+			<h4>Tracker Users</h4>
+		</div>
+		<div class="ml-auto">
+			<button type="button" class="btn btn-primary" routerLink="/trackerusers/new">New Tracker User</button>
+		</div>
+	</div>
+	<div class="table-responsive">
+		<table class="table table-striped table-hover">
+			<thead>
+				<tr>
+					<th>Tracker</th>
+					<th>Username</th>
+					<th>Shared</th>
+					<th><i class="fa fa-times" style="color: red;"></i></th>
+				</tr>
+			</thead>
+			<tbody class="clickable">
+				<tr *ngFor="let trackerUser of trackerUsers">
+					<td [routerLink]="['/trackerusers', trackerUser.id]">{{trackerUser.tracker}}</td>
+					<td [routerLink]="['/trackerusers', trackerUser.id]">{{trackerUser.username}}</td>
+					<td [routerLink]="['/trackerusers', trackerUser.id]">{{trackerUser.shared}}</td>
+					<td><i class="fa fa-times" style="color: red;" (click)="remove(trackerUser)"></i></td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</div>

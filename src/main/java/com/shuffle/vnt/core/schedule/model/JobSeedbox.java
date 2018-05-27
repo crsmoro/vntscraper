@@ -12,7 +12,7 @@ public class JobSeedbox extends GenericEntity {
 
 	@DatabaseField(foreign = true, foreignAutoRefresh = true)
 	private Job job;
-	
+
 	@DatabaseField(foreign = true, foreignAutoRefresh = true)
 	private Seedbox seedbox;
 

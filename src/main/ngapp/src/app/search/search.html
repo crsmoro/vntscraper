@@ -1,0 +1,115 @@
+<div class="p-3">
+	<form *ngIf="!job && !selectedTorrent" #formfilter="ngForm" action="SearchTrackers.vnt" method="POST" (ngSubmit)="searchTrackers(formfilter)">
+		<div class="input-group input-group-lg">
+			<div class="input-group-prepend">
+				<span class="input-group-text"><i class="fa" [class.fa-search]="!loading" [class.fa-spinner]="loading" [class.fa-spin]="loading"></i></span>
+			</div>
+			<input type="text" name="search" class="form-control" placeholder="Search on tracker..." aria-label="Search" [(ngModel)]="search">
+			<div class="input-group-append" ngbDropdown placement="bottom-right">
+				<button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" ngbDropdownToggle>
+					{{selectedTracker ? selectedTracker.name : 'All'}} <span class="sr-only">Select Tracker</span>
+				</button>
+				<div class="dropdown-menu dropdown-menu-right" ngbDropdownMenu>
+					<span class="dropdown-item clickable" (click)="selectTracker(undefined)">All</span> <span *ngFor="let tracker of trackers" class="dropdown-item clickable" (click)="selectTracker(tracker)">{{tracker.name}}</span>
+					<div role="separator" class="dropdown-divider"></div>
+					<span class="dropdown-item clickable" (click)="showAdvanced=!showAdvanced">Advanced</span>
+				</div>
+			</div>
+		</div>
+		<div class="row justify-content-md-center" *ngIf="showAdvanced">
+			<div class="col-10 search-advanced-box py-3">
+				<div class="col-12 text-center">
+					<h5>Advanced</h5>
+				</div>
+				<div class="form-group">
+					<ng-select name="categories" [items]="categories | async" [bindLabel]="'name'" placeholder="Categories" #categoriesipt="ngModel" [(ngModel)]="queryParameters.trackerCategories" [multiple]="true"></ng-select>
+					<p class="help-block">Not all trackers support multiple category search, on these the search will apply only one of them.</p>
+				</div>
+				<div class="form-group">
+					<ng-select (change)="torrentFieldSelected($event)" #torrentField placeholder="Fields" [items]="torrentFields" bindLabel="field" bindValue="field"> </ng-select>
+					<table class="table table-striped table-hover table-torrent-filter">
+						<tbody>
+							<tr *ngFor="let torrentFilters of queryParameters.torrentFilters; let i = index; trackBy:trackByIndex;">
+								<td>{{findTorrentFieldLabel(torrentFilters.field)}}</td>
+								<td><select [(ngModel)]="torrentFilters.operation" class="form-control" [name]="'torrentFiltersOperation' + i">
+										<option value="">Operation</option>
+										<option value="EQ">=</option>
+										<option value="NE">!=</option>
+										<option value="LT">&lt;</option>
+										<option value="GT">&gt;</option>
+										<option value="LE">&lt;=</option>
+										<option value="GE">&gt;=</option>
+										<option value="LIKE">Like</option>
+										<option value="NLIKE">Not Like</option>
+										<option value="REGEX">Regex</option>
+								</select></td>
+								<td><input class="form-control" type="text" [(ngModel)]="torrentFilters.value" [name]="'torrentFiltersValue' + i"></td>
+								<td><i class="fa fa-trash clickable" style="color: red;" (click)="removeTorrentFilter($event, i)"></i></td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				<div class="col-12">
+					<button class="btn btn-primary float-right" id="advancedsubmit" [class.disabled]="loading" [disabled]="loading">Submit</button>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div *ngFor="let result of results" class="col-12 my-3">
+				<h5>
+					{{result.tracker.name}} <i style="cursor: pointer;" class="fa fa-clock-o modalschedule" (click)="createSchedule(result.tracker.name)" data-toggle="tooltip" data-placement="top" title="Create schedule with this filters"></i>
+				</h5>
+				<div class="table-responsive">
+					<table class="table table-striped table-hover table-torrents" style="min-width: 1000px;">
+						<thead>
+							<tr>
+								<th >#</th>
+								<th class="name">Name</th>
+								<th class="size">Size</th>
+								<th class="category">Category</th>
+								<th class="added">Added</th>
+								<th class="download"><i class="fa fa-cloud-download text-primary"></i></th>
+								<th class="upload"><i class="fa fa-cloud-upload text-secondary"></i></th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr *ngFor="let torrent of result.torrents">
+								<th scope="row">{{torrent.id}}</th>
+								<td>{{torrent.name}}&nbsp;&nbsp;<i class="fa fa-info-circle clickable" style="font-size: 18px;" title="Details" (click)="viewDetails(torrent)"></i>
+									<a href="{{torrent.link}}" target="_blank" title="Torrent tracker page" class="ml-1">
+										<i class="fa fa-external-link-square" style="color: #333; font-size: 18px;" aria-hidden="true"></i>
+									</a>
+								</td>
+								<td>{{readableFileSize(torrent.size)}}</td>
+								<td>{{torrent.category}}</td>
+								<td>{{torrent.added ? torrent.added : '-'}}</td>
+								<td><a class="clickable" (click)="downloadTorrent(torrent)"><i class="fa fa-cloud-download text-primary" data-toggle="tooltip" data-placement="top" title="Download Torrent"></i></a></td>
+								<td>
+									<i *ngIf="sendingTorrentToSeedbox[torrent.id] && seedboxes.length > 0" class="fa fa-circle-o-notch fa-spin fa-fw"></i>
+									<div *ngIf="!sendingTorrentToSeedbox[torrent.id] && seedboxes.length > 0" class="btn-group" role="group" [attr.ngbDropdown]="seedboxes.lenght > 1" placement="bottom-right">
+										<button type="button" class="btn btn-sm"><i class="fa fa-cloud-upload clickable text-secondary" title="Send to Seedbox" (click)="uploadTorrent(seedboxes[0], torrent)"></i></button>
+									    <button *ngIf="seedboxes.lenght > 1" type="button" class="btn btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" ngbDropdownToggle>
+									      <span class="sr-only">Select Seedbox</span>
+									    </button>
+									    <div *ngIf="seedboxes.lenght > 1" class="dropdown-menu dropdown-menu-right" ngbDropdownMenu>
+									      <a class="dropdown-item clickable" *ngFor="let seedbox of seedboxes" (click)="uploadTorrent(seedbox, torrent)">{{seedbox.name}}</a>
+									    </div>
+								    </div>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				<nav>
+					<ul class="pagination justify-content-between">
+						<li class="page-item"><a class="page-link clickable" (click)="priorPage(result.tracker, result.page)">← Prior</a></li>
+						<li class="page-item"><a class="page-link clickable" (click)="nextPage(result.tracker, result.page)">Next →</a></li>
+					</ul>
+				</nav>
+			</div>
+		</div>
+		<input type="submit" style="margin-left: -1000000px;">
+	</form>
+	<job-data-component *ngIf="job" [data]="job" (done)="doneSchedule($event)"></job-data-component>
+	<torrent-detail-component *ngIf="selectedTorrent" [torrent]="selectedTorrent" [parent]="this" (done)="doneDetail($event)"></torrent-detail-component>
+</div>

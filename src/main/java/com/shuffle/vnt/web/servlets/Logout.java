@@ -1,30 +1,24 @@
 package com.shuffle.vnt.web.servlets;
 
-import com.shuffle.vnt.core.db.PersistenceManager;
+import com.shuffle.vnt.util.VntUtil;
 import com.shuffle.vnt.web.HttpServlet;
 import com.shuffle.vnt.web.WebServer;
-import com.shuffle.vnt.web.model.Session;
+import com.shuffle.vnt.web.bean.ReturnObject;
 
 import fi.iki.elonen.NanoHTTPD.IHTTPSession;
 import fi.iki.elonen.NanoHTTPD.Response;
-import fi.iki.elonen.NanoHTTPD.Response.Status;
 
 public class Logout implements HttpServlet {
 
-	private WebServer webServer;
-
 	@Override
 	public void setWebServer(WebServer webServer) {
-		this.webServer = webServer;
+		
 	}
 
 	@Override
 	public void doGet(IHTTPSession session, Response response) {
-		webServer.getSession().setSession(null);
-		PersistenceManager.getDao(Session.class).save(webServer.getSession());
-		session.getCookies().delete("session");
-		response.setStatus(Status.REDIRECT);
-		response.addHeader("Location", "/login.html");
+		session.getCookies().delete("token");
+		response.setData(VntUtil.getInputStream(VntUtil.toJson(new ReturnObject(true, null))));
 	}
 
 	@Override

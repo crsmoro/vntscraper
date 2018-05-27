@@ -83,12 +83,12 @@ a:hover {
 					</td>
 					<td
 						style="color: #000 !important; text-shadow: none !important; background-color: #fff !important; -webkit-box-shadow: none !important; box-shadow: none !important; -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box; line-height: 1.42857143; vertical-align: top; border-top-color: #ddd; border-top-width: 1px; border-top-style: solid; padding: 8px;"
-						bgcolor="#fff !important" valign="top">{{#seedboxes}}| <a target="_blank" href="{{& baseUrl}}/UploadTorrentToSeedbox.vnt?seedbox={{id}}&torrent={{stringify}}&c=true"
+						bgcolor="#fff !important" valign="top">{{#seedboxes}}| <a target="_blank" href="{{& baseUrl}}/UploadTorrentToSeedbox.vnt?seedbox={{id}}&chave={{chave}}&c=true"
 						style="background-color: transparent !important; color: #000 !important; text-shadow: none !important; -webkit-box-shadow: none !important; box-shadow: none !important; text-decoration: none; -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box;">{{name}}</a>{{/seedboxes}}
 					</td>
 					<td
 						style="color: #000 !important; text-shadow: none !important; background-color: #fff !important; -webkit-box-shadow: none !important; box-shadow: none !important; -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box; line-height: 1.42857143; vertical-align: top; border-top-color: #ddd; border-top-width: 1px; border-top-style: solid; padding: 8px;"
-						bgcolor="#fff !important" valign="top"><a href="{{& baseUrl}}/DownloadTorrent.vnt?torrent={{stringify}}" target="_blank"
+						bgcolor="#fff !important" valign="top"><a href="{{& baseUrl}}/DownloadTorrent.vnt?chave={{chave}}" target="_blank"
 						style="background-color: transparent !important; color: #000 !important; text-shadow: none !important; -webkit-box-shadow: none !important; box-shadow: none !important; text-decoration: none; -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box;">Down</a></td>
 				</tr>
 				{{/torrents}}

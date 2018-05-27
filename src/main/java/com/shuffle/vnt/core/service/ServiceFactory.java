@@ -2,26 +2,16 @@ package com.shuffle.vnt.core.service;
 
 import com.shuffle.vnt.core.VntContext;
 
-public abstract class ServiceFactory {
+public interface ServiceFactory {
 
-	private ServiceFactory() {
-
-	}
-
-	public static <S extends Service> S getInstance(Class<S> service) {
-		Class<? extends S> serviceClass = null;
-		for (Class<? extends S> serviceItem : VntContext.fetchClasses().getSubTypesOf(service)) {
-			if (!serviceItem.isInterface()) {
-				serviceClass = serviceItem;
-				break;
+	public static Service getInstance(Class<? extends Service> service) { 
+		return VntContext.getServiceParsers().stream().filter(s -> !s.isInterface()).findFirst().map(s -> {
+			try {
+				return s.newInstance();	
 			}
-		}
-		S returnService = null;
-		try {
-			returnService = serviceClass != null ? serviceClass.newInstance() : null;
-		} catch (InstantiationException | IllegalAccessException e) {
-			e.printStackTrace();
-		}
-		return returnService;
+			catch (InstantiationException | IllegalAccessException e) {
+				return null;				
+			}
+		}).filter(s -> s != null).orElse(null);
 	}
 }

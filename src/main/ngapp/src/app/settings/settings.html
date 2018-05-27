@@ -1,0 +1,19 @@
+<br>
+<div class="col-12" [hidden]="settingsGeneral || settingsEmail">
+	<div class="list-group">
+		<a class="list-group-item list-group-item-action flex-column align-items-start clickable" (click)="editGeneral(preferences)">
+			<div class="d-flex w-100 justify-content-between">
+				<h4 class="list-group-item-heading">General</h4>
+			</div>
+			<p class="mb-1">Configure Base URL, IMDB, TMDb, TMDb Language...</p>
+		</a>
+		<a class="list-group-item list-group-item-action flex-column align-items-start clickable" (click)="editEmail(preferences)">
+			<div class="d-flex w-100 justify-content-between">
+				<h4 class="list-group-item-heading">Email</h4>
+			</div>
+			<p class="mb-1">Configure hostname, username, password, etc...</p>
+		</a>
+	</div>
+</div>
+<settings-general-component [general]="settingsGeneral" *ngIf="settingsGeneral"></settings-general-component>
+<settings-email-component [general]="settingsEmail" *ngIf="settingsEmail"></settings-email-component>

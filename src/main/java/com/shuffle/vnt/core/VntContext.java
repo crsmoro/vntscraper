@@ -1,25 +1,25 @@
 package com.shuffle.vnt.core;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.reflections.Reflections;
 
-import com.shuffle.vnt.core.parser.Tracker;
-import com.shuffle.vnt.core.service.ServiceParser;
+import com.shuffle.vnt.core.service.Service;
 
 public class VntContext {
 	private VntContext() {
 
 	}
-
+	
 	private static Reflections reflections = null;
 
-	private static List<Class<? extends ServiceParser>> serviceParsers = new ArrayList<>();
+	private static final List<Class<? extends Service>> serviceParsers = new ArrayList<>();
 
 	static {
 		fetchClasses();
-		loadTrackers();
+		loadServiceParsers();
 	}
 
 	public static Reflections fetchClasses() {
@@ -33,50 +33,19 @@ public class VntContext {
 		return reflections;
 	}
 
-	public static void loadTrackers() {
-		Tracker.loadedTrackers.clear();
-		for (Class<? extends Tracker> trackerClass : fetchClasses().getSubTypesOf(Tracker.class)) {
-			if (!trackerClass.isInterface()) {
-				Tracker tracker;
-				try {
-					tracker = trackerClass.newInstance();
-					Tracker.loadedTrackers.add(tracker);
-				} catch (InstantiationException | IllegalAccessException notreallycare) {
-				
-				}
-			}
-
-		}
-	}
-
-	public static List<Tracker> getTrackers() {
-		return getTrackers(false);
-	}
-
-	public static List<Tracker> getTrackers(boolean forceReload) {
-		if (Tracker.loadedTrackers.isEmpty() || forceReload) {
-			loadTrackers();
-		}
-		return Tracker.loadedTrackers;
-	}
-
-	public static void loadServiceParsers() {
+	private static void loadServiceParsers() {
 		serviceParsers.clear();
-		for (Class<? extends ServiceParser> serviceParserClass : fetchClasses().getSubTypesOf(ServiceParser.class)) {
-			if (serviceParserClass.isInterface()) {
-				serviceParsers.add(serviceParserClass);
-			}
-		}
+		fetchClasses().getSubTypesOf(Service.class).stream().filter(s -> !s.isInterface()).forEach(serviceParsers::add);
 	}
 
-	public static List<Class<? extends ServiceParser>> getServiceParsers() {
+	public static List<Class<? extends Service>> getServiceParsers() {
 		return getServiceParsers(false);
 	}
 
-	public static List<Class<? extends ServiceParser>> getServiceParsers(boolean forceReload) {
+	public static List<Class<? extends Service>> getServiceParsers(boolean forceReload) {
 		if (serviceParsers.isEmpty() || forceReload) {
 			loadServiceParsers();
 		}
-		return serviceParsers;
+		return Collections.unmodifiableList(serviceParsers);
 	}
 }

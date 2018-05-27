@@ -4,47 +4,52 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.omertron.themoviedbapi.MovieDbException;
 import com.omertron.themoviedbapi.model.config.Configuration;
-import com.omertron.themoviedbapi.model.movie.MovieInfo;
+import com.omertron.themoviedbapi.model.movie.MovieBasic;
+import com.shuffle.vnt.api.bean.Movie;
 import com.shuffle.vnt.core.configuration.PreferenceManager;
-import com.shuffle.vnt.core.parser.bean.Movie;
-import com.shuffle.vnt.core.parser.bean.Torrent;
 
 public class TheMovieDbApi extends com.omertron.themoviedbapi.TheMovieDbApi {
-    public TheMovieDbApi() throws MovieDbException {
-	super(PreferenceManager.getPreferences().getTmdbApiKey());
-    }
+	public TheMovieDbApi() throws MovieDbException {
+		super(PreferenceManager.getPreferences().getTmdbApiKey());
+	}
 
-    private static TheMovieDbApi instance;
+	private static TheMovieDbApi instance;
 
-    public static TheMovieDbApi getInstance() throws MovieDbException {
-	if (instance == null) {
-	    instance = new TheMovieDbApi();
+	public static TheMovieDbApi getInstance() throws MovieDbException {
+		if (instance == null) {
+			instance = new TheMovieDbApi();
+		}
+		return instance;
 	}
-	return instance;
-    }
 
-    public static Movie getMovie(MovieInfo movieInfo, Torrent torrent) {
-	Movie movie = torrent != null ? torrent.getMovie() : null;
-	if (movie == null) {
-	    movie = new Movie();
-	    if (torrent != null) {
-		torrent.setMovie(movie);
-	    }
+	public static Movie getMovie(MovieBasic movieBasic) {
+		return getMovie(movieBasic, null);
 	}
-	movie.setTitle(movieInfo.getTitle());
-	movie.setOriginalTitle(movieInfo.getOriginalTitle());
-	if (StringUtils.isNotBlank(movieInfo.getOverview())) {
-	    movie.setPlot(movieInfo.getOverview());
+
+	public static Movie getMovie(MovieBasic movieBasic, Movie movie) {
+		if (movie == null) {
+			movie = new Movie();
+		}
+		movie.setTitle(movieBasic.getTitle());
+		movie.setOriginalTitle(movieBasic.getOriginalTitle());
+		if (StringUtils.isNotBlank(movieBasic.getOverview())) {
+			movie.setPlot(movieBasic.getOverview());
+		}
+		if (movie.getImdbRating() == 0D) {
+			movie.setImdbRating(movieBasic.getVoteAverage());
+		}
+		if (movie.getImdbVotes() == 0D) {
+			movie.setImdbVotes(movieBasic.getVoteCount());
+		}
+		try {
+			Configuration configuration = instance.getConfiguration();
+			String posterPath = configuration.createImageUrl(movieBasic.getPosterPath(), configuration.getPosterSizes().get(0)).toExternalForm();
+			if (StringUtils.isNotBlank(posterPath)) {
+				movie.setPoster(posterPath);
+			}
+		} catch (MovieDbException e) {
+			e.printStackTrace();
+		}
+		return movie;
 	}
-	try {
-	    Configuration configuration = instance.getConfiguration();
-	    String posterPath = configuration.createImageUrl(movieInfo.getPosterPath(), configuration.getPosterSizes().get(0)).toExternalForm();
-	    if (StringUtils.isNotBlank(posterPath)) {
-		movie.setPoster(posterPath);
-	    }
-	} catch (MovieDbException e) {
-	    e.printStackTrace();
-	}
-	return movie;
-    }
 }

@@ -1,0 +1,98 @@
+<div class="p-3">
+	<form #jobForm="ngForm" (ngSubmit)="onSubmit(jobForm)" *ngIf="job">
+
+		<div class="form-group" [class.has-danger]="!name.valid && !name.pristine">
+			<label for="name">Name</label> <input type="text" class="form-control" placeholder="Name" #name="ngModel" name="name" placeholder="Name" [(ngModel)]="job.name" required [class.form-control-danger]="!name.valid && !name.pristine">
+			<div class="alert alert-danger" [hidden]="name.valid || name.pristine">Name is required</div>
+		</div>
+		<div class="form-group" [class.has-danger]="!tracker.valid && !tracker.pristine">
+			<label for="name">Tracker</label>
+			<ng-select name="tracker" placeholder="Tracker" [items]="trackers | async" bindLabel="name" bindValue="name" #tracker="ngModel" [(ngModel)]="job.tracker" [class.form-control-danger]="!tracker.valid && !tracker.pristine" required (change)="trackerSelected($event)"></ng-select>
+			<div class="alert alert-danger" [hidden]="tracker.valid || tracker.pristine">Tracker is required</div>
+		</div>
+		<div class="form-group" [class.has-danger]="!trackerUser.valid && !trackerUser.pristine">
+			<label for="name">Tracker User</label>
+			<ng-select name="trackerUser" [items]="trackerUsers | async" #trackerUser="ngModel" [(ngModel)]="job.trackerUser" [class.form-control-danger]="!tracker.valid && !tracker.pristine" required>
+				<ng-template ng-label-tmp let-item="item">
+			        <span>{{item.tracker}} - {{item.username}}</span>
+			    </ng-template>
+				<ng-template ng-option-tmp let-item="item" let-index="index" let-search="searchTerm">
+			        <span [ngOptionHighlight]="search">{{item.tracker}} - {{item.username}}</span>
+			    </ng-template>
+			</ng-select>
+			<div class="alert alert-danger" [hidden]="trackerUser.valid || trackerUser.pristine">Tracker User is required</div>
+		</div>
+		
+		<div class="form-group" [class.has-danger]="!serviceParser.valid && !serviceParser.pristine">
+			<label for="name">Service Parser</label>
+			<select class="form-control" name="serviceParser" placeholder="Service Parser" #serviceParser="ngModel" [(ngModel)]="job.serviceParser" required [class.form-control-danger]="!serviceParser.valid && !serviceParser.pristine">
+				<option *ngFor="let serviceParser of serviceParsers | async" value="{{serviceParser.value}}">{{serviceParser.name}}</option>
+			</select>
+			<div class="alert alert-danger" [hidden]="serviceParser.valid || serviceParser.pristine">Service Parser is required</div>
+		</div>
+		<div class="form-group" [class.has-danger]="!search.valid && !search.pristine">
+			<label for="name">Search</label> <input type="text" class="form-control" placeholder="Search" #search="ngModel" [(ngModel)]="job.queryParameters.search" name="search" [class.form-control-danger]="!search.valid && !search.pristine">
+			<div class="alert alert-danger" [hidden]="search.valid || search.pristine">Search is required</div>
+		</div>
+
+		<div class="form-group" [class.has-danger]="!categoriesipt.valid && !categoriesipt.pristine">
+			<label for="categories">Categories</label>
+			<ng-select name="categories" [items]="categories | async" [bindLabel]="'name'" #categoriesipt="ngModel" [(ngModel)]="job.queryParameters.trackerCategories" [multiple]="true"></ng-select>
+			<p class="help-block">Not all trackers support multiple category search, on these the search will apply only one of them.</p>
+			<div class="alert alert-danger" [hidden]="categoriesipt.valid || categoriesipt.pristine">Categories is required</div>
+		</div>
+		
+		<div class="form-group">
+			<label>Fields</label>
+			<select class="form-control" (change)="torrentFieldSelected($event)">
+				<option value="">Select</option>
+				<option *ngFor="let torrentField of torrentFields" [value]="torrentField.field">{{torrentField.label}}</option>
+			</select>
+			<table class="table table-striped table-hover table-torrent-filter">
+				<tbody>
+					<tr *ngFor="let torrentFilters of job.queryParameters.torrentFilters; let i = index; trackBy:trackByIndex;">
+						<td>{{findTorrentFieldLabel(torrentFilters.field)}}</td>
+						<td>
+							<select [(ngModel)]="torrentFilters.operation" class="form-control" [name]="'torrentFiltersOperation' + i">
+								<option value="">Operation</option>
+								<option value="EQ">=</option>
+								<option value="NE">!=</option>
+								<option value="LT">&lt;</option>
+								<option value="GT">&gt;</option>
+								<option value="LE">&lt;=</option>
+								<option value="GE">&gt;=</option>
+								<option value="LIKE">Like</option>
+								<option value="NLIKE">Not Like</option>
+								<option value="REGEX">Regex</option></select>
+						</td>
+						<td><input class="form-control" type="text" [(ngModel)]="torrentFilters.value" [name]="'torrentFiltersValue' + i"></td>
+						<td><i class="fa fa-trash clickable" style="color: red;" (click)="removeTorrentFilter($event, i)"></i></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		
+		<div class="form-group" [class.has-danger]="!email.valid && !email.pristine">
+			<label for="name">E-mail</label> <input type="text" class="form-control" placeholder="E-mail" #email="ngModel" name="email" [(ngModel)]="job.email" required [class.form-control-danger]="!email.valid && !email.pristine">
+			<div class="alert alert-danger" [hidden]="email.valid || email.pristine">E-mail is required</div>
+		</div>
+		
+		<div class="form-row">
+			<div class="form-group col-8" [class.has-danger]="!startDate.valid && !startDate.pristine">
+				<label for="name">Start Date/Time</label> <input type="text" class="form-control" placeholder="21/12/2012 11:57" #startDate="ngModel" name="startDate" [(ngModel)]="job.startDate" required [class.form-control-danger]="!startDate.valid && !startDate.pristine">
+				<div class="alert alert-danger" [hidden]="startDate.valid || startDate.pristine">Start Date/Time is required</div>
+			</div>
+			<div class="form-group col-4" [class.has-danger]="!interval.valid && !interval.pristine">
+				<label for="name">Interval (min)</label> <input type="text" class="form-control" placeholder="1 day = 1440min" #interval="ngModel" name="interval" [(ngModel)]="job.interval" required [class.form-control-danger]="!interval.valid && !interval.pristine">
+				<div class="alert alert-danger" [hidden]="interval.valid || interval.pristine">Interval is required</div>
+			</div>
+		</div>
+		
+		<br>
+		<button type="submit" class="btn btn-primary">Submit</button>
+		<button type="button" class="btn btn-default" (click)="close()">Close</button>
+	</form>
+	<div *ngIf="!job" class="d-flex justify-content-center">
+		<i class="fa fa-spinner fa-spin fa-5x"></i> <span class="sr-only">Loading...</span>
+	</div>
+</div>

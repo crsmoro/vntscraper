@@ -1,21 +1,30 @@
 package com.shuffle.vnt.core.schedule.model;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
+import com.shuffle.sieve.core.parser.bean.QueryParameters;
 import com.shuffle.vnt.core.db.PersistenceManager;
+import com.shuffle.vnt.core.db.PersistenceManager.PostPersist;
+import com.shuffle.vnt.core.db.PersistenceManager.PostRemove;
+import com.shuffle.vnt.core.db.PersistenceManager.PostUpdate;
+import com.shuffle.vnt.core.db.PersistenceManager.PrePersist;
+import com.shuffle.vnt.core.db.PersistenceManager.PreUpdate;
 import com.shuffle.vnt.core.db.model.GenericEntity;
 import com.shuffle.vnt.core.db.persister.ServiceParserDataPersister;
 import com.shuffle.vnt.core.model.Seedbox;
 import com.shuffle.vnt.core.model.TrackerUser;
-import com.shuffle.vnt.core.parser.bean.QueryParameters;
-import com.shuffle.vnt.core.service.ServiceParser;
+import com.shuffle.vnt.core.schedule.ScheduleManager;
+import com.shuffle.vnt.core.security.SecurityContext;
+import com.shuffle.vnt.core.service.Service;
 import com.shuffle.vnt.core.service.ServiceParserData;
+import com.shuffle.vnt.web.model.User;
 
 @DatabaseTable
 public class Job extends GenericEntity implements Serializable {
@@ -32,8 +41,9 @@ public class Job extends GenericEntity implements Serializable {
 	private QueryParameters queryParameters;
 
 	@DatabaseField
-	private Class<? extends ServiceParser> serviceParser;
+	private Class<? extends Service> serviceParser;
 
+	@JsonIgnore
 	@DatabaseField(columnName = "serviceParserData_id", persisterClass = ServiceParserDataPersister.class)
 	private ServiceParserData serviceParserData;
 
@@ -52,8 +62,49 @@ public class Job extends GenericEntity implements Serializable {
 	@DatabaseField(width = Integer.MAX_VALUE, dataType = DataType.BYTE_ARRAY)
 	private byte[] template;
 
-	@DatabaseField(persisted = false)
-	private Set<Seedbox> seedboxes = new HashSet<>();
+	@DatabaseField(foreign = true, foreignAutoRefresh = true)
+	private User user;
+
+	@PrePersist
+	public void beforePersist() {
+		setUser(SecurityContext.getUser());
+	}
+
+	@PrePersist
+	@PreUpdate
+	public void beforePersistUpdate() {
+		if (SecurityContext.getUser() != null) {
+			
+			if (getId() != null) {
+				Job old = PersistenceManager.getDao(Job.class).findOne(getId());
+				if (old.getStartDate().compareTo(getStartDate()) != 0) {
+					setNextRun(getStartDate());
+				}
+				List<JobSeedbox> jobSeedboxs = PersistenceManager.getDao(JobSeedbox.class).eq("job", this).findAll();
+				jobSeedboxs.stream().forEach(PersistenceManager.getDao(JobSeedbox.class)::remove);
+			}
+			else {
+				setNextRun(getStartDate());
+			}
+		}
+	}
+	
+	@PostPersist
+	@PostUpdate
+	@PostRemove
+	private void updateSchedule() {
+		if (SecurityContext.getUser() != null) {
+			ScheduleManager.getInstance().clearSchedules();
+			ScheduleManager.getInstance().updateSchedules();
+			List<Seedbox> seedboxs = PersistenceManager.getDao(Seedbox.class).eq("user", SecurityContext.getUser()).findAll();
+			seedboxs.stream().forEach(s -> {
+				JobSeedbox jobSeedbox = new JobSeedbox();
+				jobSeedbox.setJob(this);
+				jobSeedbox.setSeedbox(s);
+				PersistenceManager.getDao(JobSeedbox.class).save(jobSeedbox);
+			});
+		}
+	}
 
 	public String getName() {
 		return name;
@@ -79,11 +130,11 @@ public class Job extends GenericEntity implements Serializable {
 		this.queryParameters = queryParameters;
 	}
 
-	public Class<? extends ServiceParser> getServiceParser() {
+	public Class<? extends Service> getServiceParser() {
 		return serviceParser;
 	}
 
-	public void setServiceParser(Class<? extends ServiceParser> serviceParser) {
+	public void setServiceParser(Class<? extends Service> serviceParser) {
 		this.serviceParser = serviceParser;
 	}
 
@@ -135,29 +186,18 @@ public class Job extends GenericEntity implements Serializable {
 		this.template = template;
 	}
 
-	public Set<Seedbox> getSeedboxes() {
-		seedboxes.clear();
-		PersistenceManager.getDao(JobSeedbox.class).eq("job", this).findAll().stream().forEach(js -> seedboxes.add(js.getSeedbox()));
-		return seedboxes;
+	public User getUser() {
+		return user;
 	}
 
-	public void setSeedboxes(Set<Seedbox> seedboxes) {
-		seedboxes.forEach(seedbox -> {
-			JobSeedbox jobSeedbox = PersistenceManager.getDao(JobSeedbox.class).eq("job", this).eq("seedbox", seedboxes).and(2).findOne();
-			if (jobSeedbox == null) {
-				jobSeedbox = new JobSeedbox();
-			}
-			jobSeedbox.setJob(this);
-			jobSeedbox.setSeedbox(seedbox);
-			PersistenceManager.getDao(JobSeedbox.class).save(jobSeedbox);
-		});
-		this.seedboxes = seedboxes;
+	public void setUser(User user) {
+		this.user = user;
 	}
 
 	@Override
 	public String toString() {
-		return "Job [name=" + name + ", trackerUser=" + trackerUser + ", queryParameters=" + queryParameters + ", serviceParser=" + serviceParser + ", email=" + email + ", startDate=" + startDate + ", nextRun=" + nextRun
-				+ ", interval=" + interval + ", template=" + (template != null ? new String(template) : null) + ", seedboxes=" + seedboxes;
+		return "Job [name=" + name + ", trackerUser=" + trackerUser + ", queryParameters=" + queryParameters + ", serviceParser=" + serviceParser + ", serviceParserData=" + serviceParserData + ", email=" + email + ", startDate=" + startDate
+				+ ", nextRun=" + nextRun + ", interval=" + interval + ", template=" + Arrays.toString(template) + ", user=" + user + ", id=" + id + "]";
 	}
 
 }

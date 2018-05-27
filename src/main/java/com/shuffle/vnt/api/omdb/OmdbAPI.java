@@ -1,30 +1,44 @@
 package com.shuffle.vnt.api.omdb;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.LaxRedirectStrategy;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.shuffle.vnt.core.parser.bean.Movie;
-import com.shuffle.vnt.core.parser.bean.Torrent;
+import com.shuffle.vnt.api.bean.Movie;
+import com.shuffle.vnt.core.configuration.PreferenceManager;
 
 public class OmdbAPI {
 
 	private static final Log log = LogFactory.getLog(OmdbAPI.class);
+	
+	private static PoolingHttpClientConnectionManager poolingHttpClientConnectionManager = new PoolingHttpClientConnectionManager();
+	static {
+		poolingHttpClientConnectionManager.setMaxTotal(500);
+		poolingHttpClientConnectionManager.setDefaultMaxPerRoute(150);
+	}
+	
+	private static final CloseableHttpClient httpClient = HttpClientBuilder.create().setRedirectStrategy(new LaxRedirectStrategy()).setDefaultRequestConfig(RequestConfig.custom().setConnectTimeout(30000).setConnectionRequestTimeout(10000).setSocketTimeout(40000).build()).setConnectionManager(poolingHttpClientConnectionManager).build();
 
 	private String imdbId;
 
@@ -148,41 +162,67 @@ public class OmdbAPI {
 	public OmdbResponse fetchResult() {
 		OmdbResponse omdbResponse = null;
 		try {
-			CloseableHttpClient httpClient = HttpClientBuilder.create().setRedirectStrategy(new LaxRedirectStrategy()).build();
 
 			List<NameValuePair> nameValuePairs = buildNameValuePair();
+			nameValuePairs.add(new BasicNameValuePair("apikey", PreferenceManager.getPreferences().getOmdbApiKey()));
 
 			String url = "http://www.omdbapi.com/?" + URLEncodedUtils.format(nameValuePairs, "UTF-8");
 			log.debug("URL : " + url);
 			HttpGet httpGet = new HttpGet(url);
-			httpGet.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:43.0) Gecko/20100101 Firefox/43.0.3");
+			httpGet.setHeader("User-Agent", "Firefox/60.0.1");
 			httpGet.addHeader("Accept-Encoding", "gzip");
-			CloseableHttpResponse imdbResponse = httpClient.execute(httpGet);
-
-			HttpEntity httpEntity = imdbResponse.getEntity();
-
-			String content = EntityUtils.toString(httpEntity);
-			log.debug("content : " + content);
-			//FIXME to use jackson objectmapper
-			Gson gson = new GsonBuilder().serializeNulls().create();
-			omdbResponse = gson.fromJson(content, OmdbResponse.class);
+			httpGet.addHeader("Accept-Charset", "utf-8");
+			log.debug("Trying to get info  from OMDb " + nameValuePairs.get(0));
+			omdbResponse = CompletableFuture.supplyAsync(() -> {
+				int maxRetries =3, retries = 0;
+				boolean ok = false;
+				while (!ok && retries < maxRetries) {
+					log.debug("Try " + (retries + 1) + " | "  + nameValuePairs.get(0));
+					try (CloseableHttpResponse imdbResponse = httpClient.execute(httpGet)) {
+						if (imdbResponse.getStatusLine().getStatusCode() == 200) {
+							ok = true;
+							HttpEntity httpEntity = imdbResponse.getEntity();
+							
+							String content = EntityUtils.toString(httpEntity, StandardCharsets.UTF_8);
+							log.debug("content : " + content);
+							// FIXME to use jackson objectmapper
+							Gson gson = new GsonBuilder().serializeNulls().create();
+							return gson.fromJson(content, OmdbResponse.class);
+						}
+					}
+					catch (ConnectTimeoutException e) {
+						
+					}
+					catch (Exception e) {
+						e.printStackTrace();
+					}
+					finally {
+						httpGet.reset();
+						log.debug("Try " + (retries + 1) + " finished " + " | "  + nameValuePairs.get(0));
+						log.debug("OK " + ok  + " | "  + nameValuePairs.get(0));
+						retries++;
+						try {
+							if (!ok) {
+								TimeUnit.SECONDS.sleep(5);
+							}
+						} catch (InterruptedException e1) {
+							
+						}
+					}
+				}
+				return null;
+			}).get(3, TimeUnit.MINUTES);
 		} catch (Exception e) {
-			e.printStackTrace();
+			
 		}
 		return omdbResponse;
 	}
 
-	public static Movie getMovie(OmdbResponse omdbResponse, Torrent torrent) {
+	public static Movie getMovie(OmdbResponse omdbResponse) {
 		if (omdbResponse == null || !omdbResponse.isResponse()) {
 			return null;
 		}
-		Movie movie = torrent != null ? torrent.getMovie() : null;
-		if (movie == null) {
-			movie = new Movie();
-			if (torrent != null) {
-				torrent.setMovie(movie);
-			}
-		}
+		Movie movie = new Movie();
 		movie.setTitle(omdbResponse.getTitle());
 		movie.setOriginalTitle(omdbResponse.getTitle());
 		movie.setYear(Long.valueOf(omdbResponse.getYear().replaceAll("[^0-9&&[^\\.]]", "")));

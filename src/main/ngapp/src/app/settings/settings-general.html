@@ -1,0 +1,59 @@
+<form #preferencesForm="ngForm" (ngSubmit)="onSubmit(preferencesForm)">
+	<div class="form-group">
+		<label for="baseUrl">Base URL</label> <input type="text" class="form-control" name="baseUrl" placeholder="Base URL" required [(ngModel)]="general.baseUrl">
+		<p class="">Set the base URL used on the emails</p>
+	</div>
+	<div class="checkbox">
+		<label> <input type="checkbox" #omdbActive name="omdbActive" [(ngModel)]="general.omdbActive"> Active IMDB Integration (Over OMDb)
+		</label>
+	</div>
+	<div [hidden]="!omdbActive.checked" class="card">
+		<div class="card-header">OMDb Integration Configuration</div>
+		<div class="card-body">
+			<div class="form-group">
+				<label for="tmdbapikey">OMDb API Key</label> <input type="text" class="form-control" name="omdbApiKey" placeholder="OMDb API Key" [(ngModel)]="general.omdbApiKey">
+				<p class="form-text text-muted">
+					Use <a href="http://www.omdbapi.com/apikey.aspx">this link</a> to request an API
+				</p>
+			</div>
+		</div>
+	</div>
+	<div class="checkbox">
+		<label> <input type="checkbox" #tmdbActive name="tmdbActive" [(ngModel)]="general.tmdbActive"> Active The Movie Database Integration
+		</label>
+	</div>
+	<div [hidden]="!tmdbActive.checked" class="card">
+		<div class="card-header">The Movie Database Integration Configuration</div>
+		<div class="card-body">
+			<div class="form-group">
+				<label for="tmdbapikey">The Movie Database API Key</label> <input type="text" class="form-control" name="tmdbApiKey" placeholder="The Movie Database API Key" [(ngModel)]="general.tmdbApiKey">
+				<p class="form-text text-muted">
+					Use your <a href="https://www.themoviedb.org/account">account page</a> to request an API
+				</p>
+			</div>
+			<div class="form-group row">
+				<label for="tmdbLanguage" class="col-form-label col-12">The Movie Database Language </label>
+				<div class="col-10">
+					<select class="form-control" name="tmdbLanguage" #tmdbLanguage>
+						<option *ngFor="let language of languages" value="{{language.code}}">{{language.label}}</option>
+					</select>
+				</div>
+				<div class="col-2">
+					<button type="button" class="btn btn-default" (click)="addLanguage(tmdbLanguage.value)">Add <i class="fa fa-plus" aria-hidden="true"></i></button>
+				</div>
+				
+			</div>
+			<div class="form-group">
+				<div *ngFor="let tmdbLanguage of general.tmdbLanguages; let i=index" class="d-flex">
+					<div class="p-2" style="min-width: 30px;"><i class="fa fa-arrow-down clickable" aria-hidden="true" [hidden]="i+1 == general.tmdbLanguages.length" (click)="downLanguage(i)"></i></div>
+					<div class="p-2" style="min-width: 30px;"><i class="fa fa-arrow-up clickable" aria-hidden="true" [hidden]="i <= 0" (click)="upLanguage(i)"></i></div>
+					<div class="p-2">{{findLanguage(general.tmdbLanguages[i].language).label}}</div>
+					<div class="ml-auto p-2"><i class="fa fa-trash clickable" aria-hidden="true" (click)="removeLanguage(i)"></i></div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<br>
+	<button type="submit" class="btn btn-primary">Submit</button>
+	<button type="button" class="btn btn-default" (click)="cancel()">Close</button>
+</form>

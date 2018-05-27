@@ -4,6 +4,9 @@ import fi.iki.elonen.NanoHTTPD.IHTTPSession;
 import fi.iki.elonen.NanoHTTPD.Response;
 
 public interface HttpServlet {
+	
+	String mimeTypeJson = "application/json";
+	
     	void setWebServer(WebServer webServer);
     
 	void doGet(IHTTPSession session, Response response);

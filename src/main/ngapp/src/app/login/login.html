@@ -1,0 +1,15 @@
+<div class="row justify-content-center">
+	<div class="col-10 col-sm-4">
+		<form #loginForm="ngForm" (ngSubmit)="onSubmit(loginForm)">
+			<div class="form-group" [class.has-danger]="!username.valid && !username.pristine">
+				<label>Login</label> <input type="text" ngModel name="username" class="form-control" required #username="ngModel" [class.form-control-danger]="!username.valid && !username.pristine">
+				<div class="alert alert-danger" [hidden]="username.valid || username.pristine">Username is required</div>
+			</div>
+			<div class="form-group" [class.has-danger]="!password.valid && !password.pristine">
+				<label>Password</label> <input type="password" ngModel name="password" class="form-control" required #password="ngModel" [class.form-control-danger]="!password.valid && !password.pristine">
+				<div class="alert alert-danger" [hidden]="password.valid || password.pristine">Password is required</div>
+			</div>
+			<button type="submit" class="btn btn-primary float-right">Login</button>
+		</form>
+	</div>
+</div>

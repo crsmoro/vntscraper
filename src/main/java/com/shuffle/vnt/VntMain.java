@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Date;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.Level;
@@ -11,25 +12,32 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.RollingFileAppender;
 import org.h2.tools.Server;
+import org.mindrot.jbcrypt.BCrypt;
 
 import com.shuffle.vnt.core.VntContext;
+import com.shuffle.vnt.core.configuration.model.Preferences;
 import com.shuffle.vnt.core.db.PersistenceManager;
 import com.shuffle.vnt.core.schedule.ScheduleManager;
 import com.shuffle.vnt.web.WebServer;
 import com.shuffle.vnt.web.model.User;
 
+import fi.iki.elonen.NanoHTTPD;
+
 public class VntMain {
 
 	private static final Log log = LogFactory.getLog(VntMain.class);
-
+	
 	public static void main(String[] args) {
-
+		
 		Date start = new Date();
-
+		
 		initLogger();
-
+		
 		Logger.getRootLogger().setLevel(Level.toLevel(System.getProperty("log", "WARN")));
-
+		
+		// Logger.getLogger("com.shuffle").setLevel(Level.DEBUG);
+		// Logger.getLogger("com.shuffle.vnt.httprequest").setLevel(Level.TRACE);
+		
 		log.info("Starting...");
 
 		// FIXME check better solution
@@ -46,34 +54,23 @@ public class VntMain {
 		if (PersistenceManager.getDao(User.class).findAll().isEmpty()) {
 			User user = new User();
 			user.setUsername("adm");
-			user.setPassword("adm");
+			user.setPassword(BCrypt.hashpw("adm", BCrypt.gensalt()));
 			user.setAdmin(true);
 			PersistenceManager.getDao(User.class).save(user);
+			Preferences preferences = new Preferences();
+			preferences.setTokenKey(RandomStringUtils.randomAlphanumeric(20));
+			preferences.setPasswordKey(RandomStringUtils.randomAlphanumeric(20));
+			preferences.setRefreshTokenKey(RandomStringUtils.randomAlphanumeric(20));
+			PersistenceManager.getDao(Preferences.class).save(preferences);
 		}
 
 		final WebServer webServer = new WebServer(Integer.getInteger("web.port", 7337));
-
-		Thread webServerThread = new Thread(new Runnable() {
-
-			@Override
-			public void run() {
-				try {
-					webServer.start();
-					// FIXME workaround to run as service on
-					// linux
-					while (!Thread.currentThread().isInterrupted()) {
-						try {
-							Thread.sleep(60000);
-						} catch (InterruptedException e) {
-
-						}
-					}
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		});
-		webServerThread.start();
+		try {
+			
+			webServer.start(NanoHTTPD.SOCKET_READ_TIMEOUT, false);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
 		ScheduleManager.getInstance().updateSchedules();
 
