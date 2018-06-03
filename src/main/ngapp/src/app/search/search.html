@@ -86,12 +86,13 @@
 								<td><a class="clickable" (click)="downloadTorrent(torrent)"><i class="fa fa-cloud-download text-primary" data-toggle="tooltip" data-placement="top" title="Download Torrent"></i></a></td>
 								<td>
 									<i *ngIf="sendingTorrentToSeedbox[torrent.id] && seedboxes.length > 0" class="fa fa-circle-o-notch fa-spin fa-fw"></i>
-									<div *ngIf="!sendingTorrentToSeedbox[torrent.id] && seedboxes.length > 0" class="btn-group" role="group" [attr.ngbDropdown]="seedboxes.lenght > 1" placement="bottom-right">
-										<button type="button" class="btn btn-sm"><i class="fa fa-cloud-upload clickable text-secondary" title="Send to Seedbox" (click)="uploadTorrent(seedboxes[0], torrent)"></i></button>
-									    <button *ngIf="seedboxes.lenght > 1" type="button" class="btn btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" ngbDropdownToggle>
+									<button *ngIf="!sendingTorrentToSeedbox[torrent.id] && seedboxes.length == 1" type="button" class="btn btn-sm" title="Send to Seedbox" (click)="uploadTorrent(seedboxes[0], torrent)"><i class="fa fa-cloud-upload text-secondary"></i></button>
+									<div *ngIf="!sendingTorrentToSeedbox[torrent.id] && seedboxes.length > 1" class="btn-group" role="group" ngbDropdown placement="bottom-right">
+										<button type="button" class="btn btn-sm" title="Send to Seedbox"><i class="fa fa-cloud-upload text-secondary"></i></button>
+									    <button type="button" class="btn btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" ngbDropdownToggle>
 									      <span class="sr-only">Select Seedbox</span>
 									    </button>
-									    <div *ngIf="seedboxes.lenght > 1" class="dropdown-menu dropdown-menu-right" ngbDropdownMenu>
+									    <div class="dropdown-menu dropdown-menu-right" ngbDropdownMenu>
 									      <a class="dropdown-item clickable" *ngFor="let seedbox of seedboxes" (click)="uploadTorrent(seedbox, torrent)">{{seedbox.name}}</a>
 									    </div>
 								    </div>
