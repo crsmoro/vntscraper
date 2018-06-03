@@ -1,8 +1,12 @@
 package com.shuffle.vnt;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.security.KeyStore;
 import java.sql.SQLException;
 import java.util.Date;
+
+import javax.net.ssl.KeyManagerFactory;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.logging.Log;
@@ -65,8 +69,20 @@ public class VntMain {
 		}
 
 		final WebServer webServer = new WebServer(Integer.getInteger("web.port", 7337));
+		
 		try {
-			
+			if (Boolean.getBoolean("web.ssl")) {
+				try {
+					KeyStore keyStore = KeyStore.getInstance("JKS");
+					keyStore.load(new FileInputStream(System.getProperty("web.ssl.jks.file")), System.getProperty("web.ssl.jks.password").toCharArray());
+					KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+					keyManagerFactory.init(keyStore, System.getProperty("web.ssl.jks.password").toCharArray());
+					webServer.makeSecure(NanoHTTPD.makeSSLSocketFactory(keyStore, keyManagerFactory), null);
+				}
+				catch (Exception e) {
+					log.error("Error loading https environment", e);
+				}
+			}
 			webServer.start(NanoHTTPD.SOCKET_READ_TIMEOUT, false);
 		} catch (IOException e) {
 			e.printStackTrace();
