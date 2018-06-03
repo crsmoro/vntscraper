@@ -22,7 +22,7 @@ export class SearchComponent {
 
     private queryParameters: any = {};
 
-    private torrentFields: any[] = [{ field: 'tracker', label: 'Tracker' }, { field: 'name', label: 'Name' }, { field: 'year', label: 'Year' }, { field: 'size', label: 'Size' }, { field: 'added', label: 'Added' }, { field: 'category', label: 'Category' }];
+    private torrentFields: any[] = [{ field: 'tracker', label: 'Tracker' }, { field: 'name', label: 'Name' }, { field: 'size', label: 'Size' }, { field: 'added', label: 'Added' }, { field: 'category', label: 'Category' }];
 
     private selectedTracker: any;
 
@@ -217,6 +217,7 @@ export class SearchComponent {
                 else {
                     alert('Something went wrong when sending torrent to the seedbox');
                 }
+                this.sendingTorrentToSeedbox[torrent.id] = false;
             }, (error) => { this.sendingTorrentToSeedbox[torrent.id] = false; });
         }
     }
