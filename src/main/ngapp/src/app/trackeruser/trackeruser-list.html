@@ -19,10 +19,10 @@
 			</thead>
 			<tbody class="clickable">
 				<tr *ngFor="let trackerUser of trackerUsers">
-					<td [routerLink]="['/trackerusers', trackerUser.id]">{{trackerUser.tracker}}</td>
-					<td [routerLink]="['/trackerusers', trackerUser.id]">{{trackerUser.username}}</td>
-					<td [routerLink]="['/trackerusers', trackerUser.id]">{{trackerUser.shared}}</td>
-					<td><i class="fa fa-times" style="color: red;" (click)="remove(trackerUser)"></i></td>
+					<td [routerLink]="trackerUser.owner ? ['/trackerusers', trackerUser.id] : []">{{trackerUser.tracker}}</td>
+					<td [routerLink]="trackerUser.owner ? ['/trackerusers', trackerUser.id] : []">{{trackerUser.username}}</td>
+					<td [routerLink]="trackerUser.owner ? ['/trackerusers', trackerUser.id] : []">{{trackerUser.shared}}</td>
+					<td><i *ngIf="trackerUser.owner" class="fa fa-times" style="color: red;" (click)="remove(trackerUser)"></i></td>
 				</tr>
 			</tbody>
 		</table>

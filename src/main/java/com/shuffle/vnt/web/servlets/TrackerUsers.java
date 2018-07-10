@@ -1,8 +1,9 @@
 package com.shuffle.vnt.web.servlets;
 
 import java.util.Collections;
-import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -32,8 +33,11 @@ public class TrackerUsers extends GenericCRUDController<TrackerUser> {
 				persistenceManager.eq("tracker", Optional.ofNullable(session.getParameters().get("tracker")).orElse(Collections.emptyList()).stream().findFirst().orElse(""));
 				persistenceManager.and(2);
 			}
-			List<TrackerUser> trackerUsers = persistenceManager.findAll();
-			response.setData(VntUtil.getInputStream(VntUtil.toJson(trackerUsers)));
+			response.setData(VntUtil.getInputStream(VntUtil.toJson(persistenceManager.findAll().stream().map(t -> {
+				Map<String, Object> mapTrackerUser = VntUtil.clazzToObject(t);
+				mapTrackerUser.put("owner", t.getUser().equals(SecurityContext.getUser()));
+				return mapTrackerUser;
+			}).collect(Collectors.toList()))));
 		}
 	}
 

@@ -40,7 +40,7 @@ public class Trackers implements HttpServlet {
 			mapReturn.put("hasCaptcha", tracker.hasCaptcha());
 			boolean avaliable = false;
 			try {
-				TrackerUser trackerUser = PersistenceManager.getDao(TrackerUser.class).eq("tracker", tracker.getName()).eq("user", webServer.getUser()).and(2).findOne();
+				TrackerUser trackerUser = PersistenceManager.getDao(TrackerUser.class).eq("tracker", tracker.getName()).eq("shared", true).eq("user", webServer.getUser()).or(2).and(2).findOne();
 				avaliable = trackerUser != null && (!tracker.hasCaptcha()
 						|| (tracker.hasCaptcha() && TrackerManager.getInstance(tracker.getName(), trackerUser.getUsername(), VntSecurity.decrypt(trackerUser.getPassword(), VntSecurity.getPasswordKey())).authenticate()));
 			} catch (SieveException e) {

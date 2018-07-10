@@ -34,7 +34,7 @@ public class TrackerCategories implements HttpServlet {
 	public void doGet(IHTTPSession session, Response response) {
 		String tracker = Optional.ofNullable(session.getParameters().get("tracker")).orElse(Collections.emptyList()).stream().findFirst().orElse(null);
 
-		List<Map<String, String>> mapCategories = Tracker.loadedTrackers.stream().filter(t -> PersistenceManager.getDao(TrackerUser.class).eq("tracker", t.getName()).eq("user", webServer.getUser()).and(2).findOne() != null)
+		List<Map<String, String>> mapCategories = Tracker.loadedTrackers.stream().filter(t -> PersistenceManager.getDao(TrackerUser.class).eq("tracker", t.getName()).eq("shared", true).eq("user", webServer.getUser()).or(2).and(2).findOne() != null)
 				.filter(t -> !Optional.ofNullable(tracker).map(String::trim).filter(s -> s.length() > 0).isPresent() || t.getName().equalsIgnoreCase(tracker)).flatMap(t -> {
 
 					return t.getCategories().stream().flatMap(c -> {
