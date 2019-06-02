@@ -4,7 +4,7 @@
 
 	<groupId>com.shuffle</groupId>
 	<artifactId>vnt</artifactId>
-	<version>3.0.2</version>
+	<version>3.1.0</version>
 	<packaging>jar</packaging>
 
 	<name>vnt</name>
@@ -91,7 +91,7 @@
 		<dependency>
 			<groupId>com.shuffle</groupId>
 			<artifactId>sieve</artifactId>
-			<version>0.1.1</version>
+			<version>0.2.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.eirslett</groupId>
